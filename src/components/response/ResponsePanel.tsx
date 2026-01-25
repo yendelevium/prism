@@ -1,28 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import CodeEditor from "@/components/editor/CodeEditor";
 
 const tabs = ["Body", "Headers", "Cookies", "Tests"];
 
 export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState("Body");
 
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab);
-    console.log("[UI]", "RESPONSE_TAB_CHANGED", { tab });
-  };
+  const responseBody = `{
+  "status": "ok",
+  "data": {}
+}`;
 
   return (
-    <div className="p-4">
-      <div className="flex gap-4 text-sm border-b border-[var(--border-color)] mb-4">
+    <div className="p-4 h-full">
+      {/* Tabs */}
+      <div className="flex gap-4 text-sm border-b border-[var(--border-color)] mb-3">
         {tabs.map(tab => (
           <button
             key={tab}
-            onClick={() => handleTabClick(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              console.log("[UI]", "RESPONSE_TAB_CHANGED", { tab });
+            }}
             className={`pb-2 ${
               activeTab === tab
-                ? "text-[var(--accent)]"
-                : "hover:text-[var(--accent)]"
+                ? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
+                : "text-[var(--text-secondary)]"
             }`}
           >
             {tab}
@@ -30,13 +35,22 @@ export default function ResponsePanel() {
         ))}
       </div>
 
-      <pre className="text-xs bg-black/30 p-3 rounded overflow-auto">
-{`[${activeTab}]
-{
-  "status": "ok",
-  "data": {}
-}`}
-      </pre>
+      {/* Content */}
+      <div className="h-[calc(100%-40px)]">
+        {activeTab === "Body" && (
+          <CodeEditor
+            language="json"
+            value={responseBody}
+            readOnly
+          />
+        )}
+
+        {activeTab !== "Body" && (
+          <div className="text-[var(--text-secondary)] p-2">
+            {activeTab} view coming soon
+          </div>
+        )}
+      </div>
     </div>
   );
 }
