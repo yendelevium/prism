@@ -1,0 +1,16 @@
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #020617;
+  --bg-panel: #020617;
+  --border-color: #1e293b;
+
+  --text-primary: #e5e7eb;
+  --text-secondary: #94a3b8;
+
+  --accent: #38bdf8;
+  --accent-hover: #0ea5e9;
+
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
+}
