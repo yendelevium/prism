@@ -10,10 +10,13 @@ export default function DashboardLayout({
   console.log("[LAYOUT]", "DASHBOARD_LAYOUT_MOUNTED");
 
   return (
-    <div className="flex flex-col flex-1">
-      <TopBar />
+    <div className="flex flex-col h-full">
+
+      <div className="flex-shrink-0 h-14">
+        <TopBar />
+      </div>
       
-      <div className="flex h-screen">
+      <div className="flex flex-1 min-h-0">
         <Sidebar />
 
         <div className="flex flex-col flex-1">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Dropdown from "../common/Dropdown";
 
 export default function RequestBar() {
   const [method, setMethod] = useState("GET");
@@ -11,19 +12,13 @@ export default function RequestBar() {
   };
 
   return (
-    <div className="flex items-center gap-2 p-3 bg-[var(--bg-panel)] border-b border-[var(--border-color)]">
-      <select
-        value={method}
-        onChange={(e) => {
-          setMethod(e.target.value);
-          console.log("[UI]", "METHOD_CHANGED", { method: e.target.value });
-        }}
-        className="bg-transparent border border-[var(--border-color)] rounded px-2 py-1"
-      >
-        {["GET", "POST", "PUT", "DELETE", "PATCH"].map(m => (
-          <option key={m}>{m}</option>
-        ))}
-      </select>
+    <div className="flex items-center gap-2 p-3 bg-[var(--bg-secondary)] border-b border-[var(--border-color)]">
+       <Dropdown
+          label="Method"
+          value={method}
+          options={["GET", "POST", "PUT", "DELETE", "PATCH"]}
+          onChange={setMethod}
+        />
 
       <input
         value={url}
