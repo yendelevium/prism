@@ -1,6 +1,7 @@
 import Sidebar from "@/components/sidebar/Sidebar";
 import RequestBar from "@/components/requestbar/RequestBar";
 import TopBar from "@/components/topbar/TopBar";
+import BottomPanel from "@/components/bottompanel/BottomPanel";
 
 export default function DashboardLayout({
   children,
@@ -19,12 +20,17 @@ export default function DashboardLayout({
       <div className="flex flex-1 min-h-0">
         <Sidebar />
 
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 min-h-0">
           <RequestBar />
 
-          <main className="flex-1 overflow-hidden border-t border-[var(--border-color)]">
+          <main className="flex-1 overflow-hidden border-t border-[var(--border-color)] min-h-0">
             {children}
           </main>
+
+          {/* Bottom Panel */}
+          <div className="flex-shrink-0 h-56">
+            <BottomPanel />
+          </div>
         </div>
       </div>
     </div>
