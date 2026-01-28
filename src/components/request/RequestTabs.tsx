@@ -12,7 +12,7 @@ export default function RequestTabs() {
 }`);
 
   return (
-    <div className="p-4 border-r border-[var(--border-color)] h-full">
+    <div className="p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
       {/* Tabs */}
       <div className="flex gap-4 text-sm border-b border-[var(--border-color)] mb-3">
         {tabs.map(tab => (

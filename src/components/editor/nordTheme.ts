@@ -13,7 +13,8 @@ export const nordTheme = {
     "editor.foreground": "#ECEFF4",
     "editorLineNumber.foreground": "#4C566A",
     "editorCursor.foreground": "#88C0D0",
-    "editor.selectionBackground": "#434C5E",
+    "editor.selectionBackground": "#81868fff",
     "editor.inactiveSelectionBackground": "#3B4252",
+    "editor.lineHighlightBorder": "#4C566A"
   },
 };

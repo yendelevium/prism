@@ -14,7 +14,7 @@ export default function ResponsePanel() {
 }`;
 
   return (
-    <div className="p-4 h-full">
+    <div className="p-4 h-full bg-[var(--bg-secondary)]">
       {/* Tabs */}
       <div className="flex gap-4 text-sm border-b border-[var(--border-color)] mb-3">
         {tabs.map(tab => (
