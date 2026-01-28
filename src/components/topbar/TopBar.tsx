@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Dropdown from '@/components/common/Dropdown';
-import { UserCircleIcon } from '@heroicons/react/16/solid';
+import { UserCircleIcon } from '@heroicons/react/24/solid';
+import IconButton from '../common/IconButton';
 
 export default function Topbar() {
-  const [protocol, setProtocol] = useState<'HTTP' | 'HTTPS'>('HTTP');
-  const [collection, setCollection] = useState('User Service');
+  const [protocol, setProtocol] = useState<'REST' | 'GraphQL' | 'gRPC'>('REST');
+  const [collection, setCollection] = useState('Collection 1');
   const [env, setEnv] = useState('Development');
 
   return (
@@ -24,8 +25,8 @@ export default function Topbar() {
         <Dropdown
           label="Protocol"
           value={protocol}
-          options={['HTTP', 'HTTPS']}
-          onChange={(v) => setProtocol(v as 'HTTP' | 'HTTPS')}
+          options={['REST', 'GraphQL', 'gRPC']}
+          onChange={(v) => setProtocol(v as 'REST' | 'GraphQL' | 'gRPC')}
         />
 
         {/* Current Collection */}
@@ -33,10 +34,10 @@ export default function Topbar() {
           label="Collection"
           value={collection}
           options={[
-            'User Service',
-            'Payments API',
-            'Analytics',
-            'Internal Tools',
+            'Collection 1',
+            'Collection 2',
+            'Collection 3',
+            'Collection 4',
           ]}
           onChange={setCollection}
         />
@@ -53,9 +54,7 @@ export default function Topbar() {
       {/* RIGHT SIDE */}
       <div className="flex items-center">
         {/* Account Button */}
-        <button className="flex items-center gap-2 px-1 py-1 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)]">
-          <UserCircleIcon className="w-8 h-8" />
-        </button>
+        <IconButton icon={UserCircleIcon} />
       </div>
     </header>
   );
