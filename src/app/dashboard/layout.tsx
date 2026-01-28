@@ -1,5 +1,5 @@
 import Sidebar from "@/components/sidebar/Sidebar";
-import RequestBar from "@/components/topbar/RequestBar";
+import RequestBar from "@/components/requestbar/RequestBar";
 
 export default function DashboardLayout({
   children,
