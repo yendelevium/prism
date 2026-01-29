@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import CodeEditor from "@/components/editor/CodeEditor";
+import CodeEditor from "@/components/editors/CodeEditor";
 
 const tabs = ["Params", "Headers", "Body", "Auth", "Tests"];
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import CodeEditor from "@/components/editor/CodeEditor";
+import CodeEditor from "@/components/editors/CodeEditor";
 import ResponseInfo from "./ResponseInfo";
 
 const tabs = ["Body", "Headers", "Cookies", "Tests"];
