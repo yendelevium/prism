@@ -23,14 +23,10 @@ export default function DashboardLayout({
         <div className="flex flex-col flex-1 min-h-0">
           <RequestBar />
 
-          <main className="flex-1 overflow-hidden border-t border-[var(--border-color)] min-h-0">
+          <main className="flex-1 overflow-hidden border-t border-[var(--border-color)] h-full">
             {children}
           </main>
 
-          {/* Bottom Panel */}
-          <div className="flex-shrink-0 h-56">
-            <BottomPanel />
-          </div>
         </div>
       </div>
     </div>
