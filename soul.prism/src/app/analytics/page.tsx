@@ -6,27 +6,79 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { Activity, TrendingUp, AlertCircle, Clock, Users, Zap, RefreshCw } from 'lucide-react';
+import type { ReactElement } from 'react';
+import type { PieLabelRenderProps, TooltipProps } from 'recharts';
+import { Payload } from 'recharts/types/component/DefaultTooltipContent';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+type TimeRange = '1h' | '24h' | '7d' | '30d';
+
+interface Summary {
+  totalRequests: number;
+  successRate: number;
+  avgResponseTime: number;
+  activeUsers: number;
+  peakHour: string;
+}
+
+interface RequestVolumePoint {
+  time: string;
+  requests: number;
+}
+
+interface StatusCodeData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface LatencyPoint {
+  time: string;
+  p50: number;
+  p95: number;
+  p99: number;
+}
+
+interface EndpointStats {
+  endpoint: string;
+  calls: number;
+  avg_time: number;
+  errors: number;
+  slowest: number;
+}
+
+interface RecentError {
+  id: number;
+  endpoint: string;
+  error: string;
+  timestamp: string;
+  status: number;
+}
+
+interface AnalyticsData {
+  summary: Summary;
+  requestVolume: RequestVolumePoint[];
+  statusCodes: StatusCodeData[];
+  latencyData: LatencyPoint[];
+  endpoints: EndpointStats[];
+  recentErrors: RecentError[];
+}
+
+
 //  Replace with real API call when backend is ready
 const analyticsService = {
-  async fetchDashboard(timeRange = '24h', endpoint = 'all') {
-    try {
-      // const data = await response.json();
-      // return data;
-      
-      // using mock data for now
-      return getMockData();
-    } catch (error) {
-      console.error('Error fetching dashboard:', error);
-      throw error;
-    }
+  async fetchDashboard(
+    timeRange: TimeRange = '24h',
+    endpoint: string = 'all'
+  ): Promise<AnalyticsData> {
+    return getMockData();
   }
 };
 
+
 // Mock data - remove this when API is ready
-function getMockData() {
+function getMockData(): AnalyticsData {
   return {
     summary: {
       totalRequests: 15847,
@@ -72,65 +124,90 @@ function getMockData() {
   };
 }
 
-const SummaryCard = ({ icon, title, value, bgColor }) => {
+interface SummaryCardProps {
+  icon: ReactElement<React.SVGProps<SVGSVGElement>>;
+  title: string;
+  value: string | number;
+  bgColor: string;
+}
+
+const SummaryCard: React.FC<SummaryCardProps> = ({
+  icon,
+  title,
+  value,
+  bgColor,
+}) => {
   return (
-    <div className="bg-[#3B4252] rounded-lg border border-[#4C566A] p-4 sm:p-5 lg:p-6 flex items-start gap-3 sm:gap-4 hover:border-[#88C0D0] transition-colors">
-      <div className={`${bgColor} text-white p-2 sm:p-2.5 lg:p-3 rounded-lg`}>
-        {React.cloneElement(icon, { className: 'w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6' })}
+    <div className="bg-[#3B4252] rounded-lg border border-[#4C566A] p-4 flex items-start gap-3">
+      <div className={`${bgColor} text-white p-2 rounded-lg`}>
+        {React.cloneElement(icon, {
+          className: 'w-5 h-5',
+        })}
       </div>
       <div>
-        <p className="text-xs sm:text-sm text-[#D8DEE9] mb-0.5 sm:mb-1">{title}</p>
-        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#ECEFF4]">{value}</p>
+        <p className="text-sm text-[#D8DEE9]">{title}</p>
+        <p className="text-xl font-bold text-[#ECEFF4]">{value}</p>
       </div>
     </div>
   );
 };
 
-// Custom tooltip for charts
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-[#3B4252] border border-[#4C566A] rounded-lg p-2 sm:p-3 shadow-xl">
-        <p className="text-xs sm:text-sm text-[#ECEFF4] font-medium mb-1 sm:mb-2">{label}</p>
-        {payload.map((entry, index) => (
-          <div key={index} className="flex items-center gap-1.5 sm:gap-2">
-            <div 
-              className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" 
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-[#D8DEE9] text-xs sm:text-sm">
-              {entry.name}: <span className="text-[#ECEFF4] font-semibold">{entry.value}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
+type CustomTooltipProps = TooltipProps<number, string> & {
+  label?: string | number;
+  payload?: Array<Payload<number, string>>
 };
 
+
+// Custom tooltip for charts
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: CustomTooltipProps) => {
+  if (!active || !payload || !payload.length) return null;
+
+  return (
+    <div className="bg-[#3B4252] border border-[#4C566A] rounded-lg p-3">
+      <p className="text-sm text-[#ECEFF4] font-medium mb-2">{label}</p>
+      {payload.map((entry, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-sm text-[#D8DEE9]">
+            {entry.name}: <strong>{entry.value}</strong>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState('24h');
-  const [selectedEndpoint, setSelectedEndpoint] = useState('all');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [lastUpdate, setLastUpdate] = useState(null);
-  const [mounted, setMounted] = useState(false);
-  
-  const [analyticsData, setAnalyticsData] = useState({
+  const [timeRange, setTimeRange] = useState<TimeRange>('24h');
+  const [selectedEndpoint, setSelectedEndpoint] = useState<string>('all');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     summary: {
       totalRequests: 0,
       successRate: 0,
       avgResponseTime: 0,
       activeUsers: 0,
-      peakHour: '--:--'
+      peakHour: '--:--',
     },
     requestVolume: [],
     statusCodes: [],
     latencyData: [],
     endpoints: [],
-    recentErrors: []
+    recentErrors: [],
   });
+
 
   // fetch data from API
   const fetchAnalytics = useCallback(async () => {
@@ -219,7 +296,7 @@ export default function AnalyticsPage() {
         <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <select 
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
+            onChange={(e) => setTimeRange(e.target.value as TimeRange)}
             className="px-3 sm:px-4 py-2 text-sm border border-[#4C566A] rounded-lg bg-[#3B4252] text-[#ECEFF4] focus:outline-none focus:ring-2 focus:ring-[#88C0D0] focus:border-transparent"
             disabled={loading}
           >
@@ -325,14 +402,10 @@ export default function AnalyticsPage() {
                     <PieChart>
                       <Pie
                         data={analyticsData.statusCodes}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={90}
-                        fill="#8884d8"
                         dataKey="value"
-                        style={{ fontSize: '11px' }}
+                        label={({ name, percent }: PieLabelRenderProps) =>
+                          `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`
+                        }
                       >
                         {analyticsData.statusCodes.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
