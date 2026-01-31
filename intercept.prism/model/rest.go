@@ -13,15 +13,6 @@ type SpanInfo struct {
 	Tags         map[string]string `json:"tags,omitempty"`
 }
 
-// Detailed HTTP request timing phases
-type HTTPTimingInfo struct {
-	DNSLookup        int64 `json:"dns_lookup_us"`
-	TCPConnect       int64 `json:"tcp_connect_us"`
-	TLSHandshake     int64 `json:"tls_handshake_us"`
-	ServerProcessing int64 `json:"server_processing_us"` // Time to first byte
-	ContentTransfer  int64 `json:"content_transfer_us"`  // Time to download body
-}
-
 // Incoming API test request
 type RestRequest struct {
 	Method  string            `json:"method"`
@@ -39,7 +30,6 @@ type RestResponse struct {
 	Error        string            `json:"error_msg"`
 	ResponseSize int64             `json:"response_size"` // in bytes
 	RequestSize  int64             `json:"request_size"`  // in bytes
-	Timing       HTTPTimingInfo    `json:"timing"`
 
 	// Distributed tracing
 	TraceID string     `json:"trace_id"`
