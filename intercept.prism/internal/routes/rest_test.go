@@ -1,4 +1,4 @@
-package tests
+package routes
 
 import (
 	"bytes"
@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yendelevium/intercept.prism/internal/routes"
 	"github.com/yendelevium/intercept.prism/model"
 )
 
@@ -19,7 +18,7 @@ func init() {
 // setupRouter creates a test router using the actual exported RestRoutes
 func setupRouter() *gin.Engine {
 	r := gin.New()
-	routes.RestRoutes(r.Group("/"))
+	restRoutes(r.Group("/"))
 	return r
 }
 

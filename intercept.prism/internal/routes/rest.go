@@ -13,7 +13,7 @@ import (
 	"github.com/yendelevium/intercept.prism/model"
 )
 
-func RestRoutes(superRouter *gin.RouterGroup) {
+func restRoutes(superRouter *gin.RouterGroup) {
 	restRouter := superRouter.Group("/rest")
 	{
 		restRouter.POST("/", func(c *gin.Context) {

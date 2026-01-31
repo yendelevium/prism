@@ -9,7 +9,7 @@ import (
 )
 
 // Once I change the store to DB this will go to soul.prism
-func TracesRoutes(superRouter *gin.RouterGroup) {
+func tracesRoutes(superRouter *gin.RouterGroup) {
 	tracesRouter := superRouter.Group("/traces")
 	{
 		// List recent traces
