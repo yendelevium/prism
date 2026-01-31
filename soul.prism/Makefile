@@ -1,5 +1,5 @@
-build:
-	go build -o intercept.prism cmd/intercept.prism/main.go
+dev: 
+	bun next dev
 
-compose:
-	docker compose up --build
+build:
+	bun next build
