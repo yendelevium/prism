@@ -1,0 +1,11 @@
+name: soul.prism
+include:
+  - path: ../compose.db.yml
+services:
+  soul.prism:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - 3000:3000
