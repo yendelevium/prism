@@ -1,13 +1,18 @@
 package tracing
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yendelevium/intercept.prism/model"
+	tracev1 "go.opentelemetry.io/proto/otlp/trace/v1"
+	"google.golang.org/protobuf/proto"
 )
 
 // This files is basically a parser for OTEL data from thr standard OTEL format
@@ -27,27 +32,36 @@ type OTLPKeyValue struct {
 	Value OTLPValue `json:"value"`
 }
 
-// OTLPSpan represents a span in OTLP JSON format (Protobuf is more efficient but ok)
 type OTLPSpan struct {
 	TraceID           string         `json:"traceId"`
 	SpanID            string         `json:"spanId"`
 	ParentSpanID      string         `json:"parentSpanId,omitempty"`
 	Name              string         `json:"name"`
-	StartTimeUnixNano json.Number    `json:"startTimeUnixNano"`
-	EndTimeUnixNano   json.Number    `json:"endTimeUnixNano"`
+	StartTimeUnixNano any            `json:"startTimeUnixNano"`
+	EndTimeUnixNano   any            `json:"endTimeUnixNano"`
 	Status            *OTLPStatus    `json:"status,omitempty"`
 	Attributes        []OTLPKeyValue `json:"attributes,omitempty"`
 }
 
-func (s *OTLPSpan) GetStartTimeNano() int64 {
-	v, _ := strconv.ParseInt(string(s.StartTimeUnixNano), 10, 64)
-	return v
+func parseNanoTime(v any) int64 {
+	switch val := v.(type) {
+	case string:
+		n, _ := strconv.ParseInt(val, 10, 64)
+		return n
+	case float64:
+		return int64(val)
+	case int64:
+		return val
+	case json.Number:
+		n, _ := val.Int64()
+		return n
+	default:
+		return 0
+	}
 }
 
-func (s *OTLPSpan) GetEndTimeNano() int64 {
-	v, _ := strconv.ParseInt(string(s.EndTimeUnixNano), 10, 64)
-	return v
-}
+func (s *OTLPSpan) GetStartTimeNano() int64 { return parseNanoTime(s.StartTimeUnixNano) }
+func (s *OTLPSpan) GetEndTimeNano() int64   { return parseNanoTime(s.EndTimeUnixNano) }
 
 // OTLPResourceSpans represents the top-level OTLP trace export format
 type OTLPResourceSpans struct {
@@ -71,27 +85,103 @@ func RegisterOTLPReceiver(router *gin.RouterGroup) {
 	router.POST("/v1/traces", handleOTLPTraces)
 }
 
-// Parse the recieved trace data and store it in the global store
-// The store is a drop in replacement for the DB as I haven't decided DB schema yet...
-// Will replace store with a DB soon
 func handleOTLPTraces(c *gin.Context) {
+	contentType := c.GetHeader("Content-Type")
+	contentEncoding := c.GetHeader("Content-Encoding")
+	log.Printf("OTLP Request - Content-Type: %s, Encoding: %s", contentType, contentEncoding)
+
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to read body"})
 		return
 	}
 
-	var data OTLPResourceSpans
-	if err := json.Unmarshal(body, &data); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid OTLP JSON format", "details": err.Error()})
+	store := GetStore()
+	var spanCount int
+
+	// Detect format: protobuf or JSON
+	if strings.Contains(contentType, "application/x-protobuf") || strings.Contains(contentType, "application/protobuf") {
+		spanCount, err = parseProtobuf(body, store)
+	} else if strings.Contains(contentType, "application/json") {
+		spanCount, err = parseJSON(body, store)
+	} else {
+		// Try protobuf first (more common), fallback to JSON
+		spanCount, err = parseProtobuf(body, store)
+		if err != nil {
+			spanCount, err = parseJSON(body, store)
+		}
+	}
+
+	if err != nil {
+		log.Printf("OTLP Parse Error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse OTLP data", "details": err.Error()})
 		return
 	}
 
-	store := GetStore()
-	spanCount := 0
+	log.Printf("Accepted %d spans", spanCount)
+	c.JSON(http.StatusOK, gin.H{"accepted": spanCount})
+}
 
+// A lot of the logic for parsing is similar, just diff datatypes. Maybe try combining them later on?
+func parseProtobuf(body []byte, store *TraceStore) (int, error) {
+	var req tracev1.TracesData
+	if err := proto.Unmarshal(body, &req); err != nil {
+		return 0, err
+	}
+
+	spanCount := 0
+	for _, rs := range req.ResourceSpans {
+		serviceName := "unknown"
+		if rs.Resource != nil {
+			for _, attr := range rs.Resource.Attributes {
+				if attr.Key == "service.name" {
+					serviceName = attr.Value.GetStringValue()
+					break
+				}
+			}
+		}
+
+		for _, ss := range rs.ScopeSpans {
+			for _, span := range ss.Spans {
+				info := model.SpanInfo{
+					SpanID:       hex.EncodeToString(span.SpanId),
+					ParentSpanID: hex.EncodeToString(span.ParentSpanId),
+					TraceID:      hex.EncodeToString(span.TraceId),
+					Operation:    span.Name,
+					ServiceName:  serviceName,
+					StartTime:    int64(span.StartTimeUnixNano) / 1000,
+					Duration:     int64(span.EndTimeUnixNano-span.StartTimeUnixNano) / 1000,
+				}
+
+				if span.Status != nil && span.Status.Code == tracev1.Status_STATUS_CODE_ERROR {
+					info.Status = "ERROR"
+				} else {
+					info.Status = "OK"
+				}
+
+				if len(span.Attributes) > 0 {
+					info.Tags = make(map[string]string)
+					for _, attr := range span.Attributes {
+						info.Tags[attr.Key] = attr.Value.GetStringValue()
+					}
+				}
+
+				store.AddSpan(info)
+				spanCount++
+			}
+		}
+	}
+	return spanCount, nil
+}
+
+func parseJSON(body []byte, store *TraceStore) (int, error) {
+	var data OTLPResourceSpans
+	if err := json.Unmarshal(body, &data); err != nil {
+		return 0, err
+	}
+
+	spanCount := 0
 	for _, rs := range data.ResourceSpans {
-		// Extract service name from resource attributes
 		serviceName := "unknown"
 		for _, attr := range rs.Resource.Attributes {
 			if attr.Key == "service.name" {
@@ -102,30 +192,22 @@ func handleOTLPTraces(c *gin.Context) {
 
 		for _, ss := range rs.ScopeSpans {
 			for _, span := range ss.Spans {
-				startNano := span.GetStartTimeNano()
-				endNano := span.GetEndTimeNano()
-
-				// Convert OTLP span to our model
 				info := model.SpanInfo{
 					SpanID:       span.SpanID,
 					ParentSpanID: span.ParentSpanID,
 					TraceID:      span.TraceID,
 					Operation:    span.Name,
 					ServiceName:  serviceName,
-					StartTime:    startNano / 1000, // nano to micro
-					Duration:     (endNano - startNano) / 1000,
+					StartTime:    span.GetStartTimeNano() / 1000,
+					Duration:     (span.GetEndTimeNano() - span.GetStartTimeNano()) / 1000,
 				}
 
-				// Extract status
-				if span.Status != nil {
-					if span.Status.Code == 2 { // ERROR
-						info.Status = "ERROR"
-					} else {
-						info.Status = "OK"
-					}
+				if span.Status != nil && span.Status.Code == 2 {
+					info.Status = "ERROR"
+				} else {
+					info.Status = "OK"
 				}
 
-				// Extract attributes as tags
 				if len(span.Attributes) > 0 {
 					info.Tags = make(map[string]string)
 					for _, attr := range span.Attributes {
@@ -142,6 +224,5 @@ func handleOTLPTraces(c *gin.Context) {
 			}
 		}
 	}
-
-	c.JSON(http.StatusOK, gin.H{"accepted": spanCount})
+	return spanCount, nil
 }
