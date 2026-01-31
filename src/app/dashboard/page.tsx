@@ -1,4 +1,4 @@
-import BottomPanel from "@/components/bottompanel/BottomPanel";
+import BottomPanelServer from "@/components/bottompanel/BottomPanelServer";
 import RequestTabs from "@/components/request/RequestTabs";
 import ResponsePanel from "@/components/response/ResponsePanel";
 
@@ -21,7 +21,7 @@ export default function DashboardHome() {
 
       {/* Bottom Panel */}
       <div className="flex-shrink-0 h-56">
-        <BottomPanel />
+        <BottomPanelServer />
       </div>
 
     </div>
