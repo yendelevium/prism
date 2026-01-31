@@ -1,0 +1,22 @@
+name: pg_duckdb
+services:
+  db:
+    image: pgduckdb/pgduckdb:17-main
+    container_name: pg_duckdb
+    restart: always
+    ports:
+      - "5432:5432"
+
+    # Replace with docker-secrets in prod
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: prism
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+    name: pg_duckdb_data
+    # So we can reuse volumes b/w different environments (soul, intercept and prism)
+    external: true

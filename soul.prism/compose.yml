@@ -1,13 +1,11 @@
-name: intercept.prism
+name: soul.prism
 include:
   - path: ../compose.db.yml
 services:
-  intercept.prism:
+  soul.prism:
     build:
       context: .
       dockerfile: Dockerfile
-      target: build-release-stage
+      target: runner
     ports:
-      - 7000:7000
-
-
+      - 3000:3000

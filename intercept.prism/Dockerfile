@@ -34,6 +34,6 @@ COPY --from=build-stage /go/bin/intercept.prism /intercept.prism
 
 USER nonroot:nonroot
 
-EXPOSE 8080
+EXPOSE 7000
 
 ENTRYPOINT ["/intercept.prism"]
