@@ -18,5 +18,5 @@ services:
 volumes:
   pgdata:
     name: pg_duckdb_data
-    # Might need if we're reusing volumes
-    # external: true
+    # So we can reuse volumes b/w different environments (soul, intercept and prism)
+    external: true
