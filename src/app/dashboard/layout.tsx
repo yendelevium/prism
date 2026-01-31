@@ -1,7 +1,6 @@
-import Sidebar from "@/components/sidebar/Sidebar";
 import RequestBar from "@/components/requestbar/RequestBar";
 import TopBar from "@/components/topbar/TopBar";
-import BottomPanel from "@/components/bottompanel/BottomPanel";
+import SidebarServer from "@/components/sidebar/SidebarServer";
 
 export default function DashboardLayout({
   children,
@@ -18,7 +17,7 @@ export default function DashboardLayout({
       </div>
       
       <div className="flex flex-1 min-h-0">
-        <Sidebar />
+        <SidebarServer />
 
         <div className="flex flex-col flex-1 min-h-0">
           <RequestBar />

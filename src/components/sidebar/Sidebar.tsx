@@ -9,11 +9,20 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import IconButton from '../common/IconButton';
-import EnvironmentSidebarPanel from './EnvironmentSidebarPanel';
 
 type SidebarSection = 'Collections' | 'Environments' | 'History' | null;
 
-export default function Sidebar() {
+export default function Sidebar( {
+  collections,
+  environments,
+  history,
+  none,
+}: {
+  collections: React.ReactNode;
+  environments: React.ReactNode;
+  history: React.ReactNode;
+  none: React.ReactNode;
+}) {
   const [activeSection, setActiveSection] = useState<SidebarSection>(null);
 
   return (
@@ -47,27 +56,13 @@ export default function Sidebar() {
       {/* SIDEBAR EXPANSION */}
       <div className="w-64 bg-[var(--bg-panel)] border-r border-[var(--border-color)] p-3">
         <div className="h-full min-h-0">
-          {activeSection === 'Environments' && (
-            <EnvironmentSidebarPanel />
-          )}
+          {activeSection === 'Environments' && environments}
 
-          {activeSection === 'Collections' && (
-            <span className="text-sm text-[var(--text-primary)]">
-              Collections Sidebar Expanded
-            </span>
-          )}
+          {activeSection === 'Collections' && collections}
 
-          {activeSection === 'History' && (
-            <span className="text-sm text-[var(--text-primary)]">
-              History Sidebar Expanded
-            </span>
-          )}
+          {activeSection === 'History' && history}
 
-          {!activeSection && (
-            <span className="text-sm text-[var(--text-secondary)]">
-              No sidebar selected
-            </span>
-          )}
+          {!activeSection && none}
         </div>
       </div>
     </div>
