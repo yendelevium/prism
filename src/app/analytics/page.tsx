@@ -9,11 +9,10 @@ import { Activity, TrendingUp, AlertCircle, Clock, Users, Zap, RefreshCw } from 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-// TODO: Replace with real API call when backend is ready
+//  Replace with real API call when backend is ready
 const analyticsService = {
   async fetchDashboard(timeRange = '24h', endpoint = 'all') {
     try {
-      // const response = await fetch(`${API_BASE_URL}/analytics?timeRange=${timeRange}&endpoint=${endpoint}`);
       // const data = await response.json();
       // return data;
       
