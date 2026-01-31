@@ -1,0 +1,22 @@
+:root {
+  /* Backgrounds */
+  --bg-primary: #2E3440;     /* nord0 */
+  --bg-secondary: #3B4252;   /* nord1 */
+  --bg-panel: #434C5E;       /* nord2 */
+
+  /* Borders */
+  --border-color: #4C566A;   /* nord3 */
+
+  /* Text */
+  --text-primary: #ECEFF4;   /* nord6 */
+  --text-secondary: #D8DEE9; /* nord4 */
+
+  /* Accent */
+  --accent: #88C0D0;         /* nord8 */
+  --accent-hover: #81A1C1;   /* nord9 */
+
+  /* Status */
+  --success: #A3BE8C;        /* nord14 */
+  --error: #BF616A;          /* nord11 */
+  --warning: #EBCB8B;        /* nord13 */
+}
