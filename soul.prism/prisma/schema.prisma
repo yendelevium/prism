@@ -1,17 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
+
 
 model User {
   id        String   @id @default(uuid())
@@ -19,11 +13,11 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
-  workspaces    UserWorkspace[]
-  collections   Collection[]
-  requests      Request[]
-  executions    Execution[]
+  workspaces  UserWorkspace[]
+  collections Collection[]
+  requests    Request[]
 }
+
 
 model Workspace {
   id        String   @id @default(uuid())
@@ -31,16 +25,16 @@ model Workspace {
   createdAt DateTime @default(now())
 
   users        UserWorkspace[]
-  collections Collection[]
+  collections  Collection[]
   environments Environment[]
 }
 
 model UserWorkspace {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   userId      String
   workspaceId String
   role        WorkspaceRole
-  joinedAt    DateTime @default(now())
+  joinedAt    DateTime      @default(now())
 
   user      User      @relation(fields: [userId], references: [id])
   workspace Workspace @relation(fields: [workspaceId], references: [id])
@@ -79,8 +73,11 @@ model Request {
 
   collection Collection @relation(fields: [collectionId], references: [id])
   createdBy  User       @relation(fields: [createdById], references: [id])
+
   executions Execution[]
+  spans      Span[]
 }
+
 
 enum HttpMethod {
   GET
@@ -100,16 +97,17 @@ model Environment {
 }
 
 model Execution {
-  id         String   @id @default(uuid())
-  requestId String
-  traceId   String
-  statusCode Int?
-  latencyMs Int?
-  executedAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  requestId   String
+  traceId     String
+  statusCode  Int?
+  latencyMs   Int?
+  executedAt  DateTime @default(now())
 
   request Request @relation(fields: [requestId], references: [id])
   spans   Span[]
 }
+
 
 model Span {
   id            String   @id @default(uuid())
@@ -122,14 +120,12 @@ model Span {
   duration      BigInt
   status        String?
   tags          Json?
-  requestId     String?
+  requestId     String
   executionId   String?
   createdAt     DateTime @default(now())
 
-  request   Request?   @relation(fields: [requestId], references: [id])
+  request   Request   @relation(fields: [requestId], references: [id])
   execution Execution? @relation(fields: [executionId], references: [id])
 
   @@unique([traceId, spanId])
 }
-
-

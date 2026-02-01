@@ -5,7 +5,7 @@ services:
     container_name: pg_duckdb
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
     # Replace with docker-secrets in prod
     environment:
@@ -15,8 +15,22 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  drizzle-gate:
+    image: ghcr.io/drizzle-team/gateway:latest
+    container_name: prism-drizzle-gateway
+    environment:
+      STORE_PATH: /app
+    restart: on-failure
+    depends_on:
+      - db
+    ports:
+      - "4983:4983"
+    volumes:
+      - drizzle_gateway_data:/app
+
 volumes:
   pgdata:
     name: pg_duckdb_data
     # So we can reuse volumes b/w different environments (soul, intercept and prism)
     external: true
+  drizzle_gateway_data:
