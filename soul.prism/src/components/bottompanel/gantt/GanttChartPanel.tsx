@@ -97,7 +97,7 @@ const TraceGanttClient: React.FC<{ spans: Span[] }> = ({ spans }) => {
   const chartHeight = data.length * 60 + 100;
 
   return (
-    <div className="w-full h-[600px] border rounded-lg overflow-hidden relative" style={{ backgroundColor: NORD.bgPrimary, borderColor: NORD.border }}>
+    <div className="w-full h-[600px] border overflow-hidden relative" style={{ backgroundColor: NORD.bgPrimary, borderColor: NORD.border }}>
       <TransformWrapper initialScale={1} minScale={0.1} maxScale={8} limitToBounds={false}>
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
