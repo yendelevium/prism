@@ -75,7 +75,6 @@ model Request {
   createdBy  User       @relation(fields: [createdById], references: [id])
 
   executions Execution[]
-  spans      Span[]
 }
 
 
@@ -105,7 +104,6 @@ model Execution {
   executedAt  DateTime @default(now())
 
   request Request @relation(fields: [requestId], references: [id])
-  spans   Span[]
 }
 
 
@@ -120,12 +118,7 @@ model Span {
   duration      BigInt
   status        String?
   tags          Json?
-  requestId     String
-  executionId   String?
   createdAt     DateTime @default(now())
-
-  request   Request   @relation(fields: [requestId], references: [id])
-  execution Execution? @relation(fields: [executionId], references: [id])
 
   @@unique([traceId, spanId])
 }

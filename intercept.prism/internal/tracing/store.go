@@ -1,152 +1,125 @@
 package tracing
 
 import (
+	"context"
+	"encoding/json"
+	"log"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/yendelevium/intercept.prism/internal/database"
 	"github.com/yendelevium/intercept.prism/model"
 )
 
-// TraceStore provides thread-safe in-memory storage for spans
+// TraceStore provides async database storage for spans
 type TraceStore struct {
-	mu     sync.RWMutex
-	spans  map[string][]model.SpanInfo // traceID -> spans
-	traces []string                    // ordered list of trace IDs (most recent first)
-	maxLen int                         // max traces to keep
+	spanQueue chan model.SpanInfo
+	queries   *database.Queries
+	wg        sync.WaitGroup
+	done      chan struct{}
 }
 
-// NewTraceStore creates a new trace store with the given capacity
-func NewTraceStore(maxTraces int) *TraceStore {
+// NewTraceStore creates a new trace store with async DB writes
+func NewTraceStore(queueSize int) *TraceStore {
 	return &TraceStore{
-		spans:  make(map[string][]model.SpanInfo),
-		traces: make([]string, 0, maxTraces),
-		maxLen: maxTraces,
+		spanQueue: make(chan model.SpanInfo, queueSize),
+		queries:   database.GetQueries(),
+		done:      make(chan struct{}),
 	}
 }
 
-// AddSpan stores a span, creating the trace entry if needed
+// Start begins the background worker for async DB writes
+func (ts *TraceStore) Start() {
+	ts.wg.Add(1)
+	go ts.worker()
+}
+
+// Stop gracefully shuts down the store
+func (ts *TraceStore) Stop() {
+	close(ts.done)
+	ts.wg.Wait()
+	close(ts.spanQueue)
+}
+
+// AddSpan queues a span for async DB write
 func (ts *TraceStore) AddSpan(span model.SpanInfo) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-
-	traceID := span.TraceID
-	if _, exists := ts.spans[traceID]; !exists {
-		// New trace - add to front of list
-		ts.traces = append([]string{traceID}, ts.traces...)
-		// Evict oldest if over capacity
-		if len(ts.traces) > ts.maxLen {
-			oldestID := ts.traces[len(ts.traces)-1]
-			delete(ts.spans, oldestID)
-			ts.traces = ts.traces[:len(ts.traces)-1]
-		}
-	}
-	ts.spans[traceID] = append(ts.spans[traceID], span)
-}
-
-// AddSpans stores multiple spans for a trace
-func (ts *TraceStore) AddSpans(spans []model.SpanInfo) {
-	for _, span := range spans {
-		ts.AddSpan(span)
+	select {
+	case ts.spanQueue <- span:
+		// Successfully queued
+	default:
+		// Queue full, log and drop
+		log.Printf("Span queue full, dropping span: %s", span.SpanID)
 	}
 }
 
-// GetTrace returns all spans for a given trace ID
-func (ts *TraceStore) GetTrace(traceID string) (*model.TraceResponse, bool) {
-	ts.mu.RLock()
-	defer ts.mu.RUnlock()
+// worker processes spans from the queue and writes to DB
+func (ts *TraceStore) worker() {
+	defer ts.wg.Done()
 
-	spans, exists := ts.spans[traceID]
-	if !exists || len(spans) == 0 {
-		return nil, false
-	}
-
-	// Build response
-	resp := &model.TraceResponse{
-		TraceID:   traceID,
-		Spans:     spans,
-		SpanCount: len(spans),
-	}
-
-	// Find root span and gather services
-	serviceSet := make(map[string]struct{})
-	var minStart, maxEnd int64 = 1<<63 - 1, 0
-
-	for i := range spans {
-		span := &spans[i]
-		serviceSet[span.ServiceName] = struct{}{}
-
-		// Track timing for total duration
-		if span.StartTime < minStart {
-			minStart = span.StartTime
-		}
-		endTime := span.StartTime + span.Duration
-		if endTime > maxEnd {
-			maxEnd = endTime
-		}
-
-		// Find root span (no parent)
-		if span.ParentSpanID == "" {
-			resp.RootSpan = span
+	for {
+		select {
+		case <-ts.done:
+			// Drain remaining spans before exit
+			ts.drainQueue()
+			return
+		case span := <-ts.spanQueue:
+			ts.writeSpan(span)
 		}
 	}
-
-	resp.Duration = maxEnd - minStart
-	for svc := range serviceSet {
-		resp.Services = append(resp.Services, svc)
-	}
-
-	return resp, true
 }
 
-// ListTraces returns recent traces for the list view
-func (ts *TraceStore) ListTraces(limit int) []model.TraceListItem {
-	ts.mu.RLock()
-	defer ts.mu.RUnlock()
+func (ts *TraceStore) drainQueue() {
+	for {
+		select {
+		case span := <-ts.spanQueue:
+			ts.writeSpan(span)
+		default:
+			return
+		}
+	}
+}
 
-	if limit > len(ts.traces) {
-		limit = len(ts.traces)
+func (ts *TraceStore) writeSpan(span model.SpanInfo) {
+	// Skip if no DB connection
+	if ts.queries == nil {
+		log.Printf("No DB connection, dropping span: %s", span.SpanID)
+		return
 	}
 
-	result := make([]model.TraceListItem, 0, limit)
-	for i := 0; i < limit; i++ {
-		traceID := ts.traces[i]
-		spans := ts.spans[traceID]
-		if len(spans) == 0 {
-			continue
-		}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-		item := model.TraceListItem{
-			TraceID:   traceID,
-			SpanCount: len(spans),
-		}
-
-		// Gather services and find root
-		serviceSet := make(map[string]struct{})
-		var minStart, maxEnd int64 = 1<<63 - 1, 0
-
-		for _, span := range spans {
-			serviceSet[span.ServiceName] = struct{}{}
-			if span.StartTime < minStart {
-				minStart = span.StartTime
-			}
-			if endTime := span.StartTime + span.Duration; endTime > maxEnd {
-				maxEnd = endTime
-			}
-			if span.ParentSpanID == "" {
-				item.RootName = span.Operation
-			}
-		}
-
-		item.StartTime = minStart
-		item.Duration = maxEnd - minStart
-		for svc := range serviceSet {
-			item.Services = append(item.Services, svc)
-		}
-
-		result = append(result, item)
+	// Convert tags to JSON
+	var tagsJSON []byte
+	if span.Tags != nil {
+		tagsJSON, _ = json.Marshal(span.Tags)
 	}
 
-	return result
+	params := database.InsertSpanParams{
+		ID:          uuid.New().String(),
+		TraceId:     span.TraceID,
+		SpanId:      span.SpanID,
+		Operation:   span.Operation,
+		ServiceName: span.ServiceName,
+		StartTime:   span.StartTime,
+		Duration:    span.Duration,
+	}
+
+	if span.ParentSpanID != "" {
+		params.ParentSpanId = pgtype.Text{String: span.ParentSpanID, Valid: true}
+	}
+	if span.Status != "" {
+		params.Status = pgtype.Text{String: span.Status, Valid: true}
+	}
+	if tagsJSON != nil {
+		params.Tags = tagsJSON
+	}
+
+	if err := ts.queries.InsertSpan(ctx, params); err != nil {
+		log.Printf("Failed to insert span %s: %v", span.SpanID, err)
+	}
 }
 
 // Global store instance
@@ -156,7 +129,8 @@ var storeOnce sync.Once
 // GetStore returns the global trace store singleton
 func GetStore() *TraceStore {
 	storeOnce.Do(func() {
-		globalStore = NewTraceStore(1000) // Keep last 1000 traces
+		globalStore = NewTraceStore(1000) // Queue up to 1000 spans
+		globalStore.Start()
 	})
 	return globalStore
 }
@@ -176,7 +150,6 @@ func generateHexID(byteLen int) string {
 	now := time.Now().UnixNano()
 	result := make([]byte, byteLen*2)
 	for i := 0; i < byteLen*2; i++ {
-		// Mix timestamp with position for uniqueness
 		result[i] = hexChars[(now>>uint(i*4)+int64(i))&0xf]
 	}
 	return string(result)

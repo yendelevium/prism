@@ -29,10 +29,18 @@ func restRoutes(superRouter *gin.RouterGroup) {
 			}
 			log.Println("Request Received")
 
+			// TODO: Create Request record in DB
+			// - Requires: collectionId, createdById (user ID), method, url, headers, body
+			// - Need to receive these from the client or from auth context
+
 			// Generate trace context
 			traceID := tracing.GenerateTraceID()
 			spanID := tracing.GenerateSpanID()
 			store := tracing.GetStore()
+
+			// TODO: Create Execution record in DB
+			// - Fields: requestId (from above), traceId
+			// - Link this execution to the request
 
 			// Construct the request
 			remoteBody := strings.NewReader(reqBody.Body)
@@ -116,6 +124,7 @@ func restRoutes(superRouter *gin.RouterGroup) {
 
 			// Store the single span
 			store.AddSpan(rootSpan)
+			log.Println("Added rootSpan for the request")
 
 			// Construct and Send Final Response
 			finalResponse := model.RestResponse{

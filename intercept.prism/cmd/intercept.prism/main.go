@@ -5,11 +5,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yendelevium/intercept.prism/internal/database"
 	"github.com/yendelevium/intercept.prism/internal/routes"
 )
 
 func main() {
 	log.Println("BYE, prism")
+	database.InitDB()
+
 	// Create a Gin router with default middleware (logger and recovery)
 	r := gin.Default()
 

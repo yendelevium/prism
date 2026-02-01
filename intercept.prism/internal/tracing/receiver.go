@@ -166,7 +166,9 @@ func parseProtobuf(body []byte, store *TraceStore) (int, error) {
 					}
 				}
 
-				store.AddSpan(info)
+				if store != nil {
+					store.AddSpan(info)
+				}
 				spanCount++
 			}
 		}
@@ -219,7 +221,9 @@ func parseJSON(body []byte, store *TraceStore) (int, error) {
 					}
 				}
 
-				store.AddSpan(info)
+				if store != nil {
+					store.AddSpan(info)
+				}
 				spanCount++
 			}
 		}
