@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  workspaces    UserWorkspace[]
+  collections   Collection[]
+  requests      Request[]
+  executions    Execution[]
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users        UserWorkspace[]
+  collections Collection[]
+  environments Environment[]
+}
+
+model UserWorkspace {
+  id          String   @id @default(uuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole
+  joinedAt    DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([userId, workspaceId])
+}
+
+enum WorkspaceRole {
+  admin
+  editor
+  viewer
+}
+
+model Collection {
+  id          String   @id @default(uuid())
+  name        String
+  workspaceId String
+  createdById String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  createdBy User      @relation(fields: [createdById], references: [id])
+  requests  Request[]
+}
+
+model Request {
+  id           String   @id @default(uuid())
+  name         String
+  method       HttpMethod
+  url          String
+  headers      Json?
+  body         String?
+  collectionId String
+  createdById  String
+  createdAt    DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id])
+  createdBy  User       @relation(fields: [createdById], references: [id])
+  executions Execution[]
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+}
+
+model Environment {
+  id          String   @id @default(uuid())
+  name        String
+  variables   Json
+  workspaceId String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Execution {
+  id         String   @id @default(uuid())
+  requestId String
+  traceId   String
+  statusCode Int?
+  latencyMs Int?
+  executedAt DateTime @default(now())
+
+  request Request @relation(fields: [requestId], references: [id])
+  spans   Span[]
+}
+
+model Span {
+  id            String   @id @default(uuid())
+  traceId       String
+  spanId        String
+  parentSpanId String?
+  operation     String
+  serviceName   String
+  startTime     BigInt
+  duration      BigInt
+  status        String?
+  tags          Json?
+  requestId     String?
+  executionId   String?
+  createdAt     DateTime @default(now())
+
+  request   Request?   @relation(fields: [requestId], references: [id])
+  execution Execution? @relation(fields: [executionId], references: [id])
+
+  @@unique([traceId, spanId])
+}
+
+
