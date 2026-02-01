@@ -1,4 +1,5 @@
 import BottomPanelClient from './BottomPanel';
+import GanttChartServer from './gantt/GanttChartServer';
 import LogsServer from './logs/LogServer';
 
 type BottomView = 'logs' | 'gantt';
@@ -11,11 +12,7 @@ export default function BottomPanelServer({
   return (
     <BottomPanelClient
       logsView={<LogsServer />}
-      ganttView={
-        <span className="text-sm text-[var(--text-primary)]">
-          Gantt Chart Viewer Displayed
-        </span>
-      }
+      ganttView={<GanttChartServer />}
     />
   );
 }

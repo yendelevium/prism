@@ -20,7 +20,7 @@ export default function DashboardHome() {
       </div>
 
       {/* Bottom Panel */}
-      <div className="flex-shrink-0 h-56">
+      <div className="flex-shrink-0 h-56 min-w-0">
         <BottomPanelServer />
       </div>
 

@@ -19,10 +19,10 @@ export default function DashboardLayout({
       <div className="flex flex-1 min-h-0">
         <SidebarServer />
 
-        <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex flex-col flex-1 min-h-0 min-w-0">
           <RequestBar />
 
-          <main className="flex-1 overflow-hidden border-t border-[var(--border-color)] h-full">
+          <main className="flex-1 overflow-hidden border-t border-[var(--border-color)] h-full w-full">
             {children}
           </main>
 

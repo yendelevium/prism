@@ -35,7 +35,7 @@ export default function BottomPanelClient({
       </div>
 
       {/* VIEWER */}
-      <div className="flex-1 min-h-0 bg-[var(--bg-secondary)] p-0">
+      <div className="flex-1 min-h-0 min-w-0 bg-[var(--bg-secondary)] p-0">
         {activeView === 'logs' ? logsView : ganttView}
       </div>
     </div>
