@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/yendelevium/intercept.prism/internal/store"
 	"github.com/yendelevium/intercept.prism/internal/tracing"
 	"github.com/yendelevium/intercept.prism/model"
 )
@@ -29,18 +31,11 @@ func restRoutes(superRouter *gin.RouterGroup) {
 			}
 			log.Println("Request Received")
 
-			// TODO: Create Request record in DB
-			// - Requires: collectionId, createdById (user ID), method, url, headers, body
-			// - Need to receive these from the client or from auth context
-
-			// Generate trace context
-			traceID := tracing.GenerateTraceID()
+			// Generate IDs upfront
+			requestID := uuid.New().String()
+			executionID := uuid.New().String()
 			spanID := tracing.GenerateSpanID()
-			store := tracing.GetStore()
-
-			// TODO: Create Execution record in DB
-			// - Fields: requestId (from above), traceId
-			// - Link this execution to the request
+			traceID := tracing.GenerateTraceID()
 
 			// Construct the request
 			remoteBody := strings.NewReader(reqBody.Body)
@@ -102,7 +97,53 @@ func restRoutes(superRouter *gin.RouterGroup) {
 				respHeaders[k] = strings.Join(v, ", ")
 			}
 
-			// Record the Root Span
+			// Determine status
+			status := "OK"
+			if remoteResponse.StatusCode >= 400 {
+				status = "ERROR"
+			}
+
+			// Build tags for the span
+			tags := map[string]string{
+				"http.method":      reqBody.Method,
+				"http.url":         reqBody.URL,
+				"http.status_code": fmt.Sprintf("%d", remoteResponse.StatusCode),
+			}
+
+			// Queue records for async DB write
+			store.AddRequest(store.RequestRecord{
+				ID:           requestID,
+				Method:       reqBody.Method,
+				URL:          reqBody.URL,
+				Headers:      reqBody.Headers,
+				Body:         reqBody.Body,
+				CollectionID: reqBody.CollectionID,
+				CreatedByID:  reqBody.CreatedByID,
+			})
+
+			store.AddExecution(store.ExecutionRecord{
+				ID:         executionID,
+				RequestID:  requestID,
+				TraceID:    traceID,
+				StatusCode: remoteResponse.StatusCode,
+				LatencyMs:  int(totalDuration.Milliseconds()),
+			})
+
+			store.AddSpan(store.SpanRecord{
+				ID:          uuid.New().String(),
+				TraceID:     traceID,
+				SpanID:      spanID,
+				Operation:   fmt.Sprintf("%s %s", reqBody.Method, reqBody.URL),
+				ServiceName: "intercept.prism",
+				StartTime:   requestStart.UnixMicro(),
+				Duration:    totalDuration.Microseconds(),
+				Status:      status,
+				Tags:        tags,
+			})
+
+			log.Println("Queued Request, Execution, and Span for async DB write")
+
+			// Build span info for response (for client-side display)
 			rootSpan := model.SpanInfo{
 				SpanID:      spanID,
 				TraceID:     traceID,
@@ -110,21 +151,9 @@ func restRoutes(superRouter *gin.RouterGroup) {
 				ServiceName: "intercept.prism",
 				StartTime:   requestStart.UnixMicro(),
 				Duration:    totalDuration.Microseconds(),
-				Status:      "OK",
-				Tags: map[string]string{
-					"http.method":      reqBody.Method,
-					"http.url":         reqBody.URL,
-					"http.status_code": fmt.Sprintf("%d", remoteResponse.StatusCode),
-				},
+				Status:      status,
+				Tags:        tags,
 			}
-
-			if remoteResponse.StatusCode >= 400 {
-				rootSpan.Status = "ERROR"
-			}
-
-			// Store the single span
-			store.AddSpan(rootSpan)
-			log.Println("Added rootSpan for the request")
 
 			// Construct and Send Final Response
 			finalResponse := model.RestResponse{
@@ -135,6 +164,8 @@ func restRoutes(superRouter *gin.RouterGroup) {
 				Error:        "",
 				ResponseSize: int64(len(responseBodyBytes)),
 				RequestSize:  int64(len(reqBody.Body)),
+				RequestID:    requestID,
+				ExecutionID:  executionID,
 				TraceID:      traceID,
 				SpanID:       spanID,
 				Spans:        []model.SpanInfo{rootSpan},

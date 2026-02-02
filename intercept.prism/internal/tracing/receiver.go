@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yendelevium/intercept.prism/model"
+	"github.com/google/uuid"
+	"github.com/yendelevium/intercept.prism/internal/store"
 	tracev1 "go.opentelemetry.io/proto/otlp/trace/v1"
 	"google.golang.org/protobuf/proto"
 )
@@ -96,19 +98,18 @@ func handleOTLPTraces(c *gin.Context) {
 		return
 	}
 
-	store := GetStore()
 	var spanCount int
 
 	// Detect format: protobuf or JSON
 	if strings.Contains(contentType, "application/x-protobuf") || strings.Contains(contentType, "application/protobuf") {
-		spanCount, err = parseProtobuf(body, store)
+		spanCount, err = parseProtobuf(body)
 	} else if strings.Contains(contentType, "application/json") {
-		spanCount, err = parseJSON(body, store)
+		spanCount, err = parseJSON(body)
 	} else {
 		// Try protobuf first (more common), fallback to JSON
-		spanCount, err = parseProtobuf(body, store)
+		spanCount, err = parseProtobuf(body)
 		if err != nil {
-			spanCount, err = parseJSON(body, store)
+			spanCount, err = parseJSON(body)
 		}
 	}
 
@@ -123,7 +124,7 @@ func handleOTLPTraces(c *gin.Context) {
 }
 
 // A lot of the logic for parsing is similar, just diff datatypes. Maybe try combining them later on?
-func parseProtobuf(body []byte, store *TraceStore) (int, error) {
+func parseProtobuf(body []byte) (int, error) {
 	var req tracev1.TracesData
 	if err := proto.Unmarshal(body, &req); err != nil {
 		return 0, err
@@ -143,32 +144,31 @@ func parseProtobuf(body []byte, store *TraceStore) (int, error) {
 
 		for _, ss := range rs.ScopeSpans {
 			for _, span := range ss.Spans {
-				info := model.SpanInfo{
+				status := "OK"
+				if span.Status != nil && span.Status.Code == tracev1.Status_STATUS_CODE_ERROR {
+					status = "ERROR"
+				}
+
+				var tags map[string]string
+				if len(span.Attributes) > 0 {
+					tags = make(map[string]string)
+					for _, attr := range span.Attributes {
+						tags[attr.Key] = attr.Value.GetStringValue()
+					}
+				}
+
+				store.AddSpan(store.SpanRecord{
+					ID:           uuid.New().String(),
+					TraceID:      hex.EncodeToString(span.TraceId),
 					SpanID:       hex.EncodeToString(span.SpanId),
 					ParentSpanID: hex.EncodeToString(span.ParentSpanId),
-					TraceID:      hex.EncodeToString(span.TraceId),
 					Operation:    span.Name,
 					ServiceName:  serviceName,
 					StartTime:    int64(span.StartTimeUnixNano) / 1000,
 					Duration:     int64(span.EndTimeUnixNano-span.StartTimeUnixNano) / 1000,
-				}
-
-				if span.Status != nil && span.Status.Code == tracev1.Status_STATUS_CODE_ERROR {
-					info.Status = "ERROR"
-				} else {
-					info.Status = "OK"
-				}
-
-				if len(span.Attributes) > 0 {
-					info.Tags = make(map[string]string)
-					for _, attr := range span.Attributes {
-						info.Tags[attr.Key] = attr.Value.GetStringValue()
-					}
-				}
-
-				if store != nil {
-					store.AddSpan(info)
-				}
+					Status:       status,
+					Tags:         tags,
+				})
 				spanCount++
 			}
 		}
@@ -176,7 +176,7 @@ func parseProtobuf(body []byte, store *TraceStore) (int, error) {
 	return spanCount, nil
 }
 
-func parseJSON(body []byte, store *TraceStore) (int, error) {
+func parseJSON(body []byte) (int, error) {
 	var data OTLPResourceSpans
 	if err := json.Unmarshal(body, &data); err != nil {
 		return 0, err
@@ -194,39 +194,58 @@ func parseJSON(body []byte, store *TraceStore) (int, error) {
 
 		for _, ss := range rs.ScopeSpans {
 			for _, span := range ss.Spans {
-				info := model.SpanInfo{
-					SpanID:       span.SpanID,
-					ParentSpanID: span.ParentSpanID,
-					TraceID:      span.TraceID,
-					Operation:    span.Name,
-					ServiceName:  serviceName,
-					StartTime:    span.GetStartTimeNano() / 1000,
-					Duration:     (span.GetEndTimeNano() - span.GetStartTimeNano()) / 1000,
-				}
-
+				status := "OK"
 				if span.Status != nil && span.Status.Code == 2 {
-					info.Status = "ERROR"
-				} else {
-					info.Status = "OK"
+					status = "ERROR"
 				}
 
+				var tags map[string]string
 				if len(span.Attributes) > 0 {
-					info.Tags = make(map[string]string)
+					tags = make(map[string]string)
 					for _, attr := range span.Attributes {
 						if attr.Value.StringValue != "" {
-							info.Tags[attr.Key] = attr.Value.StringValue
+							tags[attr.Key] = attr.Value.StringValue
 						} else if attr.Value.IntValue != "" {
-							info.Tags[attr.Key] = attr.Value.IntValue
+							tags[attr.Key] = attr.Value.IntValue
 						}
 					}
 				}
 
-				if store != nil {
-					store.AddSpan(info)
-				}
+				store.AddSpan(store.SpanRecord{
+					ID:           uuid.New().String(),
+					TraceID:      span.TraceID,
+					SpanID:       span.SpanID,
+					ParentSpanID: span.ParentSpanID,
+					Operation:    span.Name,
+					ServiceName:  serviceName,
+					StartTime:    span.GetStartTimeNano() / 1000,
+					Duration:     (span.GetEndTimeNano() - span.GetStartTimeNano()) / 1000,
+					Status:       status,
+					Tags:         tags,
+				})
 				spanCount++
 			}
 		}
 	}
 	return spanCount, nil
+}
+
+// GenerateTraceID generates a W3C Trace Context compliant trace ID (32 hex chars)
+func GenerateTraceID() string {
+	return generateHexID(16)
+}
+
+// GenerateSpanID generates a span ID (16 hex chars)
+func GenerateSpanID() string {
+	return generateHexID(8)
+}
+
+func generateHexID(byteLen int) string {
+	const hexChars = "0123456789abcdef"
+	now := time.Now().UnixNano()
+	result := make([]byte, byteLen*2)
+	for i := 0; i < byteLen*2; i++ {
+		result[i] = hexChars[(now>>uint(i*4)+int64(i))&0xf]
+	}
+	return string(result)
 }

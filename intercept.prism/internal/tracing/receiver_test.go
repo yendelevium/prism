@@ -54,7 +54,7 @@ func TestParseProtobuf_ValidData(t *testing.T) {
 	}
 
 	// Parse and verify - use nil store since we just test parsing
-	spanCount, err := parseProtobuf(protoBytes, nil)
+	spanCount, err := parseProtobuf(protoBytes)
 	if err != nil {
 		t.Fatalf("parseProtobuf failed: %v", err)
 	}
@@ -89,7 +89,7 @@ func TestParseProtobuf_MultipleSpans(t *testing.T) {
 	}
 
 	protoBytes, _ := proto.Marshal(tracesData)
-	spanCount, err := parseProtobuf(protoBytes, nil)
+	spanCount, err := parseProtobuf(protoBytes)
 
 	if err != nil {
 		t.Fatalf("parseProtobuf failed: %v", err)
@@ -124,7 +124,7 @@ func TestParseProtobuf_ErrorStatus(t *testing.T) {
 	}
 
 	protoBytes, _ := proto.Marshal(tracesData)
-	spanCount, err := parseProtobuf(protoBytes, nil)
+	spanCount, err := parseProtobuf(protoBytes)
 
 	if err != nil {
 		t.Fatalf("parseProtobuf failed: %v", err)
@@ -135,7 +135,7 @@ func TestParseProtobuf_ErrorStatus(t *testing.T) {
 }
 
 func TestParseProtobuf_InvalidData(t *testing.T) {
-	_, err := parseProtobuf([]byte{0x00, 0x01, 0x02, 0xff, 0xfe}, nil)
+	_, err := parseProtobuf([]byte{0x00, 0x01, 0x02, 0xff, 0xfe})
 	if err != nil {
 		t.Logf("Expected error for invalid protobuf: %v", err)
 	}
@@ -165,7 +165,7 @@ func TestParseProtobuf_ServiceNameExtraction(t *testing.T) {
 	}
 
 	protoBytes, _ := proto.Marshal(tracesData)
-	spanCount, err := parseProtobuf(protoBytes, nil)
+	spanCount, err := parseProtobuf(protoBytes)
 
 	if err != nil {
 		t.Fatalf("parseProtobuf failed: %v", err)
@@ -197,7 +197,7 @@ func TestParseJSON_ValidData(t *testing.T) {
 		}]
 	}`)
 
-	spanCount, err := parseJSON(jsonPayload, nil)
+	spanCount, err := parseJSON(jsonPayload)
 	if err != nil {
 		t.Fatalf("parseJSON failed: %v", err)
 	}
@@ -221,7 +221,7 @@ func TestParseJSON_MultipleSpans(t *testing.T) {
 		}]
 	}`)
 
-	spanCount, err := parseJSON(jsonPayload, nil)
+	spanCount, err := parseJSON(jsonPayload)
 	if err != nil {
 		t.Fatalf("parseJSON failed: %v", err)
 	}
@@ -242,7 +242,7 @@ func TestParseJSON_InvalidData(t *testing.T) {
 
 	for _, tc := range invalidPayloads {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := parseJSON([]byte(tc.payload), nil)
+			_, err := parseJSON([]byte(tc.payload))
 			if err == nil {
 				t.Errorf("Expected error for %s payload", tc.name)
 			}
@@ -258,7 +258,7 @@ func TestParseJSON_EmptySpans(t *testing.T) {
 		}]
 	}`)
 
-	spanCount, err := parseJSON(jsonPayload, nil)
+	spanCount, err := parseJSON(jsonPayload)
 	if err != nil {
 		t.Fatalf("parseJSON failed: %v", err)
 	}
@@ -283,7 +283,7 @@ func TestParseJSON_ServiceNameExtraction(t *testing.T) {
 		}]
 	}`)
 
-	spanCount, err := parseJSON(jsonPayload, nil)
+	spanCount, err := parseJSON(jsonPayload)
 	if err != nil {
 		t.Fatalf("parseJSON failed: %v", err)
 	}

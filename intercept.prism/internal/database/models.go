@@ -5,8 +5,76 @@
 package database
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type HttpMethod string
+
+const (
+	HttpMethodGET    HttpMethod = "GET"
+	HttpMethodPOST   HttpMethod = "POST"
+	HttpMethodPUT    HttpMethod = "PUT"
+	HttpMethodDELETE HttpMethod = "DELETE"
+)
+
+func (e *HttpMethod) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = HttpMethod(s)
+	case string:
+		*e = HttpMethod(s)
+	default:
+		return fmt.Errorf("unsupported scan type for HttpMethod: %T", src)
+	}
+	return nil
+}
+
+type NullHttpMethod struct {
+	HttpMethod HttpMethod
+	Valid      bool // Valid is true if HttpMethod is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullHttpMethod) Scan(value interface{}) error {
+	if value == nil {
+		ns.HttpMethod, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.HttpMethod.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullHttpMethod) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.HttpMethod), nil
+}
+
+type Execution struct {
+	ID         string
+	RequestId  string
+	TraceId    string
+	StatusCode pgtype.Int4
+	LatencyMs  pgtype.Int4
+	ExecutedAt pgtype.Timestamp
+}
+
+type Request struct {
+	ID           string
+	Name         string
+	Method       HttpMethod
+	Url          string
+	Headers      []byte
+	Body         pgtype.Text
+	CollectionId string
+	CreatedById  string
+	CreatedAt    pgtype.Timestamp
+}
 
 type Span struct {
 	ID           string

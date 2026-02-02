@@ -11,6 +11,66 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const insertExecution = `-- name: InsertExecution :one
+INSERT INTO "Execution" ("id", "requestId", "traceId", "statusCode", "latencyMs")
+VALUES ($1, $2, $3, $4, $5)
+RETURNING "id"
+`
+
+type InsertExecutionParams struct {
+	ID         string
+	RequestId  string
+	TraceId    string
+	StatusCode pgtype.Int4
+	LatencyMs  pgtype.Int4
+}
+
+func (q *Queries) InsertExecution(ctx context.Context, arg InsertExecutionParams) (string, error) {
+	row := q.db.QueryRow(ctx, insertExecution,
+		arg.ID,
+		arg.RequestId,
+		arg.TraceId,
+		arg.StatusCode,
+		arg.LatencyMs,
+	)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertRequest = `-- name: InsertRequest :one
+INSERT INTO "Request" ("id", "name", "method", "url", "headers", "body", "collectionId", "createdById")
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING "id"
+`
+
+type InsertRequestParams struct {
+	ID           string
+	Name         string
+	Method       HttpMethod
+	Url          string
+	Headers      []byte
+	Body         pgtype.Text
+	CollectionId string
+	CreatedById  string
+}
+
+func (q *Queries) InsertRequest(ctx context.Context, arg InsertRequestParams) (string, error) {
+	row := q.db.QueryRow(ctx, insertRequest,
+		arg.ID,
+		arg.Name,
+		arg.Method,
+		arg.Url,
+		arg.Headers,
+		arg.Body,
+		arg.CollectionId,
+		arg.CreatedById,
+	)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertSpan = `-- name: InsertSpan :exec
 INSERT INTO "Span" ("id", "traceId", "spanId", "parentSpanId", "operation", "serviceName", "startTime", "duration", "status", "tags")
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
