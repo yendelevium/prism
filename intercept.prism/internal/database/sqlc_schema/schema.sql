@@ -1,6 +1,5 @@
 -- Schema for sqlc code generation ONLY
--- Actual migrations are handled by another service (Prisma)
--- This file is just for sqlc to understand the table structure
+-- Actual migrations are handled by soul.prism (Prisma)
 
 CREATE TYPE "HttpMethod" AS ENUM ('GET', 'POST', 'PUT', 'DELETE');
 
