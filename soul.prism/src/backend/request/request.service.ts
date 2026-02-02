@@ -105,4 +105,10 @@ export async function getRequestById(id: string): Promise<Request | null> {
   });
 }
 
+export async function deleteRequest(id: string): Promise<Request> {
+  const prisma = getPrisma();
 
+  return prisma.request.delete({
+    where: { id },
+  });
+}
