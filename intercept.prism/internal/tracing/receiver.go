@@ -87,6 +87,15 @@ func RegisterOTLPReceiver(router *gin.RouterGroup) {
 	router.POST("/v1/traces", handleOTLPTraces)
 }
 
+// handleOTLPTraces godoc
+// @Summary      Receive OTLP traces
+// @Description  Receives OpenTelemetry traces in protobuf or JSON format
+// @Tags         Tracing
+// @Accept       application/x-protobuf,application/json
+// @Produce      json
+// @Success      200 {object} map[string]interface{} "Traces accepted"
+// @Failure      400 {object} map[string]interface{} "Invalid trace data"
+// @Router       /v1/traces [post]
 func handleOTLPTraces(c *gin.Context) {
 	contentType := c.GetHeader("Content-Type")
 	contentEncoding := c.GetHeader("Content-Encoding")

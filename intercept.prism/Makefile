@@ -14,3 +14,6 @@ down:
 
 test:
 	go test ./... -v
+
+docs:
+	swag init -g cmd/intercept.prism/main.go -o docs

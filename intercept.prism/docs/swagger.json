@@ -1,0 +1,208 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API testing and distributed tracing platform",
+        "title": "Intercept Prism API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:7000",
+    "basePath": "/",
+    "paths": {
+        "/rest/": {
+            "post": {
+                "description": "Proxies an HTTP request to a target URL with tracing enabled",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "REST"
+                ],
+                "summary": "Execute an HTTP request",
+                "parameters": [
+                    {
+                        "description": "Request configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response with tracing info",
+                        "schema": {
+                            "$ref": "#/definitions/model.RestResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/model.RestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Request execution failed",
+                        "schema": {
+                            "$ref": "#/definitions/model.RestResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/traces": {
+            "post": {
+                "description": "Receives OpenTelemetry traces in protobuf or JSON format",
+                "consumes": [
+                    "application/x-protobuf",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tracing"
+                ],
+                "summary": "Receive OTLP traces",
+                "responses": {
+                    "200": {
+                        "description": "Traces accepted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid trace data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.RestRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "collection_id": {
+                    "type": "string"
+                },
+                "created_by_id": {
+                    "type": "string"
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "method": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RestResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "error_msg": {
+                    "type": "string"
+                },
+                "execution_id": {
+                    "type": "string"
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "request_duration": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "description": "Database record IDs",
+                    "type": "string"
+                },
+                "request_size": {
+                    "description": "in bytes",
+                    "type": "integer"
+                },
+                "response_size": {
+                    "description": "in bytes",
+                    "type": "integer"
+                },
+                "span_id": {
+                    "type": "string"
+                },
+                "spans": {
+                    "description": "Local spans captured for this request",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SpanInfo"
+                    }
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "trace_id": {
+                    "description": "Distributed tracing",
+                    "type": "string"
+                }
+            }
+        },
+        "model.SpanInfo": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "description": "Microseconds",
+                    "type": "integer"
+                },
+                "operation": {
+                    "type": "string"
+                },
+                "parent_span_id": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
+                },
+                "span_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "description": "Unix microseconds",
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "trace_id": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,140 @@
+basePath: /
+definitions:
+  model.RestRequest:
+    properties:
+      body:
+        type: string
+      collection_id:
+        type: string
+      created_by_id:
+        type: string
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      url:
+        type: string
+    type: object
+  model.RestResponse:
+    properties:
+      body:
+        type: string
+      error_msg:
+        type: string
+      execution_id:
+        type: string
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      request_duration:
+        type: string
+      request_id:
+        description: Database record IDs
+        type: string
+      request_size:
+        description: in bytes
+        type: integer
+      response_size:
+        description: in bytes
+        type: integer
+      span_id:
+        type: string
+      spans:
+        description: Local spans captured for this request
+        items:
+          $ref: '#/definitions/model.SpanInfo'
+        type: array
+      status:
+        type: integer
+      trace_id:
+        description: Distributed tracing
+        type: string
+    type: object
+  model.SpanInfo:
+    properties:
+      duration:
+        description: Microseconds
+        type: integer
+      operation:
+        type: string
+      parent_span_id:
+        type: string
+      service_name:
+        type: string
+      span_id:
+        type: string
+      start_time:
+        description: Unix microseconds
+        type: integer
+      status:
+        type: string
+      tags:
+        additionalProperties:
+          type: string
+        type: object
+      trace_id:
+        type: string
+    type: object
+host: localhost:7000
+info:
+  contact: {}
+  description: API testing and distributed tracing platform
+  title: Intercept Prism API
+  version: "1.0"
+paths:
+  /rest/:
+    post:
+      consumes:
+      - application/json
+      description: Proxies an HTTP request to a target URL with tracing enabled
+      parameters:
+      - description: Request configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response with tracing info
+          schema:
+            $ref: '#/definitions/model.RestResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.RestResponse'
+        "500":
+          description: Request execution failed
+          schema:
+            $ref: '#/definitions/model.RestResponse'
+      summary: Execute an HTTP request
+      tags:
+      - REST
+  /v1/traces:
+    post:
+      consumes:
+      - application/x-protobuf
+      - application/json
+      description: Receives OpenTelemetry traces in protobuf or JSON format
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Traces accepted
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid trace data
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Receive OTLP traces
+      tags:
+      - Tracing
+swagger: "2.0"
