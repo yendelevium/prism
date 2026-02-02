@@ -1,30 +1,33 @@
-import BottomPanelServer from "@/components/bottompanel/BottomPanelServer";
+import { cookies } from "next/headers";
+import Resizable from "./resizable";
+import { Layout } from "react-resizable-panels";
 import RequestTabs from "@/components/request/RequestTabs";
 import ResponsePanel from "@/components/response/ResponsePanel";
+import BottomPanelServer from "@/components/bottompanel/BottomPanelServer";
 
-export default function DashboardHome() {
-  console.log("[PAGE]", "DASHBOARD_REST_DEFAULT_LOADED");
+export default async function Page() {
 
-  return (
-    <div className="flex flex-col h-full min-h-0">
+  const groupIdHorizontal = 'dashboard-horizontal-layout';
+  const groupIdVertical = 'dashboard-vertical-layout';
 
-      {/* Main content (Request + Response) */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className="flex-1 min-w-0 border-r border-[var(--border-color)]">
-          <RequestTabs />
-        </div>
+  const api = await cookies();
 
-        <div className="flex-1 min-w-0">
-          <ResponsePanel />
-        </div>
-      </div>
+  const defaultLayoutStringHorizontal = api.get(groupIdHorizontal)?.value;
+  const defaultLayoutHorizontal = defaultLayoutStringHorizontal
+    ? (JSON.parse(defaultLayoutStringHorizontal) as Layout)
+    : undefined;
 
-      {/* Bottom Panel */}
-      <div className="flex-shrink-0 h-56 min-w-0">
-        <BottomPanelServer />
-      </div>
+  const defaultLayoutStringVertical = api.get(groupIdVertical)?.value;
+  const defaultLayoutVertical = defaultLayoutStringVertical
+    ? (JSON.parse(defaultLayoutStringVertical) as Layout)
+    : undefined;
 
-    </div>
-  );
+  return <Resizable 
+    defaultLayoutHorizontal={defaultLayoutHorizontal}
+    defaultLayoutVertical={defaultLayoutVertical} 
+    requestTabs={<RequestTabs />}
+    responsePanel={<ResponsePanel />}
+    bottomPanelServer={<BottomPanelServer />}
+  />;
+
 }
-
