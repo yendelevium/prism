@@ -30,16 +30,17 @@ const CollectionsSidebarPanel: React.FC<Props> = ({ collections }) => {
       className="w-full h-full flex flex-col border-r select-none transition-colors duration-300"
       style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}
     >
-      {/* Sidebar Header */}
-      <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: 'var(--border-color)' }}>
-        <h2 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+      {/* Header */}
+      <div className="p-4 flex items-center justify-between border-b shrink-0" style={{ borderColor: 'var(--border-color)' }}>
+        <h2 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+          <Folder size={12} />
           Collections
         </h2>
         <button 
-          className="p-1 rounded hover:bg-[var(--bg-panel)] transition-colors"
+          className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: 'var(--accent)' }}
         >
-          <Plus size={16} />
+          <Plus size={14} />
         </button>
       </div>
 
