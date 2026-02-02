@@ -7,7 +7,7 @@ import IconButton from '../common/IconButton';
 
 export default function Topbar() {
   const [protocol, setProtocol] = useState<'REST' | 'GraphQL' | 'gRPC'>('REST');
-  const [collection, setCollection] = useState('Collection 1');
+  const [workspace, setWorkspace] = useState('Workspace 1');
   const [env, setEnv] = useState('Development');
 
   return (
@@ -29,17 +29,17 @@ export default function Topbar() {
           onChange={(v) => setProtocol(v as 'REST' | 'GraphQL' | 'gRPC')}
         />
 
-        {/* Current Collection */}
+        {/* Current Workspace */}
         <Dropdown
-          label="Collection"
-          value={collection}
+          label="Workspace"
+          value={workspace}
           options={[
-            'Collection 1',
-            'Collection 2',
-            'Collection 3',
-            'Collection 4',
+            'Workspace 1',
+            'Workspace 2',
+            'Workspace 3',
+            'Workspace 4',
           ]}
-          onChange={setCollection}
+          onChange={setWorkspace}
         />
 
         {/* Environment Selector */}

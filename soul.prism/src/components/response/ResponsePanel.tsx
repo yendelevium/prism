@@ -32,10 +32,10 @@ export default function ResponsePanel() {
 
   return (
     <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
-      <div className="flex justify-between">
+      <div className="flex justify-between border-b border-[var(--border-color)] mb-3">
 
         {/* Tabs */}
-        <div className="flex gap-4 text-sm border-b border-[var(--border-color)] mb-3">
+        <div className="flex gap-4 text-sm">
           {tabs.map(tab => (
             <button
               key={tab}
