@@ -6,7 +6,7 @@ import {
   getRequestsByCollection,
 } from "@/backend/request/request.service";
 import type { CreateRequestInput } from "@/backend/request/request.types";
-import type { HttpMethod } from "@prisma/client";
+import { Prisma, type HttpMethod } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -19,6 +19,13 @@ const allowedMethods: ReadonlySet<HttpMethod> = new Set([
 
 function errorDetails(error: unknown): string {
   return error instanceof Error ? error.message : "Unknown error";
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2025"
+  );
 }
 
 function parseMethod(value: unknown): HttpMethod | null {
@@ -57,6 +64,12 @@ export async function GET(request: NextRequest) {
     const requests = await getRequestsByCollection(collectionId);
     return NextResponse.json({ data: requests }, { status: 200 });
   } catch (error) {
+    if (isNotFoundError(error)) {
+      return NextResponse.json(
+        { error: "Request not found" },
+        { status: 404 },
+      );
+    }
     return NextResponse.json(
       {
         error: "Failed to fetch requests",
@@ -90,11 +103,11 @@ export async function POST(request: NextRequest) {
   const createdById =
     typeof body.createdById === "string" && body.createdById.trim().length > 0
       ? body.createdById.trim()
-      : "user_01";
+      : "";
 
-  if (!name || !method || !url || !collectionId) {
+  if (!name || !method || !url || !collectionId || !createdById) {
     return NextResponse.json(
-      { error: "name, method, url, and collectionId are required" },
+      { error: "name, method, url, collectionId, and createdById are required" },
       { status: 400 },
     );
   }
@@ -112,6 +125,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: created }, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Collection not found") {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+    if (error instanceof Error && error.message === "User not found") {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     return NextResponse.json(
       {
         error: "Failed to create request",
@@ -134,6 +153,12 @@ export async function DELETE(request: NextRequest) {
     const deleted = await deleteRequest(requestId);
     return NextResponse.json({ data: deleted }, { status: 200 });
   } catch (error) {
+    if (isNotFoundError(error)) {
+      return NextResponse.json(
+        { error: "Request not found" },
+        { status: 404 },
+      );
+    }
     return NextResponse.json(
       {
         error: "Failed to delete request",

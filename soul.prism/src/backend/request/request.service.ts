@@ -62,14 +62,14 @@ export async function createRequest(
     throw new Error("Collection not found");
   }
 
-  await prisma.user.upsert({
+  const user = await prisma.user.findUnique({
     where: { id: input.createdById },
-    create: {
-      id: input.createdById,
-      email: `${input.createdById}@example.local`,
-    },
-    update: {},
+    select: { id: true },
   });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
 
   const headers = normalizeHeaders(input.headers);
 
