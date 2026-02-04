@@ -12,6 +12,14 @@ export interface CreateRequestInput {
   createdById: string;
 }
 
+export interface UpdateRequestInput {
+  name?: string;
+  method?: HttpMethod;
+  url?: string;
+  headers?: Record<string, string> | null;
+  body?: string | null;
+}
+
 export interface RequestResponse {
   data: Request | Request[];
 }

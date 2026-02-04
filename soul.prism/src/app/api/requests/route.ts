@@ -4,8 +4,9 @@ import {
   deleteRequest,
   getRequestById,
   getRequestsByCollection,
+  updateRequest,
 } from "@/backend/request/request.service";
-import type { CreateRequestInput } from "@/backend/request/request.types";
+import type { CreateRequestInput, UpdateRequestInput } from "@/backend/request/request.types";
 import { Prisma, type HttpMethod } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ const allowedMethods: ReadonlySet<HttpMethod> = new Set([
   "POST",
   "PUT",
   "DELETE",
+  "PATCH",
 ]);
 
 function errorDetails(error: unknown): string {
@@ -162,6 +164,108 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to delete request",
+        details: process.env.NODE_ENV === "production" ? undefined : errorDetails(error),
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const url = new URL(request.url);
+  const requestId = url.searchParams.get("id");
+
+  if (!requestId) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+
+  let body: UpdateRequestInput | null = null;
+  try {
+    body = (await request.json()) as UpdateRequestInput;
+  } catch {
+    body = null;
+  }
+
+  if (!body) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+
+  const updates: UpdateRequestInput = {};
+
+  if (body.name !== undefined) {
+    if (typeof body.name !== "string" || body.name.trim().length === 0) {
+      return NextResponse.json(
+        { error: "name must be a non-empty string" },
+        { status: 400 },
+      );
+    }
+    updates.name = body.name.trim();
+  }
+
+  if (body.method !== undefined) {
+    const method = parseMethod(body.method);
+    if (!method) {
+      return NextResponse.json(
+        { error: "method must be a valid HTTP method" },
+        { status: 400 },
+      );
+    }
+    updates.method = method;
+  }
+
+  if (body.url !== undefined) {
+    if (typeof body.url !== "string" || body.url.trim().length === 0) {
+      return NextResponse.json(
+        { error: "url must be a non-empty string" },
+        { status: 400 },
+      );
+    }
+    updates.url = body.url.trim();
+  }
+
+  if (body.headers !== undefined) {
+    if (
+      body.headers !== null &&
+      (typeof body.headers !== "object" || Array.isArray(body.headers))
+    ) {
+      return NextResponse.json(
+        { error: "headers must be an object or null" },
+        { status: 400 },
+      );
+    }
+    updates.headers = body.headers;
+  }
+
+  if (body.body !== undefined) {
+    if (body.body !== null && typeof body.body !== "string") {
+      return NextResponse.json(
+        { error: "body must be a string or null" },
+        { status: 400 },
+      );
+    }
+    updates.body = body.body;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json(
+      { error: "At least one field must be provided" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const updated = await updateRequest(requestId, updates);
+    return NextResponse.json({ data: updated }, { status: 200 });
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return NextResponse.json(
+        { error: "Request not found" },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json(
+      {
+        error: "Failed to update request",
         details: process.env.NODE_ENV === "production" ? undefined : errorDetails(error),
       },
       { status: 500 },

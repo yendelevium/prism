@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaClient, type HttpMethod } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import type { CreateRequestInput, Request } from "./request.types";
+import type { CreateRequestInput, Request, UpdateRequestInput } from "./request.types";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   __prismPrismaClient?: PrismaClient;
@@ -110,5 +110,26 @@ export async function deleteRequest(id: string): Promise<Request> {
 
   return prisma.request.delete({
     where: { id },
+  });
+}
+
+export async function updateRequest(
+  id: string,
+  input: UpdateRequestInput,
+): Promise<Request> {
+  const prisma = getPrisma();
+
+  const headers =
+    input.headers === undefined ? undefined : normalizeHeaders(input.headers);
+
+  return prisma.request.update({
+    where: { id },
+    data: {
+      name: input.name?.trim(),
+      method: input.method as HttpMethod | undefined,
+      url: input.url?.trim(),
+      headers,
+      body: input.body ?? undefined,
+    },
   });
 }
