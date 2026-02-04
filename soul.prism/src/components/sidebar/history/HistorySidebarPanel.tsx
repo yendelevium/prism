@@ -19,7 +19,7 @@ const methodColorMap: Record<string, string> = {
 
 export default function HistorySidebar({ history }: Props) {
   return (
-    <aside 
+    <aside
       className="w-full h-full flex flex-col border-r select-none overflow-hidden"
       style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}
     >
@@ -45,7 +45,7 @@ export default function HistorySidebar({ history }: Props) {
             >
               {/* Top Row: Method and Timestamp */}
               <div className="flex justify-between items-baseline mb-1">
-                <span 
+                <span
                   className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--bg-panel)]"
                   style={{ color: methodColorMap[req.method.toUpperCase()] || 'var(--text-secondary)' }}
                 >
@@ -58,15 +58,15 @@ export default function HistorySidebar({ history }: Props) {
 
               {/* Bottom Row: Path/URL */}
               <div className="flex items-center justify-between gap-2">
-                <div 
-                  className="text-xs truncate font-mono tracking-tight" 
+                <div
+                  className="text-xs truncate font-mono tracking-tight"
                   style={{ color: 'var(--text-primary)' }}
                   title={req.url}
                 >
                   {/* Extract path for better readability, fall back to full URL */}
                   {req.url.replace(/^https?:\/\/[^\/]+/, '') || req.url}
                 </div>
-                
+
                 {/* Subtle status indicator or trailing icon */}
                 <div className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: 'var(--border-color)' }}></div>
               </div>

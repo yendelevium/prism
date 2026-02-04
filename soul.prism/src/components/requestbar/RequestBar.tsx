@@ -13,12 +13,12 @@ export default function RequestBar() {
 
   return (
     <div className="flex items-center gap-2 p-3 bg-[var(--bg-secondary)] border-b border-[var(--border-color)]">
-       <Dropdown
-          label="Method"
-          value={method}
-          options={["GET", "POST", "PUT", "DELETE", "PATCH"]}
-          onChange={setMethod}
-        />
+      <Dropdown
+        label="Method"
+        value={method}
+        options={["GET", "POST", "PUT", "DELETE", "PATCH"]}
+        onChange={setMethod}
+      />
 
       <input
         value={url}
