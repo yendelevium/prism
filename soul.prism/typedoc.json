@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Prism Docs",
+  "entryPoints": [
+        "src",
+  ],
+  "entryPointStrategy": "expand",
+  "exclude": [
+    ".next/**",
+    "**/*.test.ts*",
+  ],
+  "out": "./public/docs/",
+  "cleanOutputDir": true,
+  "skipErrorChecking": true,
+  "excludeExternals": true, 
+  "compilerOptions": {
+    "skipLibCheck": true,  
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]  
+    }
+  }
+}
