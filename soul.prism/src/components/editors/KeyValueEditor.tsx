@@ -18,7 +18,7 @@ export type KeyValueRow = {
   secret?: boolean
 }
 
-type Props = {
+export type KeyValueEditorProps = {
   rows: KeyValueRow[]
   onChange: (rows: KeyValueRow[]) => void
 
@@ -59,7 +59,7 @@ export function KeyValueEditor({
 
   rowHeight = 'md',
   dense = false,
-}: Props) {
+}: KeyValueEditorProps) {
   const isView = mode === 'view'
 
   /** Local visibility state for secrets */

@@ -4,7 +4,7 @@ import React from 'react';
 import { HistoryItem } from "./types";
 import { Clock, Trash2 } from 'lucide-react';
 
-type Props = {
+export type HistorySidebarProps = {
   history: HistoryItem[];
 };
 
@@ -17,7 +17,7 @@ const methodColorMap: Record<string, string> = {
   DELETE: "var(--error)",
 };
 
-export default function HistorySidebar({ history }: Props) {
+export default function HistorySidebar({ history }: HistorySidebarProps) {
   return (
     <aside
       className="w-full h-full flex flex-col border-r select-none overflow-hidden"

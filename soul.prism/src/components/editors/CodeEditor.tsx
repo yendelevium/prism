@@ -8,7 +8,7 @@ const MonacoEditor = dynamic(
   { ssr: false }
 );
 
-type CodeEditorProps = {
+export type CodeEditorProps = {
   value: string;
   language: string;
   onChange?: (value: string | undefined) => void;

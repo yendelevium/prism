@@ -21,9 +21,9 @@ export default function IconButton({
 }
 
 
-type IconButtonVariant = 'default' | 'active'
+export type IconButtonVariant = 'default' | 'active'
 
-type IconButtonProps = {
+export type IconButtonProps = {
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
     onClick?: () => void
     variant?: IconButtonVariant

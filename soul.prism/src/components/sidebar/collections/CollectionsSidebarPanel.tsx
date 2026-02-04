@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, Folder, Search, Plus, MoreHorizontal } from 'lucide-react';
 import { Collection, RequestItem, HttpMethod } from './types';
 
-interface Props {
+export interface CollectionsProps {
   collections: Collection[];
 }
 
@@ -17,7 +17,7 @@ const methodColorMap: Record<string, string> = {
   DELETE: "var(--error)",
 };
 
-const CollectionsSidebarPanel: React.FC<Props> = ({ collections }) => {
+const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({ collections }) => {
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ 'col-1': true });
   const [activeReqId, setActiveReqId] = useState<string | null>(null);
 

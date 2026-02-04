@@ -5,11 +5,11 @@ import { Settings2, Plus, Trash2, Globe } from 'lucide-react';
 import { KeyValueEditor, KeyValueRow } from '../../editors/KeyValueEditor';
 import { Environment } from './types';
 
-type Props = {
+export type EnvironmentSidebarProps = {
   initialEnvironments: Environment[];
 };
 
-export default function EnvSidebarClient({ initialEnvironments }: Props) {
+export default function EnvSidebarClient({ initialEnvironments }: EnvironmentSidebarProps) {
   const [envs, setEnvs] = useState<Environment[]>(initialEnvironments);
   const [editingEnv, setEditingEnv] = useState<Environment | null>(null);
 
