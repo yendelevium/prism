@@ -6,8 +6,7 @@ import {
   ChartBarSquareIcon,
 } from '@heroicons/react/24/outline';
 import IconButton from '../common/IconButton';
-
-type BottomView = 'logs' | 'gantt';
+import { BottomView } from './types';
 
 export default function BottomPanelClient({
   logsView,

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-type LogViewerProps = {
+export type LogViewerProps = {
   logs: string[];
 };
 

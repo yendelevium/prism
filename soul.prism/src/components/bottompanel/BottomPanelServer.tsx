@@ -1,8 +1,7 @@
 import BottomPanelClient from './BottomPanel';
 import GanttChartServer from './gantt/GanttChartServer';
 import LogsServer from './logs/LogServer';
-
-type BottomView = 'logs' | 'gantt';
+import { BottomView } from './types';
 
 export default function BottomPanelServer({
   activeView = 'logs',
