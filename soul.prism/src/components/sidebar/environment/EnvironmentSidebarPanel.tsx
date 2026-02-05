@@ -151,6 +151,7 @@ export function EnvSidebarClient({
           onClick={addEnvironment}
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: 'var(--accent)' }}
+          aria-label='add'
         >
           <Plus size={14} />
         </button>
@@ -198,6 +199,7 @@ export function EnvSidebarClient({
                       deleteEnvironment(e, env.id)
                     }
                     className="p-1 text-[var(--text-secondary)] hover:text-[var(--error)]"
+                    aria-label='delete'
                   >
                     <Trash2 size={12} />
                   </button>
