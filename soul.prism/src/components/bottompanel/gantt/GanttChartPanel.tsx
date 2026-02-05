@@ -38,7 +38,7 @@ export interface TraceGanttClientProps {
  * Recharts does not expose full row data to tick renderers by default,
  * so `fullData` is injected explicitly.
  */
-const TreeTick = (props: any) => {
+export const TreeTick = (props: any) => {
   const { x, y, payload, fullData } = props;
 
   // Resolve the full span object from the tick value (span_id)
@@ -105,7 +105,7 @@ const TreeTick = (props: any) => {
  * This shape intentionally renders only the duration bar and applies
  * semantic coloring based on span execution status.
  */
-const CustomBarShape = (props: any) => {
+export const CustomBarShape = (props: any) => {
   const { x, y, width, height, payload, dataKey } = props;
 
   // Offset bars exist purely for layout and should not be rendered

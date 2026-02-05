@@ -13,6 +13,17 @@ This project uses `bun` as the package manager as it's lightning fast and outcla
 
 To know more about these commands, look into the `Makefile`
 
+## Tests
+To run tests, run `make test`
+- Browser APIs that need to be mocked can be defined in `jest.setup.js`
+- For info on how to write tests, check out the [Jest docs](https://jestjs.io/docs/getting-started)
+
+## Docs
+For generating docs, run `make docs`
+- Docs will be generated to public/docs
+- Visit /docs/index.html to view the docs
+- For info on how to write comments for docs, check out the [TypeDoc docs](https://typedoc.org/)
+
 ## Contributing
 For any new feature, checkout a new git branch, add your changes there, and create a PR to merge it into main. NEVER PUSH DIRECTLY TO MAIN. 
 
