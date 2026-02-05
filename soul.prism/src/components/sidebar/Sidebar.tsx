@@ -10,17 +10,20 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import IconButton from '../common/IconButton';
+import { Layers } from 'lucide-react';
 
-type SidebarSection = 'Collections' | 'Environments' | 'History' | null;
+export type SidebarSection = 'Collections' | 'Environments' | 'Workspaces' | 'History' | null;
 
 export default function Sidebar( {
   collections,
   environments,
+  workspaces,
   history,
   none,
 }: {
   collections: React.ReactNode;
   environments: React.ReactNode;
+  workspaces: React.ReactNode;
   history: React.ReactNode;
   none: React.ReactNode;
 }) {
@@ -40,6 +43,11 @@ export default function Sidebar( {
             icon={GlobeAltIcon}
             onClick={() => setActiveSection('Environments')}
             variant={activeSection === 'Environments' ? 'active' : 'default'}
+          />
+          <IconButton
+            icon={Layers}
+            onClick={() => setActiveSection('Workspaces')}
+            variant={activeSection === 'Workspaces' ? 'active' : 'default'}
           />
           <IconButton
             icon={ClockIcon}
@@ -82,9 +90,12 @@ export default function Sidebar( {
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto">
-            {activeSection === 'Environments' && environments}
 
             {activeSection === 'Collections' && collections}
+            
+            {activeSection === 'Environments' && environments}
+
+            {activeSection === 'Workspaces' && workspaces}
 
             {activeSection === 'History' && history}
 
