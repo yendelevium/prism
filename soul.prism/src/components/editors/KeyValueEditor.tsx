@@ -9,37 +9,176 @@ import {
 } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 
+/**
+ * Represents a single editable key/value entry.
+ *
+ * Rows are treated as immutable records and are replaced wholesale
+ * when changes occur.
+ */
 export type KeyValueRow = {
+  /**
+   * Stable unique identifier for the row.
+   *
+   * Used for React rendering and local UI state such as secret visibility.
+   */
   id: string
+
+  /**
+   * Key name for the entry.
+   */
   key: string
+
+  /**
+   * Value associated with the key.
+   */
   value: string
+
+  /**
+   * Whether this row is enabled.
+   *
+   * When disabled, the row remains visible but is considered inactive.
+   *
+   * @defaultValue true
+   */
   enabled?: boolean
+
+  /**
+   * Whether this row is read-only.
+   *
+   * Read-only rows cannot be edited or deleted, regardless of editor mode.
+   */
   readonly?: boolean
+
+  /**
+   * Whether the value should be treated as sensitive.
+   *
+   * Secret values are masked by default and can be temporarily revealed
+   * via a visibility toggle.
+   */
   secret?: boolean
 }
 
+/**
+ * Props for {@link KeyValueEditor}.
+ */
 export type KeyValueEditorProps = {
+  /**
+   * List of key/value rows to render.
+   *
+   * This component is fully controlled; all mutations are surfaced
+   * through {@link KeyValueEditorProps.onChange}.
+   */
   rows: KeyValueRow[]
+
+  /**
+   * Callback invoked whenever rows are added, removed, or modified.
+   */
   onChange: (rows: KeyValueRow[]) => void
 
+  /**
+   * Optional title rendered in the editor header.
+   */
   title?: string
 
+  /**
+   * Display mode of the editor.
+   *
+   * - `edit`: fields are editable and controls may be shown
+   * - `view`: read-only presentation with no mutations allowed
+   *
+   * @defaultValue "edit"
+   */
   mode?: 'edit' | 'view'
+
+  /**
+   * Whether users may add new rows.
+   *
+   * Only applies in `edit` mode.
+   *
+   * @defaultValue false
+   */
   allowAdd?: boolean
+
+  /**
+   * Whether users may delete existing rows.
+   *
+   * Read-only rows cannot be deleted even when this is enabled.
+   *
+   * @defaultValue false
+   */
   allowDelete?: boolean
+
+  /**
+   * Whether rows expose an enabled/disabled toggle.
+   *
+   * @defaultValue false
+   */
   allowToggle?: boolean
 
+  /**
+   * Placeholder text for the key input.
+   *
+   * @defaultValue "Key"
+   */
   keyPlaceholder?: string
+
+  /**
+   * Placeholder text for the value input.
+   *
+   * @defaultValue "Value"
+   */
   valuePlaceholder?: string
+
+  /**
+   * Text shown when no rows are present.
+   *
+   * @defaultValue "No entries"
+   */
   emptyState?: string
 
+  /**
+   * Optional validation function for keys.
+   *
+   * Returning a string indicates an error message; returning `null`
+   * indicates a valid value.
+   */
   validateKey?: (key: string) => string | null
+
+  /**
+   * Optional validation function for values.
+   *
+   * Returning a string indicates an error message; returning `null`
+   * indicates a valid value.
+   */
   validateValue?: (value: string) => string | null
 
+  /**
+   * Visual height of each row.
+   *
+   * @defaultValue "md"
+   */
   rowHeight?: 'sm' | 'md'
+
+  /**
+   * Whether to use a more compact visual density.
+   *
+   * @defaultValue false
+   */
   dense?: boolean
 }
 
+/**
+ * Controlled editor for managing key/value pairs.
+ *
+ * @remarks
+ * Responsibilities:
+ * - Render editable or read-only key/value rows
+ * - Provide optional controls for adding, deleting, and toggling rows
+ * - Support validation feedback and secret value masking
+ *
+ * This component does not manage persistence or validation state itself;
+ * it delegates all data ownership to the parent.
+ */
 export function KeyValueEditor({
   rows,
   onChange,
@@ -60,15 +199,30 @@ export function KeyValueEditor({
   rowHeight = 'md',
   dense = false,
 }: KeyValueEditorProps) {
+  /**
+   * Whether the editor is currently in view-only mode.
+   */
   const isView = mode === 'view'
 
-  /** Local visibility state for secrets */
+  /**
+   * Local visibility state for secret values.
+   *
+   * This state is intentionally ephemeral and not exposed to the parent.
+   */
   const [revealed, setRevealed] = useState<Record<string, boolean>>({})
 
+  /**
+   * Toggle visibility of a secret value for a specific row.
+   */
   const toggleReveal = (id: string) => {
     setRevealed(r => ({ ...r, [id]: !r[id] }))
   }
 
+  /**
+   * Update a single row by applying a partial patch.
+   *
+   * Rows are replaced immutably to preserve referential integrity.
+   */
   const updateRow = useCallback(
     (id: string, patch: Partial<KeyValueRow>) => {
       onChange(
@@ -80,10 +234,16 @@ export function KeyValueEditor({
     [rows, onChange]
   )
 
+  /**
+   * Remove a row by its identifier.
+   */
   const deleteRow = (id: string) => {
     onChange(rows.filter(r => r.id !== id))
   }
 
+  /**
+   * Append a new, empty row to the editor.
+   */
   const addRow = () => {
     onChange([
       ...rows,
@@ -96,6 +256,9 @@ export function KeyValueEditor({
     ])
   }
 
+  /**
+   * CSS class applied based on row height selection.
+   */
   const rowHeightClass =
     rowHeight === 'sm'
       ? 'h-[28px]'
@@ -232,7 +395,6 @@ export function KeyValueEditor({
           })}
         </div>
       </div>
-
     </div>
   )
 }
