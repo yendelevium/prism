@@ -6,6 +6,7 @@ import {
   getWorkspaceById,
 } from "@/backend/workspace/workspace.service";
 import type { Workspace } from "@/backend/workspace/workspace.types";
+import { requireUser, requireWorkspaceAccess } from "@/backend/auth/auth.utils";
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -13,7 +14,6 @@ export type ActionResult<T> =
 
 export async function createWorkspaceAction(
   name: string,
-  userId: string,
 ): Promise<ActionResult<Workspace>> {
   const trimmedName = name?.trim();
 
@@ -21,12 +21,9 @@ export async function createWorkspaceAction(
     return { success: false, error: "name is required" };
   }
 
-  if (!userId || userId.trim().length === 0) {
-    return { success: false, error: "userId is required" };
-  }
-
   try {
-    const workspace = await createWorkspace({ name: trimmedName }, userId);
+    const user = await requireUser();
+    const workspace = await createWorkspace({ name: trimmedName }, user.id);
     return { success: true, data: workspace };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -36,14 +33,10 @@ export async function createWorkspaceAction(
 }
 
 export async function listWorkspacesAction(
-  userId: string,
 ): Promise<ActionResult<Workspace[]>> {
-  if (!userId || userId.trim().length === 0) {
-    return { success: false, error: "userId is required" };
-  }
-
   try {
-    const workspaces = await listWorkspacesForUser(userId);
+    const user = await requireUser();
+    const workspaces = await listWorkspacesForUser(user.id);
     return { success: true, data: workspaces };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -60,6 +53,7 @@ export async function getWorkspaceByIdAction(
   }
 
   try {
+    await requireWorkspaceAccess(workspaceId);
     const workspace = await getWorkspaceById(workspaceId);
     return { success: true, data: workspace ?? null };
   } catch (error) {
