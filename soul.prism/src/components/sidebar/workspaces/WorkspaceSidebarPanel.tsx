@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import {
   Layers,
   Plus,
@@ -10,29 +10,47 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Workspace, WorkspaceSidebarProps } from './types';
+import { createNewWorkspace } from './WorkspaceServer';
+import { toast } from 'sonner';
 
 
 export function WorkspaceSidebarClient({
   initialWorkspaces,
+  createNewWorkspace,
 }: WorkspaceSidebarProps) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [newUserEmail, setNewUserEmail] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   const addWorkspace = () => {
+
     const newWs: Workspace = {
       id: crypto.randomUUID(),
       name: 'New Workspace',
-      created_by: 'Current User', // In production, get from auth context
+      created_by: '', // In production, get from auth context
       users: [],
       created_at: new Date().toISOString(),
     };
+
     setEditingWorkspace(newWs);
   };
 
-  const saveChanges = () => {
+  const saveChanges = async () => {
     if (!editingWorkspace) return;
-    
+
+    const exists = workspaces.find(w => w.id === editingWorkspace.id);
+    if (!exists) {
+      try {
+        await createNewWorkspace(editingWorkspace.name);
+        toast.success("Workspace Saved");
+      }
+      catch (err: any) {
+        toast.error(err.message ?? "Something went wrong");
+        return;
+      }
+    }
+
     setWorkspaces(prev => {
       const exists = prev.find(w => w.id === editingWorkspace.id);
       if (exists) {
@@ -40,7 +58,7 @@ export function WorkspaceSidebarClient({
       }
       return [editingWorkspace, ...prev];
     });
-    
+   
     setEditingWorkspace(null);
   };
 
