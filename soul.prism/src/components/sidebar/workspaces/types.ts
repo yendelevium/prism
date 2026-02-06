@@ -9,4 +9,5 @@ export type Workspace = {
 
 export type WorkspaceSidebarProps = {
   initialWorkspaces: Workspace[];
+  createNewWorkspace: (workspaceName: string) => Promise<Workspace | null>;
 };
