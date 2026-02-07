@@ -2,16 +2,21 @@
 
 import { useState } from "react";
 import CodeEditor from "@/components/editors/CodeEditor";
-import { KeyValueEditor, KeyValueRow } from "../editors/KeyValueEditor";
+import { KeyValueEditor, KeyValueRow, rowsToObject } from "../editors/KeyValueEditor";
+import { useRequestStore } from "@/stores/useRequestStore";
 
 const tabs = ["Params", "Headers", "Body", "Auth", "Tests"];
 
 export default function RequestTabs() {
   const [activeTab, setActiveTab] = useState("Params");
-  const [body, setBody] = useState(`{
-  "example": true
-}`);
-  const [rows, setRows] = useState<KeyValueRow[]>([
+  const [body, setBodyText] = useState(`{
+    "example": true
+  }`);
+  const setParams = useRequestStore(s => s.setParams);
+  const setHeaders = useRequestStore(s => s.setHeaders);
+  const setBody = useRequestStore(s => s.setBody);
+
+  const [paramRows, setParamRows] = useState<KeyValueRow[]>([
     {
       id: '1',
       key: 'API_BASE_URL_WITH_A_REALLY_LONG_NAME',
@@ -24,6 +29,10 @@ export default function RequestTabs() {
       secret: true,
     },
   ])
+
+
+  const [headerRows, setHeaderRows] = useState<KeyValueRow[]>([]);
+
 
   return (
     <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
@@ -53,8 +62,9 @@ export default function RequestTabs() {
           <CodeEditor
             language="json"
             value={body}
-            onChange={() => {
-              setBody(body)
+            onChange={(body) => {
+              setBodyText(body ?? "");
+              setBody(body ?? "");
             }}
           />
         )}
@@ -62,8 +72,11 @@ export default function RequestTabs() {
         {activeTab === "Params" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={rows}
-              onChange={setRows}
+              rows={paramRows}
+              onChange={(rows) => {
+                setParamRows(rows);
+                setParams(rowsToObject(rows));
+              }}
               title="Query Parameters"
               allowAdd
               allowDelete
@@ -81,8 +94,11 @@ export default function RequestTabs() {
         {activeTab === "Headers" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={rows}
-              onChange={setRows}
+              rows={headerRows}
+              onChange={(rows) => {
+                setHeaderRows(rows);
+                setHeaders(rowsToObject(rows))
+              }}
               title="Request Headers"
               allowAdd
               allowDelete
