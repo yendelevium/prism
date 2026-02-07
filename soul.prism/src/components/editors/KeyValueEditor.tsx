@@ -168,6 +168,40 @@ export type KeyValueEditorProps = {
 }
 
 /**
+ * Converts an array of KeyValueRow to a javascript object
+ * 
+ * @remark Only converts rows that are enabled
+ * 
+ * @param rows - the KeyValueRows to be converted
+ * @returns - the object
+ */
+export function rowsToObject(rows: KeyValueRow[]) {
+  return rows
+    .filter(r => r.enabled !== false && r.key)
+    .reduce((acc, r) => {
+      acc[r.key] = r.value;
+      return acc;
+    }, {} as Record<string, string>);
+}
+
+/**
+ * Converts a javascript object of the form Record<string, string> to an array of KeyValueRow 
+ * 
+ * @param records - the object to be converted
+ * @returns - the KeyValueRow array
+ */
+export function objectToRows(obj: Record<string, string>) {
+  return Object
+    .entries(obj)
+    .map(([key, value], index) => ({
+      id: `${key}-${index}`,
+      key,
+      value,
+      enabled: true,
+    }));
+}
+
+/**
  * Controlled editor for managing key/value pairs.
  *
  * @remarks

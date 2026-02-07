@@ -1,34 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRequestStore } from "@/stores/useRequestStore";
 import CodeEditor from "@/components/editors/CodeEditor";
 import ResponseInfo from "./ResponseInfo";
-import { KeyValueEditor, KeyValueRow } from "../editors/KeyValueEditor";
+import { KeyValueEditor, KeyValueRow, objectToRows } from "../editors/KeyValueEditor";
 
 const tabs = ["Body", "Headers", "Cookies", "Tests"];
 
 export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState("Body");
-  const [responeStatus, setResponseStatus] = useState(200)
-  const [resposneTime, setResponseTime] = useState(432)
-  const [rows, setRows] = useState<KeyValueRow[]>([
-    {
-      id: '1',
-      key: 'API_BASE_URL_WITH_A_REALLY_LONG_NAME',
-      value: 'https://api.example.com',
-    },
-    {
-      id: '2',
-      key: 'API_KEY',
-      value: 'secret-key',
-      secret: true,
-    },
-  ])
-
-  const responseBody = `{
-  "status": "ok",
-  "data": {}
-}`;
+  const response = useRequestStore(s => s.response);
 
   return (
     <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
@@ -54,7 +36,7 @@ export default function ResponsePanel() {
           ))}
         </div>
 
-        <ResponseInfo statusCode={responeStatus} responseTime={resposneTime}/>
+        <ResponseInfo statusCode={response.status} responseTime={response.time}/>
 
       </div>
 
@@ -63,7 +45,7 @@ export default function ResponsePanel() {
         {activeTab === "Body" && (
           <CodeEditor
             language="json"
-            value={responseBody}
+            value={response.body ?? "No Body"}
             readOnly
           />
         )}
@@ -71,8 +53,8 @@ export default function ResponsePanel() {
         {activeTab === "Headers" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={rows}
-              onChange={setRows}
+              rows={objectToRows(response.headers)}
+              onChange={() => {}}
               title="Response Headers"
               mode="view"
               allowAdd
@@ -90,8 +72,8 @@ export default function ResponsePanel() {
         {activeTab === "Cookies" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={rows}
-              onChange={setRows}
+              rows={[]}
+              onChange={() => {}}
               title="Cookies"
               mode="view"
               allowAdd
