@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings2,
   Plus,
   Trash2,
   Globe,
+  Star,
 } from 'lucide-react';
+import { useEnvironment } from '../../context/EnvironmentContext';
 import {
   KeyValueEditor,
   KeyValueRow,
@@ -59,6 +61,29 @@ export function EnvSidebarClient({
    */
   const [editingEnv, setEditingEnv] =
     useState<Environment | null>(null);
+
+  const [activeEnvId, setActiveEnvId] = useState<string | null>(
+    initialEnvironments.length > 0 ? initialEnvironments[0].id : null
+  );
+
+  const { setVariables } = useEnvironment();
+
+  // Sync active environment variables to context
+  useEffect(() => {
+    const active = envs.find(e => e.id === activeEnvId);
+    const vars: Record<string, string> = {};
+
+    if (active) {
+      active.variables.forEach(row => {
+        if (row.enabled !== false && row.key) {
+          vars[row.key] = row.value;
+        }
+      });
+    }
+
+    console.log('[ENV] Setting variables:', { activeEnvId, vars, activeEnvName: active?.name });
+    setVariables(vars);
+  }, [activeEnvId, envs, setVariables]);
 
   /**
    * Create and open a new environment.
@@ -186,7 +211,21 @@ export function EnvSidebarClient({
                 </div>
 
                 {/* Row actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveEnvId(env.id === activeEnvId ? null : env.id);
+                    }}
+                    className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                    title={env.id === activeEnvId ? "Deactivate Environment" : "Set Active"}
+                  >
+                    <Star
+                      size={12}
+                      fill={env.id === activeEnvId ? "currentColor" : "none"}
+                      className={env.id === activeEnvId ? "text-[var(--accent)]" : ""}
+                    />
+                  </button>
                   <button
                     className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent)]"
                     title="Edit Environment"
