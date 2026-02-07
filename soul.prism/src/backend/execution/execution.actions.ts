@@ -5,6 +5,9 @@ import {
   listExecutionsByRequestId,
 } from "@/backend/execution/execution.service";
 import type { Execution } from "@/backend/execution/execution.types";
+import { getRequestById } from "@/backend/request/request.service";
+import { getCollectionById } from "@/backend/collection/collection.service";
+import { requireWorkspaceAccess } from "@/backend/auth/auth.utils";
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -18,6 +21,15 @@ export async function listExecutionsByRequestIdAction(
   }
 
   try {
+    const request = await getRequestById(requestId);
+    if (!request) {
+      return { success: false, error: "request not found" };
+    }
+    const collection = await getCollectionById(request.collectionId);
+    if (!collection) {
+      return { success: false, error: "Collection not found" };
+    }
+    await requireWorkspaceAccess(collection.workspaceId);
     const executions = await listExecutionsByRequestId(requestId);
     return { success: true, data: executions };
   } catch (error) {
@@ -36,6 +48,17 @@ export async function getExecutionByIdAction(
 
   try {
     const execution = await getExecutionById(executionId);
+    if (execution) {
+      const request = await getRequestById(execution.requestId);
+      if (!request) {
+        return { success: false, error: "request not found" };
+      }
+      const collection = await getCollectionById(request.collectionId);
+      if (!collection) {
+        return { success: false, error: "Collection not found" };
+      }
+      await requireWorkspaceAccess(collection.workspaceId);
+    }
     return { success: true, data: execution };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

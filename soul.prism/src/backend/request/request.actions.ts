@@ -7,12 +7,14 @@ import {
   getRequestsByCollection,
   updateRequest,
 } from "@/backend/request/request.service";
+import { getCollectionById } from "@/backend/collection/collection.service";
 import type {
   CreateRequestInput,
   Request,
   UpdateRequestInput,
 } from "@/backend/request/request.types";
 import type { HttpMethod } from "@prisma/client";
+import { requireUser, requireWorkspaceAccess } from "@/backend/auth/auth.utils";
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -43,19 +45,22 @@ export async function createRequestAction(
   const url = typeof input.url === "string" ? input.url.trim() : "";
   const collectionId =
     typeof input.collectionId === "string" ? input.collectionId.trim() : "";
-  const createdById =
-    typeof input.createdById === "string" && input.createdById.trim().length > 0
-      ? input.createdById.trim()
-      : "";
 
-  if (!name || !method || !url || !collectionId || !createdById) {
+  if (!name || !method || !url || !collectionId) {
     return {
       success: false,
-      error: "name, method, url, collectionId, and createdById are required",
+      error: "name, method, url, and collectionId are required",
     };
   }
 
   try {
+    const user = await requireUser();
+    const collection = await getCollectionById(collectionId);
+    if (!collection) {
+      return { success: false, error: "Collection not found" };
+    }
+    await requireWorkspaceAccess(collection.workspaceId);
+
     const created = await createRequest({
       name,
       method,
@@ -63,7 +68,7 @@ export async function createRequestAction(
       headers: input.headers ?? null,
       body: input.body ?? null,
       collectionId,
-      createdById,
+      createdById: user.id,
     });
 
     return { success: true, data: created };
@@ -88,6 +93,11 @@ export async function getRequestsByCollectionAction(
   }
 
   try {
+    const collection = await getCollectionById(collectionId);
+    if (!collection) {
+      return { success: false, error: "Collection not found" };
+    }
+    await requireWorkspaceAccess(collection.workspaceId);
     const requests = await getRequestsByCollection(collectionId);
     return { success: true, data: requests };
   } catch (error) {
@@ -106,6 +116,13 @@ export async function getRequestByIdAction(
 
   try {
     const request = await getRequestById(requestId);
+    if (request) {
+      const collection = await getCollectionById(request.collectionId);
+      if (!collection) {
+        return { success: false, error: "Collection not found" };
+      }
+      await requireWorkspaceAccess(collection.workspaceId);
+    }
     return { success: true, data: request };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -168,6 +185,17 @@ export async function updateRequestAction(
   }
 
   try {
+    const existing = await getRequestById(requestId);
+    if (!existing) {
+      return { success: false, error: "request not found" };
+    }
+
+    const collection = await getCollectionById(existing.collectionId);
+    if (!collection) {
+      return { success: false, error: "Collection not found" };
+    }
+    await requireWorkspaceAccess(collection.workspaceId);
+
     const updated = await updateRequest(requestId, updates);
     return { success: true, data: updated };
   } catch (error) {
@@ -185,6 +213,15 @@ export async function deleteRequestAction(
   }
 
   try {
+    const existing = await getRequestById(requestId);
+    if (!existing) {
+      return { success: false, error: "request not found" };
+    }
+    const collection = await getCollectionById(existing.collectionId);
+    if (!collection) {
+      return { success: false, error: "Collection not found" };
+    }
+    await requireWorkspaceAccess(collection.workspaceId);
     const deleted = await deleteRequest(requestId);
     return { success: true, data: deleted };
   } catch (error) {

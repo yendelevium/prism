@@ -7,6 +7,7 @@ import {
   listCollectionsByWorkspace,
 } from "@/backend/collection/collection.service";
 import type { Collection } from "@/backend/collection/collection.types";
+import { requireUser, requireWorkspaceAccess } from "@/backend/auth/auth.utils";
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -15,7 +16,6 @@ export type ActionResult<T> =
 export async function createCollectionAction(
   name: string,
   workspaceId: string,
-  userId: string,
 ): Promise<ActionResult<Collection>> {
   const trimmedName = name?.trim();
 
@@ -27,14 +27,12 @@ export async function createCollectionAction(
     return { success: false, error: "workspaceId is required" };
   }
 
-  if (!userId || userId.trim().length === 0) {
-    return { success: false, error: "userId is required" };
-  }
-
   try {
+    const user = await requireUser();
+    await requireWorkspaceAccess(workspaceId);
     const collection = await createCollection(
       { name: trimmedName, workspaceId },
-      userId,
+      user.id,
     );
     return { success: true, data: collection };
   } catch (error) {
@@ -52,6 +50,7 @@ export async function listCollectionsByWorkspaceAction(
   }
 
   try {
+    await requireWorkspaceAccess(workspaceId);
     const collections = await listCollectionsByWorkspace(workspaceId);
     return { success: true, data: collections };
   } catch (error) {
@@ -70,6 +69,9 @@ export async function getCollectionByIdAction(
 
   try {
     const collection = await getCollectionById(collectionId);
+    if (collection) {
+      await requireWorkspaceAccess(collection.workspaceId);
+    }
     return { success: true, data: collection };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -86,6 +88,11 @@ export async function deleteCollectionAction(
   }
 
   try {
+    const collection = await getCollectionById(collectionId);
+    if (!collection) {
+      return { success: false, error: "collection not found" };
+    }
+    await requireWorkspaceAccess(collection.workspaceId);
     const deleted = await deleteCollection(collectionId);
     return { success: true, data: deleted };
   } catch (error) {
