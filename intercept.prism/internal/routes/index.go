@@ -7,5 +7,6 @@ import (
 
 func AddRoutes(superRouter *gin.RouterGroup) {
 	restRoutes(superRouter)
+	analyticsRoutes(superRouter) 
 	tracing.RegisterOTLPReceiver(superRouter)
 }

@@ -11,6 +11,56 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getServiceGraph = `-- name: GetServiceGraph :many
+SELECT 
+    s1."serviceName" as source_service,
+    s2."serviceName" as target_service,
+    COUNT(*) as call_count,
+    AVG(s2."duration") as avg_duration,
+    SUM(CASE WHEN s2."status" = 'ERROR' THEN 1 ELSE 0 END) as error_count
+FROM "Span" s1
+INNER JOIN "Span" s2 
+    ON s1."traceId" = s2."traceId" 
+    AND s1."spanId" = s2."parentSpanId"
+WHERE s1."serviceName" IS NOT NULL 
+    AND s2."serviceName" IS NOT NULL
+GROUP BY s1."serviceName", s2."serviceName"
+`
+
+type GetServiceGraphRow struct {
+	SourceService string
+	TargetService string
+	CallCount     int64
+	AvgDuration   float64
+	ErrorCount    int64
+}
+
+func (q *Queries) GetServiceGraph(ctx context.Context) ([]GetServiceGraphRow, error) {
+	rows, err := q.db.Query(ctx, getServiceGraph)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetServiceGraphRow
+	for rows.Next() {
+		var i GetServiceGraphRow
+		if err := rows.Scan(
+			&i.SourceService,
+			&i.TargetService,
+			&i.CallCount,
+			&i.AvgDuration,
+			&i.ErrorCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertExecution = `-- name: InsertExecution :one
 INSERT INTO "Execution" ("id", "requestId", "traceId", "statusCode", "latencyMs")
 VALUES ($1, $2, $3, $4, $5)

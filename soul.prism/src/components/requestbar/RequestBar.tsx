@@ -2,13 +2,23 @@
 
 import { useState } from "react";
 import Dropdown from "../common/Dropdown";
+import { useEnvironment } from "../context/EnvironmentContext";
+import { requestParser } from "@/utils/variableParser";
 
 export default function RequestBar() {
   const [method, setMethod] = useState("GET");
   const [url, setUrl] = useState("");
 
+  const { variables } = useEnvironment();
+
   const handleSend = () => {
-    console.log("[UI]", "SEND_REQUEST_CLICKED", { method, url });
+    const parsedUrl = requestParser(url, variables);
+    console.log("[UI]", "SEND_REQUEST_CLICKED", {
+      method, 
+      url, 
+      parsedUrl, 
+      usedVariables: variables 
+    });
   };
 
   return (

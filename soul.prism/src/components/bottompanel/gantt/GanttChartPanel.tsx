@@ -11,6 +11,20 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Span, GanttData } from "./types";
+import { useState } from 'react';
+import SpanDetailPanel from './SpanDetailPanel';
+
+const NORD = {
+  bgPrimary: "#2E3440",
+  bgSecondary: "#3B4252",
+  bgPanel: "#434C5E",
+  border: "#4C566A",
+  textPrimary: "#ECEFF4",
+  textSecondary: "#D8DEE9",
+  accent: "#88C0D0",
+  success: "#A3BE8C",
+  error: "#BF616A",
+};
 
 /**
  * Props for {@link TraceGanttClient}.
@@ -57,9 +71,8 @@ export const TreeTick = (props: any) => {
       {/* Hierarchy guide line connecting this span to its parent */}
       {dataItem.depth > 0 && (
         <path
-          d={`M ${-190 + (dataItem.depth - 1) * 16} ${-20} V 0 H ${
-            -185 + indent
-          }`}
+          d={`M ${-190 + (dataItem.depth - 1) * 16} ${-20} V 0 H ${-185 + indent
+            }`}
           fill="none"
           stroke="var(--border-color)"
           strokeWidth="1"
@@ -106,16 +119,9 @@ export const TreeTick = (props: any) => {
  * semantic coloring based on span execution status.
  */
 export const CustomBarShape = (props: any) => {
-  const { x, y, width, height, payload, dataKey } = props;
-
-  // Offset bars exist purely for layout and should not be rendered
-  if (dataKey === "offset" || !payload) return null;
-
-  const fill =
-    payload.status === "error"
-      ? "var(--error)"
-      : "var(--success)";
-
+  const { x, y, width, height, payload, dataKey, onClick } = props;
+  if (dataKey === 'offset' || !payload) return null;
+  const fill = payload.status === 'error' ? NORD.error : NORD.success;
   return (
     <rect
       x={x}
@@ -124,6 +130,8 @@ export const CustomBarShape = (props: any) => {
       height={height}
       fill={fill}
       rx={2}
+      style={{ cursor: 'pointer' }}
+      onClick={() => onClick?.(payload)}
     />
   );
 };
@@ -148,6 +156,8 @@ export const CustomBarShape = (props: any) => {
 export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
   spans,
 }) => {
+  const [selectedSpan, setSelectedSpan] = useState<Span | null>(null);
+
   /**
    * Normalize and enrich raw span data for chart rendering.
    *
@@ -339,14 +349,14 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                     dataKey="offset"
                     stackId="a"
                     isAnimationActive={false}
-                    shape={<CustomBarShape />}
+                    shape={<CustomBarShape onClick={setSelectedSpan} />}
                   />
                   <Bar
                     dataKey="duration"
                     stackId="a"
                     barSize={22}
                     isAnimationActive={false}
-                    shape={<CustomBarShape />}
+                    shape={<CustomBarShape onClick={setSelectedSpan} />}
                   />
                 </ComposedChart>
               </div>
@@ -354,6 +364,13 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
           </>
         )}
       </TransformWrapper>
+
+      {selectedSpan && (
+        <SpanDetailPanel
+          span={selectedSpan}
+          onClose={() => setSelectedSpan(null)}
+        />
+      )}
     </div>
   );
 };
