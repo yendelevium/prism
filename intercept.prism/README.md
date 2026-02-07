@@ -1,12 +1,11 @@
 # INTERCEPT.PRISM [WIP]
 _Currently a work in progress_
 
-
 This is the proxy server through which all API requests go through. Currently only handles HTTP requests(REST) with distributed tracing. Future work includes adding support for gRPC, graphQL, websockets and other protocols.
 
-It injects the request with traceID, timestamps the upstream API's response time, captures request metadata(duration, response & response size) and sends it back. It exposes an OTEL endpoint `/v1/traces` so upstream can push OTEL data to the endpoint which then parses it (support for both protobuf and JSON) and stores it in a local store (for now, will shift to DB soon).
+It injects the request with traceID, timestamps the upstream API's response time, captures request metadata(duration, response & response size) and sends it back. It exposes an OTEL endpoint `/v1/traces` so upstream can push OTEL data to the endpoint which then parses it (support for both protobuf and JSON) and stores it in the DB.
 
-### Setup
+## Setup
 Make sure to run `make configure` at root `/prism` to make the volume for pg_duckdb.
 - Development: Run `make dev`
 - Testing: Run `make test`
@@ -16,10 +15,12 @@ Make sure to run `make configure` at root `/prism` to make the volume for pg_duc
 
 Docker-Compose files and Makefiles for easy setup and for a seamless dev experience. Includes unit tests for OTEL parsing and the HTTP proxy. Test files are suffixed with `_test.go`. The service runs on port 7000.
 
-### API Documentation
-- [Swagger UI](http://localhost:7000/swagger/index.html)
+Make sure to generate your `.env` file by following `.example.env` before running the proxy.
 
-### Remaining Work
+## API Documentation
+The API docs are visible at [Swagger UI](http://localhost:7000/swagger/index.html). They are also under `/docs`. Run `make docs` to generate the docs for soul.prism. 
+
+## Future Work
 - Some code refactoring (especially related to OTEL proto and JSON parsers)
 - Additional support for other protocols
 - Inject chaos rules into requests

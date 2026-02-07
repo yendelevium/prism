@@ -1,12 +1,12 @@
-# VIEW
+# SOUL.PRISM [WIP]
+_Currently a work-in-progress_
 
-The client UI + minimal Next.js backend for `prism`. This is what will be visible to the users.
-
-## Requirements
-Run bun install after cloning the git repo to automatically install neccessary packages
+The client UI + Next.js backend for `prism`. This is what will be visible to the users. It handles the user data, and forwards the constructed user requests to the proxy. It's also reponsible for analytics.
 
 ## Setup
-This project uses `bun` as the package manager as it's lightning fast and outclasses npm. If you don't have bun, please install it from [here](https://bun.sh/)
+This project uses `bun` as the JS runtime as it's lightning fast and outclasses any other runtime. If you don't have bun, please install it from [here](https://bun.sh/)
+
+Run `bun install` after cloning the git repo to automatically install neccessary packages.
 
 - For development, run `make dev`
 - To build, run `make build` - the build will be in the default `.next` directory 
@@ -23,8 +23,3 @@ For generating docs, run `make docs`
 - Docs will be generated to public/docs
 - Visit /docs/index.html to view the docs
 - For info on how to write comments for docs, check out the [TypeDoc docs](https://typedoc.org/)
-
-## Contributing
-For any new feature, checkout a new git branch, add your changes there, and create a PR to merge it into main. NEVER PUSH DIRECTLY TO MAIN. 
-
-Follow [Git hygiene](https://cbea.ms/git-commit/), and [Commit Convetions](https://medium.com/@aslandjc7/git-is-a-powerful-version-control-system-but-writing-clear-and-meaningful-commit-messages-is-48eebc428a00)
