@@ -9,3 +9,5 @@ down:
 
 configure:
 	docker volume create pg_duckdb_data
+
+# Add for testing both services
