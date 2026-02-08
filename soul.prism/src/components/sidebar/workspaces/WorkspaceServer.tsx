@@ -2,8 +2,10 @@
 
 import { createWorkspace, listWorkspacesForUser } from '@/backend/workspace/workspace.service';
 import { WorkspaceSidebarClient } from './WorkspaceSidebarPanel';
-import { Workspace } from './types';
+import { Workspace } from '@/@types/workspace';
 import { CreateWorkspaceInput, Workspace as Workspace_S } from '@/backend/workspace/workspace.types';
+import { parseBackendWorkspace } from '@/@types/workspace';
+import { refresh, revalidatePath } from 'next/cache';
 
 const userId = 'user_1'; // TODO: need to get userId from some auth context or something
 
@@ -32,25 +34,7 @@ export default async function WorkspaceServer() {
 
 
   const workspaces = (await listWorkspacesForUser(userId)).map((workspace) => parseBackendWorkspace(workspace));
-  return <WorkspaceSidebarClient 
-    initialWorkspaces={workspaces}
-    createNewWorkspace={createNewWorkspace}/>;
-}
-
-/**
- * Parses workspace type from {@link workspace.service!workspace | backend} to workspace type from {@link workspaces/types! | frontend}
- * 
- * @param workspace - from backend to be parsed 
- * @returns 
- */
-function parseBackendWorkspace(workspace: Workspace_S) {
-  return {
-    id: workspace.id,
-    name: workspace.name,
-    users: [], // TODO: listWorkspacesForUser should include the users associated with each workspace
-    created_by: workspace.ownerId,
-    created_at: workspace.createdAt.toISOString()
-  } as Workspace;
+  return <WorkspaceSidebarClient />;
 }
 
 /**
@@ -76,5 +60,5 @@ export async function createNewWorkspace(workspaceName: string) {
   };
 
   const ws: Workspace | null = await createWorkspace(createWorkspaceInput, userId).then((ws) => parseBackendWorkspace(ws));  
-  return ws;
+  revalidatePath("/");
 }

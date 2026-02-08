@@ -9,19 +9,16 @@ import {
   UserPlus,
   Trash2,
 } from 'lucide-react';
-import { Workspace, WorkspaceSidebarProps } from './types';
+import { Workspace } from '@/@types/workspace'; 
 import { createNewWorkspace } from './WorkspaceServer';
 import { toast } from 'sonner';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
-
-export function WorkspaceSidebarClient({
-  initialWorkspaces,
-  createNewWorkspace,
-}: WorkspaceSidebarProps) {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
+export function WorkspaceSidebarClient() {
+  const workspaces = useWorkspaceStore(s => s.workspaces);
+  const setWorkspaces = useWorkspaceStore(s => s.setWorkspaces);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [isPending, startTransition] = useTransition();
 
   const addWorkspace = () => {
 
@@ -42,6 +39,7 @@ export function WorkspaceSidebarClient({
     const exists = workspaces.find(w => w.id === editingWorkspace.id);
     if (!exists) {
       try {
+        setWorkspaces([editingWorkspace, ...workspaces])
         await createNewWorkspace(editingWorkspace.name);
         toast.success("Workspace Saved");
       }
@@ -50,14 +48,12 @@ export function WorkspaceSidebarClient({
         return;
       }
     }
+    else {
+      
+      // TODO: Write server action to actually update workspace in DB
+      setWorkspaces(workspaces.map(ws => ws.id === editingWorkspace.id ? editingWorkspace : ws));
 
-    setWorkspaces(prev => {
-      const exists = prev.find(w => w.id === editingWorkspace.id);
-      if (exists) {
-        return prev.map(w => w.id === editingWorkspace.id ? editingWorkspace : w);
-      }
-      return [editingWorkspace, ...prev];
-    });
+    }
    
     setEditingWorkspace(null);
   };
