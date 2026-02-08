@@ -1,21 +1,28 @@
 import RequestBar from "@/components/requestbar/RequestBar";
-import TopBar from "@/components/topbar/TopBar";
 import SidebarServer from "@/components/sidebar/SidebarServer";
 import { EnvironmentProvider } from "@/components/context/EnvironmentContext";
+import DataStoreProvider from "../providers/DataStoreProvider";
+import { listWorkspacesForUser } from "@/backend/workspace/workspace.service";
+import { parseBackendWorkspace } from "@/@types/workspace";
+import Topbar from "@/components/topbar/TopBar";
 
-export default function DashboardLayout({
+const userId = "user_1";
+
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   console.log("[LAYOUT]", "DASHBOARD_LAYOUT_MOUNTED");
 
-  return (
-    <EnvironmentProvider>
-      <div className="flex flex-col h-full">
+  const data = await getInitData();
 
+  return (
+    <DataStoreProvider workspaces={data.workspacesData}>
+      <EnvironmentProvider>
+      <div className="flex flex-col h-full">
         <div className="flex-shrink-0 h-14">
-          <TopBar />
+          <Topbar />
         </div>
 
         <div className="flex flex-1 min-h-0 h-full w-full">
@@ -27,10 +34,18 @@ export default function DashboardLayout({
             <main className="flex-1 overflow-hidden border-t border-[var(--border-color)] h-full w-full">
               {children}
             </main>
-
           </div>
         </div>
       </div>
-    </EnvironmentProvider>
+      </EnvironmentProvider>
+    </DataStoreProvider>
   );
+}
+
+async function getInitData() {
+  const workspacesData = (await listWorkspacesForUser(userId)).map((ws) =>
+    parseBackendWorkspace(ws),
+  );
+
+  return {workspacesData: workspacesData}
 }

@@ -4,10 +4,12 @@ import { useState } from 'react';
 import Dropdown from '@/components/common/Dropdown';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 import IconButton from '../common/IconButton';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 export default function Topbar() {
   const [protocol, setProtocol] = useState<'REST' | 'GraphQL' | 'gRPC'>('REST');
-  const [workspace, setWorkspace] = useState('Workspace 1');
+  const workspaces = useWorkspaceStore(s => s.workspaces);
+  const [currentWorkspace, setCurrentWorkspace] = useState('Workspace 1');
   const [env, setEnv] = useState('Development');
 
   return (
@@ -32,14 +34,9 @@ export default function Topbar() {
         {/* Current Workspace */}
         <Dropdown
           label="Workspace"
-          value={workspace}
-          options={[
-            'Workspace 1',
-            'Workspace 2',
-            'Workspace 3',
-            'Workspace 4',
-          ]}
-          onChange={setWorkspace}
+          value={currentWorkspace}
+          options={workspaces.map(ws => ws.name)}
+          onChange={setCurrentWorkspace}
         />
 
         {/* Environment Selector */}

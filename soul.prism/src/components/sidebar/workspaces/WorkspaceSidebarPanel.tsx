@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import {
   Layers,
   Plus,
@@ -9,38 +9,52 @@ import {
   UserPlus,
   Trash2,
 } from 'lucide-react';
-import { Workspace, WorkspaceSidebarProps } from './types';
+import { Workspace } from '@/@types/workspace'; 
+import { createNewWorkspace } from './WorkspaceServer';
+import { toast } from 'sonner';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
-
-export function WorkspaceSidebarClient({
-  initialWorkspaces,
-}: WorkspaceSidebarProps) {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
+export function WorkspaceSidebarClient() {
+  const workspaces = useWorkspaceStore(s => s.workspaces);
+  const setWorkspaces = useWorkspaceStore(s => s.setWorkspaces);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [newUserEmail, setNewUserEmail] = useState('');
 
   const addWorkspace = () => {
+
     const newWs: Workspace = {
       id: crypto.randomUUID(),
       name: 'New Workspace',
-      created_by: 'Current User', // In production, get from auth context
+      created_by: '', // In production, get from auth context
       users: [],
       created_at: new Date().toISOString(),
     };
+
     setEditingWorkspace(newWs);
   };
 
-  const saveChanges = () => {
+  const saveChanges = async () => {
     if (!editingWorkspace) return;
-    
-    setWorkspaces(prev => {
-      const exists = prev.find(w => w.id === editingWorkspace.id);
-      if (exists) {
-        return prev.map(w => w.id === editingWorkspace.id ? editingWorkspace : w);
+
+    const exists = workspaces.find(w => w.id === editingWorkspace.id);
+    if (!exists) {
+      try {
+        setWorkspaces([editingWorkspace, ...workspaces])
+        await createNewWorkspace(editingWorkspace.name);
+        toast.success("Workspace Saved");
       }
-      return [editingWorkspace, ...prev];
-    });
-    
+      catch (err: any) {
+        toast.error(err.message ?? "Something went wrong");
+        return;
+      }
+    }
+    else {
+      
+      // TODO: Write server action to actually update workspace in DB
+      setWorkspaces(workspaces.map(ws => ws.id === editingWorkspace.id ? editingWorkspace : ws));
+
+    }
+   
     setEditingWorkspace(null);
   };
 
