@@ -13,6 +13,8 @@ import { Workspace } from '@/@types/workspace';
 import { createNewWorkspace } from './WorkspaceServer';
 import { toast } from 'sonner';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { createWorkspaceAction } from '@/backend/workspace/workspace.actions';
+import { unwrap } from '@/@types/actionResult';
 
 export function WorkspaceSidebarClient() {
   const workspaces = useWorkspaceStore(s => s.workspaces);
@@ -40,7 +42,7 @@ export function WorkspaceSidebarClient() {
     if (!exists) {
       try {
         setWorkspaces([editingWorkspace, ...workspaces])
-        await createNewWorkspace(editingWorkspace.name);
+        unwrap(await createWorkspaceAction(editingWorkspace.name));
         toast.success("Workspace Saved");
       }
       catch (err: any) {

@@ -5,6 +5,8 @@ import DataStoreProvider from "../providers/DataStoreProvider";
 import { listWorkspacesForUser } from "@/backend/workspace/workspace.service";
 import { parseBackendWorkspace } from "@/@types/workspace";
 import Topbar from "@/components/topbar/TopBar";
+import { listWorkspacesAction } from "@/backend/workspace/workspace.actions";
+import { unwrap } from "@/@types/actionResult";
 
 const userId = "user_1";
 
@@ -43,9 +45,9 @@ export default async function DashboardLayout({
 }
 
 async function getInitData() {
-  const workspacesData = (await listWorkspacesForUser(userId)).map((ws) =>
-    parseBackendWorkspace(ws),
-  );
-
+  const workspacesData = unwrap(
+    await listWorkspacesAction()
+  ).map(ws => parseBackendWorkspace(ws)); 
+  
   return {workspacesData: workspacesData}
 }
