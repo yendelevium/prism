@@ -2,9 +2,8 @@
 
 import { useRequestStore } from "@/stores/useRequestStore";
 import Dropdown from "../common/Dropdown";
-import { useEnvironment } from "../context/EnvironmentContext";
-import { requestParser } from "@/utils/variableParser";
 import { toast } from "sonner";
+import { useEnvironment } from "../context/EnvironmentContext";
 
 export default function RequestBar() {
   const {
@@ -19,9 +18,7 @@ export default function RequestBar() {
   // TODO: see if this way of updating the url works, fingers crossed
   const handleSend = async () => {
     try {
-      const parsedUrl = requestParser(url, variables);
-      setUrl(parsedUrl);
-      await execute();
+      await execute(variables);
     } catch (err: any) {
       toast.error(err.message ?? "Failed to send request");
     }

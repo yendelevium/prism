@@ -1,5 +1,8 @@
+"use client";
+
 // stores/useRequestStore.ts
 import { InterceptorResponse, InterceptorSpan } from "@/@types/intercept";
+import { requestParser } from "@/utils/variableParser";
 import { create } from "zustand";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -35,7 +38,7 @@ execution: {
   setHeaders: (h: Record<string, string>) => void;
   setBody: (b: string | null) => void;
 
-  execute: () => Promise<void>;
+  execute: (eV: Record<string, string>) => Promise<void>;
 }
 
 export const useRequestStore = create<RequestState>((set, get) => ({
@@ -66,7 +69,7 @@ export const useRequestStore = create<RequestState>((set, get) => ({
   setHeaders: (headers) => set({ headers }),
   setBody: (body) => set({ body }),
 
-  execute: async () => {
+  execute: async (environmentVariables) => {
     const { method, url, params, headers, body } = get();
 
     // Verify
@@ -74,9 +77,12 @@ export const useRequestStore = create<RequestState>((set, get) => ({
       throw new Error("URL is required");
     }
 
+    // Parse env variables
+    const envUrl = requestParser(url, environmentVariables);
+
     let parsedUrl: URL;
     try {
-      parsedUrl = new URL(url);
+      parsedUrl = new URL(envUrl);
     } catch {
       throw new Error("Invalid URL");
     }
