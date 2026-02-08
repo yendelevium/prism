@@ -18,7 +18,7 @@ export type HttpMethod =
  *
  * @remarks
  * A request is a reusable, named operation that belongs to a
- * {@link Collection} and may be executed against an external API.
+ * {@link CollectionItem} and may be executed against an external API.
  */
 export interface RequestItem {
   /**
@@ -76,7 +76,7 @@ export interface RequestItem {
  * Collections are rendered as folders in the UI and are scoped
  * to a specific workspace.
  */
-export interface Collection {
+export interface CollectionItem {
   /**
    * Unique identifier for the collection.
    */

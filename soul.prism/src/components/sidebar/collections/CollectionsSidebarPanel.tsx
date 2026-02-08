@@ -9,7 +9,7 @@ import {
   Plus,
   MoreHorizontal,
 } from 'lucide-react';
-import { Collection } from './types';
+import { CollectionItem } from './types';
 
 /**
  * Props for {@link CollectionsSidebarPanel}.
@@ -21,7 +21,7 @@ export interface CollectionsProps {
    * Each collection is rendered as a collapsible folder containing
    * one or more request items.
    */
-  collections: Collection[];
+  collections: CollectionItem[];
 }
 
 /**

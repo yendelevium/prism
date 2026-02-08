@@ -1,19 +1,19 @@
 //stores/useSelectionStore.ts
 
-import { Collection, RequestItem } from "@/components/sidebar/collections/types";
+import { CollectionItem, RequestItem } from "@/components/sidebar/collections/types";
 import { Workspace } from "@/@types/workspace";
 import { create } from "zustand";
 
 interface SelectionState {
     workspace: Workspace | null,
-    collection: Collection | null,
+    collection: CollectionItem | null,
     request: RequestItem | null
 
     getWorkspace: () => Workspace | null;
-    getCollection: () => Collection | null;
+    getCollection: () => CollectionItem | null;
     getRequest: () => RequestItem | null; 
     setWorkspace: (w: Workspace | null) => void;
-    setCollection: (c: Collection | null) => void;
+    setCollection: (c: CollectionItem | null) => void;
     setRequest: (r: RequestItem | null) => void; 
 }
 
