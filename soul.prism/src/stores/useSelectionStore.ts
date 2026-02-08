@@ -12,9 +12,9 @@ interface SelectionState {
     getWorkspace: () => Workspace | null;
     getCollection: () => Collection | null;
     getRequest: () => RequestItem | null; 
-    setWorkspace: (w: Workspace) => void;
-    setCollection: (c: Collection) => void;
-    setRequest: (r: RequestItem) => void; 
+    setWorkspace: (w: Workspace | null) => void;
+    setCollection: (c: Collection | null) => void;
+    setRequest: (r: RequestItem | null) => void; 
 }
 
 export const useSelectionStore = create<SelectionState>((set, get) => ({
