@@ -41,8 +41,8 @@ export function WorkspaceSidebarClient() {
     const exists = workspaces.find(w => w.id === editingWorkspace.id);
     if (!exists) {
       try {
-        setWorkspaces([editingWorkspace, ...workspaces])
         unwrap(await createWorkspaceAction(editingWorkspace.name));
+        setWorkspaces([editingWorkspace, ...workspaces])
         toast.success("Workspace Saved");
       }
       catch (err: any) {

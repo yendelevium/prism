@@ -7,22 +7,15 @@ import {
   Folder,
   Search,
   Plus,
-  MoreHorizontal,
+  Trash2,
 } from 'lucide-react';
-import { CollectionItem } from './types';
+import { CollectionItem, collectionToCollectionItem, RequestItem } from '../../../@types/collectionItem';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { createCollectionAction } from '@/backend/collection/collection.actions';
+import { unwrap } from '@/@types/actionResult';
+import { useSelectionStore } from '@/stores/useSelectionStore';
+import { toast } from 'sonner';
 
-/**
- * Props for {@link CollectionsSidebarPanel}.
- */
-export interface CollectionsProps {
-  /**
-   * List of collections to display in the sidebar.
-   *
-   * Each collection is rendered as a collapsible folder containing
-   * one or more request items.
-   */
-  collections: CollectionItem[];
-}
 
 /**
  * Maps HTTP methods to CSS color variables.
@@ -43,6 +36,8 @@ export const methodColorMap: Record<string, string> = {
   DELETE: "var(--error)",
 };
 
+
+
 /**
  * Sidebar navigation panel for browsing request collections.
  *
@@ -56,9 +51,13 @@ export const methodColorMap: Record<string, string> = {
  * This component is intentionally stateful but **UI-only**:
  * it does not perform routing, persistence, or data fetching.
  */
-export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
-  collections,
-}) => {
+export const CollectionsSidebarPanel: React.FC = () => {
+
+  const collections = useCollectionStore(s => s.collections);
+  const isLoading = useCollectionStore(s => s.isLoading);
+  const setCollections = useCollectionStore(s => s.setCollections);
+  const currentWorkspace = useSelectionStore(s => s.workspace);
+
   /**
    * Tracks which collection folders are expanded.
    *
@@ -81,6 +80,22 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
   const toggleFolder = (id: string) => {
     setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
   };
+
+  
+
+  const createCollection = async () => {
+    
+    try {
+      const newCollection = unwrap(await createCollectionAction('Untitled', currentWorkspace!.id));
+      const newCollectionItem = await collectionToCollectionItem(newCollection);
+      setCollections([...collections, newCollectionItem]);
+      toast.success("Successfully created collection");
+    }
+    catch (err: any) {
+      toast.error(err.message);
+      return;
+    }
+  }
 
   return (
     <aside
@@ -107,6 +122,7 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
         <button
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: 'var(--accent)' }}
+          onClick={createCollection}
         >
           <Plus size={14} />
         </button>
@@ -137,22 +153,33 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
 
       {/* Navigation Tree */}
       <nav className="flex-1 overflow-y-auto pt-2 scrollbar-hide">
-        {collections.map(col => (
+        {isLoading && (
+          <div className="px-4 py-6 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+            <div className="h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+            Loading collections…
+          </div>
+        )}
+        {!isLoading && (collections.map(col => (
           <div key={col.id} className="mb-1">
             {/* Collection Header */}
             <div
-              onClick={() => toggleFolder(col.id)}
-              className="group flex items-center px-4 py-1.5 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+              className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
             >
               <span
                 className="mr-1"
                 style={{ color: 'var(--border-color)' }}
               >
-                {expandedFolders[col.id] ? (
-                  <ChevronDown size={14} />
-                ) : (
-                  <ChevronRight size={14} />
-                )}
+                <button
+                  onClick={() => toggleFolder(col.id)}
+                  className="mr-1 p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                  aria-label="Toggle collection"
+                >
+                  {expandedFolders[col.id] ? (
+                    <ChevronDown size={14} />
+                  ) : (
+                    <ChevronRight size={14} />
+                  )}
+                </button>
               </span>
 
               <Folder
@@ -172,12 +199,28 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
                 {col.name}
               </span>
 
-              {/* Context menu placeholder */}
-              <MoreHorizontal
-                size={14}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: 'var(--border-color)' }}
-              />
+              {/* Actions */}
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Create request */}
+                <button
+                  onClick={() => {}}
+                  className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                  style={{ color: 'var(--accent)' }}
+                  title="Add request"
+                >
+                  <Plus size={12} />
+                </button>
+
+                {/* Delete collection */}
+                <button
+                  onClick={() => {}}
+                  className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                  style={{ color: 'var(--error)' }}
+                  title="Delete collection"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
             </div>
 
             {/* Requests */}
@@ -229,7 +272,7 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
               </div>
             )}
           </div>
-        ))}
+        )))}
       </nav>
     </aside>
   );

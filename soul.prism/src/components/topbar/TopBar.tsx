@@ -41,12 +41,12 @@ export default function Topbar() {
         {/* Current Workspace */}
         <Dropdown
           label="Workspace"
-          value={currentWorkspace?.name ?? ""}
+          value={currentWorkspace?.id ?? ""}
           options={workspaces.map(ws => ({
             value: ws.id,
             label: ws.name,
           }))}
-          onChange={(newWsId) =>setCurrentWorkspace(workspaces.find(w => w.id === newWsId) ?? null)}
+          onChange={(newWsId) => setCurrentWorkspace(workspaces.find(w => w.id === newWsId) ?? null)}
         />
 
         {/* Environment Selector */}

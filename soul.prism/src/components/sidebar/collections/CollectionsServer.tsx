@@ -1,5 +1,5 @@
 import CollectionsSidebarPanel from './CollectionsSidebarPanel';
-import { CollectionItem } from './types';
+import { CollectionItem } from '../../../@types/collectionItem';
 
 export default async function CollectionsServer() {
   const sampleCollections: CollectionItem[] = [

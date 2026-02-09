@@ -1,3 +1,8 @@
+import { Collection } from "@/backend/collection/collection.types";
+import { unwrap } from "./actionResult";
+import { Request } from "@/backend/request/request.types";
+import { getRequestsByCollectionAction } from "@/backend/request/request.actions";
+
 /**
  * Supported HTTP methods for request execution.
  *
@@ -96,4 +101,28 @@ export interface CollectionItem {
    * Requests contained within this collection.
    */
   requests: RequestItem[];
+}
+
+
+
+
+export const requestToRequestItem = (request: Request) => {
+  return {
+    body: request.body,
+    collection_id: request.collectionId,
+    headers: request.headers,
+    id: request.id,
+    method: request.method,
+    name: request.name,
+    url: request.url,
+  } as RequestItem;
+}
+
+export const collectionToCollectionItem = async (collection: Collection) => {
+  return {
+    id: collection.id,
+    name: collection.name,
+    requests: unwrap(await getRequestsByCollectionAction(collection.id)).map(c => requestToRequestItem(c)),
+    workspace_id: collection.workspaceId
+  } as CollectionItem;
 }

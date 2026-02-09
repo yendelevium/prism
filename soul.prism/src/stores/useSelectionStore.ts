@@ -1,6 +1,6 @@
 //stores/useSelectionStore.ts
 
-import { CollectionItem, RequestItem } from "@/components/sidebar/collections/types";
+import { CollectionItem, RequestItem } from "@/@types/collectionItem";
 import { Workspace } from "@/@types/workspace";
 import { create } from "zustand";
 
