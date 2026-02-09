@@ -1,3 +1,10 @@
+import { Collection } from "@/backend/collection/collection.types";
+import { unwrap } from "./actionResult";
+import { Request } from "@/backend/request/request.types";
+import { getRequestsByCollectionAction } from "@/backend/request/request.actions";
+import { KeyValueRow, objectToRows, urlToKeyValueRows } from "@/components/editors/KeyValueEditor";
+import { JsonValue } from "@prisma/client/runtime/client";
+
 /**
  * Supported HTTP methods for request execution.
  *
@@ -18,7 +25,7 @@ export type HttpMethod =
  *
  * @remarks
  * A request is a reusable, named operation that belongs to a
- * {@link Collection} and may be executed against an external API.
+ * {@link CollectionItem} and may be executed against an external API.
  */
 export interface RequestItem {
   /**
@@ -46,12 +53,17 @@ export interface RequestItem {
   url: string;
 
   /**
+   * Search params associated with the request.
+   */
+  params: KeyValueRow[];
+
+  /**
    * HTTP headers associated with the request.
    *
    * Keys should be treated as case-insensitive, though they are
    * stored as provided.
    */
-  headers: Record<string, string>;
+  headers: KeyValueRow[];
 
   /**
    * Raw request body payload.
@@ -76,7 +88,7 @@ export interface RequestItem {
  * Collections are rendered as folders in the UI and are scoped
  * to a specific workspace.
  */
-export interface Collection {
+export interface CollectionItem {
   /**
    * Unique identifier for the collection.
    */
@@ -96,4 +108,27 @@ export interface Collection {
    * Requests contained within this collection.
    */
   requests: RequestItem[];
+}
+
+
+export const requestToRequestItem = (request: Request) => {
+  return {
+    body: request.body,
+    collection_id: request.collectionId,
+    headers: objectToRows(request.headers ? request.headers as Record<string, string> : {}),
+    params: urlToKeyValueRows(request.url),
+    id: request.id,
+    method: request.method,
+    name: request.name,
+    url: request.url,
+  } as RequestItem;
+}
+
+export const collectionToCollectionItem = async (collection: Collection) => {
+  return {
+    id: collection.id,
+    name: collection.name,
+    requests: unwrap(await getRequestsByCollectionAction(collection.id)).map(c => requestToRequestItem(c)),
+    workspace_id: collection.workspaceId
+  } as CollectionItem;
 }

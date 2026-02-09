@@ -5,11 +5,15 @@ import Dropdown from '@/components/common/Dropdown';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 import IconButton from '../common/IconButton';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useSelectionStore } from '@/stores/useSelectionStore';
+
+type Protocol = 'REST' | 'GraphQL' | 'gRPC';
 
 export default function Topbar() {
-  const [protocol, setProtocol] = useState<'REST' | 'GraphQL' | 'gRPC'>('REST');
+  const [protocol, setProtocol] = useState<Protocol>('REST');
   const workspaces = useWorkspaceStore(s => s.workspaces);
-  const [currentWorkspace, setCurrentWorkspace] = useState('Workspace 1');
+  const currentWorkspace = useSelectionStore(s => s.workspace);
+  const setCurrentWorkspace = useSelectionStore(s => s.setWorkspace);
   const [env, setEnv] = useState('Development');
 
   return (
@@ -27,23 +31,32 @@ export default function Topbar() {
         <Dropdown
           label="Protocol"
           value={protocol}
-          options={['REST', 'GraphQL', 'gRPC']}
-          onChange={(v) => setProtocol(v as 'REST' | 'GraphQL' | 'gRPC')}
+          options={["REST", "GraphQL", "gRPC"].map(protocol => ({
+            value: protocol as Protocol,
+            label: protocol,
+          }))}
+          onChange={(v) => setProtocol(v)}
         />
 
         {/* Current Workspace */}
         <Dropdown
           label="Workspace"
-          value={currentWorkspace}
-          options={workspaces.map(ws => ws.name)}
-          onChange={setCurrentWorkspace}
+          value={currentWorkspace?.id ?? ""}
+          options={workspaces.map(ws => ({
+            value: ws.id,
+            label: ws.name,
+          }))}
+          onChange={(newWsId) => setCurrentWorkspace(workspaces.find(w => w.id === newWsId) ?? null)}
         />
 
         {/* Environment Selector */}
         <Dropdown
           label="Env"
           value={env}
-          options={['Development', 'Staging', 'Production']}
+          options={['Development', 'Staging', 'Production'].map(env => ({
+            value: env,
+            label: env
+          }))}
           onChange={setEnv}
         />
       </div>

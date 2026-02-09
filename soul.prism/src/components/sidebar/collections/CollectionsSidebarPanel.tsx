@@ -7,22 +7,18 @@ import {
   Folder,
   Search,
   Plus,
-  MoreHorizontal,
+  Trash2,
 } from 'lucide-react';
-import { Collection } from './types';
+import { CollectionItem, collectionToCollectionItem, HttpMethod, RequestItem, requestToRequestItem } from '../../../@types/collectionItem';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { createCollectionAction } from '@/backend/collection/collection.actions';
+import { unwrap } from '@/@types/actionResult';
+import { useSelectionStore } from '@/stores/useSelectionStore';
+import { toast } from 'sonner';
+import { CreateRequestInput, Request } from '@/backend/request/request.types';
+import { createRequestAction } from '@/backend/request/request.actions';
+import { useRequestStore } from '@/stores/useRequestStore';
 
-/**
- * Props for {@link CollectionsSidebarPanel}.
- */
-export interface CollectionsProps {
-  /**
-   * List of collections to display in the sidebar.
-   *
-   * Each collection is rendered as a collapsible folder containing
-   * one or more request items.
-   */
-  collections: Collection[];
-}
 
 /**
  * Maps HTTP methods to CSS color variables.
@@ -43,6 +39,8 @@ export const methodColorMap: Record<string, string> = {
   DELETE: "var(--error)",
 };
 
+
+
 /**
  * Sidebar navigation panel for browsing request collections.
  *
@@ -56,9 +54,16 @@ export const methodColorMap: Record<string, string> = {
  * This component is intentionally stateful but **UI-only**:
  * it does not perform routing, persistence, or data fetching.
  */
-export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
-  collections,
-}) => {
+export const CollectionsSidebarPanel: React.FC = () => {
+
+  const collections = useCollectionStore(s => s.collections);
+  const isLoading = useCollectionStore(s => s.isLoading);
+  const setCollections = useCollectionStore(s => s.setCollections);
+  const currentWorkspace = useSelectionStore(s => s.workspace);
+  const currentRequest = useSelectionStore(s => s.request);
+  const setRequest = useSelectionStore(s => s.setRequest);
+  const setRequestStore = useRequestStore(s => s.setRequest);
+
   /**
    * Tracks which collection folders are expanded.
    *
@@ -69,18 +74,63 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
   >({ 'col-1': true });
 
   /**
-   * Identifier of the currently selected request.
-   *
-   * Used exclusively for visual highlighting.
-   */
-  const [activeReqId, setActiveReqId] = useState<string | null>(null);
-
-  /**
    * Toggle the expanded state of a collection folder.
    */
   const toggleFolder = (id: string) => {
     setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
   };
+
+  
+
+  const createCollection = async () => {
+    
+    try {
+      const newCollection = unwrap(await createCollectionAction('Untitled', currentWorkspace!.id));
+      const newCollectionItem = await collectionToCollectionItem(newCollection);
+      setCollections([...collections, newCollectionItem]);
+      toast.success("Successfully created collection");
+    }
+    catch (err: any) {
+      toast.error(err.message);
+      return;
+    }
+  }
+
+  const createRequest = async (collectionId: string) => {
+    try {
+      // Create a blank request
+      const newRequestInput = {
+        body: "",
+        collectionId: collectionId,
+        headers: {},
+        method: "GET" as HttpMethod,
+        name: "Untitled",
+        url: "https://prism-amrita-app.com/exampleURL",
+      } as CreateRequestInput;
+
+      const newRequest = unwrap(await createRequestAction(newRequestInput));
+      toast.success("Successfully created request");
+
+      const newRequestItem = requestToRequestItem(newRequest);
+      setCollections(
+        collections.map(c => 
+          c.id === collectionId 
+            ? { ...c, requests: [...c.requests, newRequestItem] } // Update the requests for this particular collection
+            : c
+        )
+      );
+
+      setExpandedFolders(prev => ({
+        ...prev,
+        [collectionId]: true,
+      }));
+
+      setRequest(newRequestItem);
+    }
+    catch (err: any) {
+      toast.error(err.message);
+    }
+  }
 
   return (
     <aside
@@ -103,10 +153,11 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
           Collections
         </h2>
 
-        {/* Add collection (behavior intentionally not implemented here) */}
+        {/* Add collection */}
         <button
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: 'var(--accent)' }}
+          onClick={createCollection}
         >
           <Plus size={14} />
         </button>
@@ -137,22 +188,33 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
 
       {/* Navigation Tree */}
       <nav className="flex-1 overflow-y-auto pt-2 scrollbar-hide">
-        {collections.map(col => (
+        {isLoading && (
+          <div className="px-4 py-6 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+            <div className="h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+            Loading collections…
+          </div>
+        )}
+        {!isLoading && (collections.map(col => (
           <div key={col.id} className="mb-1">
             {/* Collection Header */}
             <div
-              onClick={() => toggleFolder(col.id)}
-              className="group flex items-center px-4 py-1.5 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+              className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
             >
               <span
                 className="mr-1"
                 style={{ color: 'var(--border-color)' }}
               >
-                {expandedFolders[col.id] ? (
-                  <ChevronDown size={14} />
-                ) : (
-                  <ChevronRight size={14} />
-                )}
+                <button
+                  onClick={() => toggleFolder(col.id)}
+                  className="mr-1 p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                  aria-label="Toggle collection"
+                >
+                  {expandedFolders[col.id] ? (
+                    <ChevronDown size={14} />
+                  ) : (
+                    <ChevronRight size={14} />
+                  )}
+                </button>
               </span>
 
               <Folder
@@ -172,12 +234,28 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
                 {col.name}
               </span>
 
-              {/* Context menu placeholder */}
-              <MoreHorizontal
-                size={14}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: 'var(--border-color)' }}
-              />
+              {/* Actions */}
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Create request */}
+                <button
+                  onClick={() => createRequest(col.id)}
+                  className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                  style={{ color: 'var(--accent)' }}
+                  title="Add request"
+                >
+                  <Plus size={12} />
+                </button>
+
+                {/* Delete collection */}
+                <button
+                  onClick={() => {}}
+                  className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                  style={{ color: 'var(--error)' }}
+                  title="Delete collection"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
             </div>
 
             {/* Requests */}
@@ -189,11 +267,13 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
                 {col.requests.map(req => (
                   <div
                     key={req.id}
-                    onClick={() => setActiveReqId(req.id)}
+                    onClick={() => {
+                      setRequest(req); // Selection Store
+                    }}
                     className={`
                       flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2
                       ${
-                        activeReqId === req.id
+                        currentRequest?.id === req.id
                           ? 'bg-[var(--bg-panel)] border-[var(--accent)]'
                           : 'border-transparent hover:bg-[var(--bg-secondary)]'
                       }
@@ -217,7 +297,7 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
                       className="text-xs truncate"
                       style={{
                         color:
-                          activeReqId === req.id
+                          currentRequest?.id === req.id
                             ? 'var(--text-primary)'
                             : 'var(--text-secondary)',
                       }}
@@ -229,7 +309,7 @@ export const CollectionsSidebarPanel: React.FC<CollectionsProps> = ({
               </div>
             )}
           </div>
-        ))}
+        )))}
       </nav>
     </aside>
   );

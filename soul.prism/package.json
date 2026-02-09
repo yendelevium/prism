@@ -13,7 +13,9 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@clerk/backend": "^2.30.1",
     "@clerk/nextjs": "^6.37.3",
+    "@clerk/shared": "^3.44.0",
     "@heroicons/react": "^2.2.0",
     "@monaco-editor/react": "^4.7.0",
     "@nestjs/config": "^4.0.2",
@@ -25,9 +27,11 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.23",
     "clsx": "^2.1.1",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
+    "lodash": "^4.17.23",
     "lucide-react": "^0.563.0",
     "monaco-editor": "^0.55.1",
     "next": "16.1.1",

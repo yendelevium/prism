@@ -31,7 +31,10 @@ export default function RequestBar() {
       <Dropdown
         label="Method"
         value={method}
-        options={METHODS}
+        options={METHODS.map(m => ({
+          value: m,
+          label: m,
+        }))}
         onChange={setMethod}
       />
 
