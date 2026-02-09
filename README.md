@@ -236,7 +236,3 @@ Made with ❤️ by:
 | Ananthu | CB.SC.U4CSE23408 |
 | Yash | CB.SC.U4CSE23458 |
 | Honnesha | CB.SC.U4CSE23461 |
-
-## License
-
-This project is currently under development and not yet licensed for public use.

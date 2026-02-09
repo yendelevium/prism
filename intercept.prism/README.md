@@ -425,49 +425,6 @@ func executeRequest(c *gin.Context) {
 }
 ```
 
-## Database Schema
-
-intercept.prism writes to the following tables:
-
-### Request
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `method` | VARCHAR | HTTP method (GET, POST, etc.) |
-| `url` | TEXT | Target URL |
-| `headers` | JSONB | Request headers |
-| `body` | TEXT | Request body |
-| `collection_id` | UUID | Foreign key to Collection |
-| `created_by_id` | UUID | Foreign key to User |
-| `created_at` | TIMESTAMP | Creation timestamp |
-
-### Execution
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `request_id` | UUID | Foreign key to Request |
-| `trace_id` | VARCHAR(32) | W3C Trace ID |
-| `status_code` | INT | HTTP response status |
-| `latency_ms` | INT | Response time in milliseconds |
-| `executed_at` | TIMESTAMP | Execution timestamp |
-
-### Span
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `trace_id` | VARCHAR(32) | W3C Trace ID |
-| `span_id` | VARCHAR(16) | Span identifier |
-| `parent_span_id` | VARCHAR(16) | Parent span (nullable) |
-| `operation` | VARCHAR | Operation name |
-| `service_name` | VARCHAR | Service identifier |
-| `start_time` | BIGINT | Start time (microseconds) |
-| `duration` | BIGINT | Duration (microseconds) |
-| `status` | VARCHAR | OK / ERROR |
-| `tags` | JSONB | Additional metadata |
-
 ## Future Roadmap
 
 ### Planned Features
