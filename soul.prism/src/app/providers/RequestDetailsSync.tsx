@@ -19,18 +19,18 @@ export function RequestDetailsSync() {
         }
 
         const loadRequest = async () => {
-            const raw = unwrap(
-                await getRequestByIdAction(request.id)
-            );
-
-            if (!raw) {
+            try {
+                const raw = unwrap(
+                    await getRequestByIdAction(request.id)
+                );
+                const requestItem = requestToRequestItem(raw!);
+                setRequest(requestItem);
+            }
+            catch (err: any) {
                 toast.error("Could not load that request");
                 return;
             }
 
-            const requestItem = requestToRequestItem(raw!);
-
-            setRequest(requestItem);
         }
 
         loadRequest();
