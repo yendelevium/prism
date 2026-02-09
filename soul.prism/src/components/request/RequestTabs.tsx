@@ -53,10 +53,8 @@ export default function RequestTabs() {
         {activeTab === "Params" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={objectToRows(params)}
-              onChange={(rows) => {
-                setParams(rowsToObject(rows));
-              }}
+              rows={params}
+              onChange={setParams}
               title="Query Parameters"
               allowAdd
               allowDelete
@@ -74,10 +72,8 @@ export default function RequestTabs() {
         {activeTab === "Headers" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={objectToRows(headers)}
-              onChange={(rows) => {
-                setHeaders(rowsToObject(rows))
-              }}
+              rows={headers}
+              onChange={setHeaders}
               title="Request Headers"
               allowAdd
               allowDelete

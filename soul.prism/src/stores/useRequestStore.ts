@@ -6,10 +6,11 @@ import { requestParser } from "@/utils/variableParser";
 import { create } from "zustand";
 import { debounce } from "lodash";
 
-import { updateRequestAction } from "@/backend/request/request.actions"; // <-- your server action
+import { updateRequestAction } from "@/backend/request/request.actions";
 import { RequestItem } from "@/@types/collectionItem";
 import { toast } from "sonner";
 import { unwrap } from "@/@types/actionResult";
+import { KeyValueRow, rowsToObject, rowsToSearchParams } from "@/components/editors/KeyValueEditor";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -19,8 +20,8 @@ interface RequestState {
 
   method: HttpMethod;
   url: string;
-  params: Record<string, string>;
-  headers: Record<string, string>;
+  params: KeyValueRow[];
+  headers: KeyValueRow[];
   body: string | null;
 
   // inside useRequestStore
@@ -44,8 +45,8 @@ interface RequestState {
 
   setMethod: (m: HttpMethod) => void;
   setUrl: (url: string) => void;
-  setParams: (p: Record<string, string>) => void;
-  setHeaders: (h: Record<string, string>) => void;
+  setParams: (p: KeyValueRow[]) => void;
+  setHeaders: (h: KeyValueRow[]) => void;
   setBody: (b: string | null) => void;
 
   saveRequest: () => Promise<void>;
@@ -64,8 +65,8 @@ export const useRequestStore = create<RequestState>((set, get) => {
 
     method: "GET",
     url: "",
-    params: {},
-    headers: {},
+    params: [],
+    headers: [],
     body: null,
 
     response: {
@@ -88,9 +89,9 @@ export const useRequestStore = create<RequestState>((set, get) => {
         id: r.id,
         name: r.name,
         method: r.method,
-        url: r.url,
-        params: r.params ?? {},
-        headers: r.headers ?? {},
+        url: new URL(r.url).origin + new URL(r.url).pathname,
+        params: r.params ?? [],
+        headers: r.headers ?? [],
         body: r.body,
       });
     },
@@ -126,10 +127,10 @@ export const useRequestStore = create<RequestState>((set, get) => {
 
       const updateRequestInput = {
         body: body,
-        headers: headers,
+        headers: rowsToObject(headers),
         method: method,
         name: name,
-        url: url + toQueryString(params)
+        url: url + '?' + rowsToSearchParams(params).toString(),
       }
 
       try {
@@ -158,15 +159,10 @@ export const useRequestStore = create<RequestState>((set, get) => {
         throw new Error("Invalid URL");
       }
 
-    // Build final URL
-      Object.entries(params).forEach(([k, v]) =>
-        parsedUrl.searchParams.set(k, v)
-      );
-
       const payload = {
         method,
-        url: parsedUrl.toString(),
-        headers,
+        url: parsedUrl + '?' + rowsToSearchParams(params).toString(),
+        headers: rowsToObject(headers),
         body,
         collection_id: "c_1",  // TODO: implement with actual collection id
         created_by_id: "user_1",  // TODO: implement with actual used id
@@ -210,10 +206,5 @@ function parseDurationMs(v: string): number {
   if (!v) return 0;
   const n = Number(v.replace(/ms$/, ""));
   return Number.isFinite(n) ? n : 0;
-}
-
-function toQueryString(params: Record<string, string>): string {
-  const queryString = new URLSearchParams(params).toString();
-  return queryString ? `?${queryString}` : '';
 }
 

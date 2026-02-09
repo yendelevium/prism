@@ -119,6 +119,13 @@ export const CollectionsSidebarPanel: React.FC = () => {
             : c
         )
       );
+
+      setExpandedFolders(prev => ({
+        ...prev,
+        [collectionId]: true,
+      }));
+
+      setRequest(newRequestItem);
     }
     catch (err: any) {
       toast.error(err.message);
@@ -146,7 +153,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
           Collections
         </h2>
 
-        {/* Add collection (behavior intentionally not implemented here) */}
+        {/* Add collection */}
         <button
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: 'var(--accent)' }}
@@ -261,8 +268,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   <div
                     key={req.id}
                     onClick={() => {
-                      //setRequest(req); // Selection Store
-                      setRequestStore(req); // Request Store
+                      setRequest(req); // Selection Store
                     }}
                     className={`
                       flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2

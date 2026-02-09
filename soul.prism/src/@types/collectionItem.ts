@@ -2,6 +2,8 @@ import { Collection } from "@/backend/collection/collection.types";
 import { unwrap } from "./actionResult";
 import { Request } from "@/backend/request/request.types";
 import { getRequestsByCollectionAction } from "@/backend/request/request.actions";
+import { KeyValueRow, objectToRows, urlToKeyValueRows } from "@/components/editors/KeyValueEditor";
+import { JsonValue } from "@prisma/client/runtime/client";
 
 /**
  * Supported HTTP methods for request execution.
@@ -53,7 +55,7 @@ export interface RequestItem {
   /**
    * Search params associated with the request.
    */
-  params: Record<string, string>;
+  params: KeyValueRow[];
 
   /**
    * HTTP headers associated with the request.
@@ -61,7 +63,7 @@ export interface RequestItem {
    * Keys should be treated as case-insensitive, though they are
    * stored as provided.
    */
-  headers: Record<string, string>;
+  headers: KeyValueRow[];
 
   /**
    * Raw request body payload.
@@ -108,19 +110,13 @@ export interface CollectionItem {
   requests: RequestItem[];
 }
 
-export function getSearchParams(url: string): Record<string, string> {
-  const params = new URL(url).searchParams;
-  return Object.fromEntries(params.entries());
-}
-
-
 
 export const requestToRequestItem = (request: Request) => {
   return {
     body: request.body,
     collection_id: request.collectionId,
-    headers: request.headers,
-    params: getSearchParams(request.url),
+    headers: objectToRows(request.headers ? request.headers as Record<string, string> : {}),
+    params: urlToKeyValueRows(request.url),
     id: request.id,
     method: request.method,
     name: request.name,

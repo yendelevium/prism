@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState } from "react";
 import {
   PlusIcon,
   TrashIcon,
   EyeIcon,
   EyeSlashIcon,
-} from '@heroicons/react/24/outline'
-import clsx from 'clsx'
+} from "@heroicons/react/24/outline";
+import clsx from "clsx";
 
 /**
  * Represents a single editable key/value entry.
@@ -21,17 +21,17 @@ export type KeyValueRow = {
    *
    * Used for React rendering and local UI state such as secret visibility.
    */
-  id: string
+  id: string;
 
   /**
    * Key name for the entry.
    */
-  key: string
+  key: string;
 
   /**
    * Value associated with the key.
    */
-  value: string
+  value: string;
 
   /**
    * Whether this row is enabled.
@@ -40,14 +40,14 @@ export type KeyValueRow = {
    *
    * @defaultValue true
    */
-  enabled?: boolean
+  enabled?: boolean;
 
   /**
    * Whether this row is read-only.
    *
    * Read-only rows cannot be edited or deleted, regardless of editor mode.
    */
-  readonly?: boolean
+  readonly?: boolean;
 
   /**
    * Whether the value should be treated as sensitive.
@@ -55,8 +55,8 @@ export type KeyValueRow = {
    * Secret values are masked by default and can be temporarily revealed
    * via a visibility toggle.
    */
-  secret?: boolean
-}
+  secret?: boolean;
+};
 
 /**
  * Props for {@link KeyValueEditor}.
@@ -68,17 +68,17 @@ export type KeyValueEditorProps = {
    * This component is fully controlled; all mutations are surfaced
    * through {@link KeyValueEditorProps.onChange}.
    */
-  rows: KeyValueRow[]
+  rows: KeyValueRow[];
 
   /**
    * Callback invoked whenever rows are added, removed, or modified.
    */
-  onChange: (rows: KeyValueRow[]) => void
+  onChange: (rows: KeyValueRow[]) => void;
 
   /**
    * Optional title rendered in the editor header.
    */
-  title?: string
+  title?: string;
 
   /**
    * Display mode of the editor.
@@ -88,7 +88,7 @@ export type KeyValueEditorProps = {
    *
    * @defaultValue "edit"
    */
-  mode?: 'edit' | 'view'
+  mode?: "edit" | "view";
 
   /**
    * Whether users may add new rows.
@@ -97,7 +97,7 @@ export type KeyValueEditorProps = {
    *
    * @defaultValue false
    */
-  allowAdd?: boolean
+  allowAdd?: boolean;
 
   /**
    * Whether users may delete existing rows.
@@ -106,35 +106,35 @@ export type KeyValueEditorProps = {
    *
    * @defaultValue false
    */
-  allowDelete?: boolean
+  allowDelete?: boolean;
 
   /**
    * Whether rows expose an enabled/disabled toggle.
    *
    * @defaultValue false
    */
-  allowToggle?: boolean
+  allowToggle?: boolean;
 
   /**
    * Placeholder text for the key input.
    *
    * @defaultValue "Key"
    */
-  keyPlaceholder?: string
+  keyPlaceholder?: string;
 
   /**
    * Placeholder text for the value input.
    *
    * @defaultValue "Value"
    */
-  valuePlaceholder?: string
+  valuePlaceholder?: string;
 
   /**
    * Text shown when no rows are present.
    *
    * @defaultValue "No entries"
    */
-  emptyState?: string
+  emptyState?: string;
 
   /**
    * Optional validation function for keys.
@@ -142,7 +142,7 @@ export type KeyValueEditorProps = {
    * Returning a string indicates an error message; returning `null`
    * indicates a valid value.
    */
-  validateKey?: (key: string) => string | null
+  validateKey?: (key: string) => string | null;
 
   /**
    * Optional validation function for values.
@@ -150,55 +150,100 @@ export type KeyValueEditorProps = {
    * Returning a string indicates an error message; returning `null`
    * indicates a valid value.
    */
-  validateValue?: (value: string) => string | null
+  validateValue?: (value: string) => string | null;
 
   /**
    * Visual height of each row.
    *
    * @defaultValue "md"
    */
-  rowHeight?: 'sm' | 'md'
+  rowHeight?: "sm" | "md";
 
   /**
    * Whether to use a more compact visual density.
    *
    * @defaultValue false
    */
-  dense?: boolean
-}
+  dense?: boolean;
+};
 
 /**
- * Converts an array of KeyValueRow to a javascript object
- * 
+ * Converts an array of KeyValueRow to URLSearchParams
+ *
  * @remark Only converts rows that are enabled
- * 
+ *
  * @param rows - the KeyValueRows to be converted
- * @returns - the object
+ * @returns - the URLSearchParams
  */
-export function rowsToObject(rows: KeyValueRow[]) {
+export function rowsToSearchParams(rows: KeyValueRow[]) {
+  const params = new URLSearchParams();
+
+  rows.forEach((r) => {
+    if (r.enabled !== false && r.key) {
+      params.append(r.key, r.value);
+    }
+  });
+
+  return params;
+}
+
+export function urlToKeyValueRows(url: string): KeyValueRow[] {
+  let parsed: URL;
+
+  try {
+    parsed = new URL(url);
+  } catch {
+    return [];
+  }
+
+  const rows: KeyValueRow[] = [];
+
+  parsed.searchParams.forEach((value, key) => {
+    rows.push({
+      id: crypto.randomUUID(),
+      key,
+      value,
+      enabled: true,
+    });
+  });
+
+  return rows;
+}
+
+
+/** * Converts an array of KeyValueRow to a javascript object 
+ * 
+ * @remark Only converts rows that are enabled 
+ * @param rows - the KeyValueRows to be converted 
+ * @returns - the object 
+ * */ 
+export function rowsToObject(
+  rows: KeyValueRow[],
+) {
   return rows
-    .filter(r => r.enabled !== false && r.key)
-    .reduce((acc, r) => {
-      acc[r.key] = r.value;
-      return acc;
-    }, {} as Record<string, string>);
+    .filter((r) => r.enabled !== false && r.key)
+    .reduce(
+      (acc, r) => {
+        acc[r.key] = r.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 }
 
 /**
- * Converts a javascript object of the form Record<string, string> to an array of KeyValueRow 
- * 
+ * Converts a javascript object of the form Record<string, string> to an array of KeyValueRow
+ *
  * @param records - the object to be converted
  * @returns - the KeyValueRow array
  */
 export function objectToRows(obj: Record<string, string>) {
-  return Object
-    .entries(obj)
-    .map(([key, value], index) => ({
-      id: `${key}-${index}`,
-      key,
-      value,
-      enabled: true,
-    }));
+  return Object.entries(obj).map(([key, value], index) => ({
+    id: `${key}-${index}`,
+    key,
+    value,
+    enabled: true,
+  }));
 }
 
 /**
@@ -218,39 +263,39 @@ export function KeyValueEditor({
   onChange,
   title,
 
-  mode = 'edit',
+  mode = "edit",
   allowAdd = false,
   allowDelete = false,
   allowToggle = false,
 
-  keyPlaceholder = 'Key',
-  valuePlaceholder = 'Value',
-  emptyState = 'No entries',
+  keyPlaceholder = "Key",
+  valuePlaceholder = "Value",
+  emptyState = "No entries",
 
   validateKey,
   validateValue,
 
-  rowHeight = 'md',
+  rowHeight = "md",
   dense = false,
 }: KeyValueEditorProps) {
   /**
    * Whether the editor is currently in view-only mode.
    */
-  const isView = mode === 'view'
+  const isView = mode === "view";
 
   /**
    * Local visibility state for secret values.
    *
    * This state is intentionally ephemeral and not exposed to the parent.
    */
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({})
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   /**
    * Toggle visibility of a secret value for a specific row.
    */
   const toggleReveal = (id: string) => {
-    setRevealed(r => ({ ...r, [id]: !r[id] }))
-  }
+    setRevealed((r) => ({ ...r, [id]: !r[id] }));
+  };
 
   /**
    * Update a single row by applying a partial patch.
@@ -259,21 +304,17 @@ export function KeyValueEditor({
    */
   const updateRow = useCallback(
     (id: string, patch: Partial<KeyValueRow>) => {
-      onChange(
-        rows.map(row =>
-          row.id === id ? { ...row, ...patch } : row
-        )
-      )
+      onChange(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
     },
-    [rows, onChange]
-  )
+    [rows, onChange],
+  );
 
   /**
    * Remove a row by its identifier.
    */
   const deleteRow = (id: string) => {
-    onChange(rows.filter(r => r.id !== id))
-  }
+    onChange(rows.filter((r) => r.id !== id));
+  };
 
   /**
    * Append a new, empty row to the editor.
@@ -283,20 +324,17 @@ export function KeyValueEditor({
       ...rows,
       {
         id: crypto.randomUUID(),
-        key: '',
-        value: '',
+        key: "",
+        value: "",
         enabled: true,
       },
-    ])
-  }
+    ]);
+  };
 
   /**
    * CSS class applied based on row height selection.
    */
-  const rowHeightClass =
-    rowHeight === 'sm'
-      ? 'h-[28px]'
-      : 'h-[36px]'
+  const rowHeightClass = rowHeight === "sm" ? "h-[28px]" : "h-[36px]";
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[var(--bg-primary)]">
@@ -311,9 +349,9 @@ export function KeyValueEditor({
             <button
               onClick={addRow}
               className={clsx(
-                'flex items-center gap-1 rounded px-2 py-1 text-xs',
-                'text-[var(--accent)] hover:bg-[var(--bg-secondary)]',
-                dense && 'py-0.5'
+                "flex items-center gap-1 rounded px-2 py-1 text-xs",
+                "text-[var(--accent)] hover:bg-[var(--bg-secondary)]",
+                dense && "py-0.5",
               )}
             >
               <PlusIcon className="h-3.5 w-3.5" />
@@ -331,19 +369,19 @@ export function KeyValueEditor({
         )}
 
         <div className="flex flex-col gap-1">
-          {rows.map(row => {
-            const keyError = validateKey?.(row.key)
-            const valueError = validateValue?.(row.value)
-            const isSecret = row.secret
-            const isRevealed = revealed[row.id]
+          {rows.map((row) => {
+            const keyError = validateKey?.(row.key);
+            const valueError = validateValue?.(row.value);
+            const isSecret = row.secret;
+            const isRevealed = revealed[row.id];
 
             return (
               <div
                 key={row.id}
                 className={clsx(
-                  'flex items-center gap-2 rounded px-1',
+                  "flex items-center gap-2 rounded px-1",
                   rowHeightClass,
-                  !isView && 'hover:bg-[var(--bg-secondary)]'
+                  !isView && "hover:bg-[var(--bg-secondary)]",
                 )}
               >
                 {/* Toggle */}
@@ -352,7 +390,7 @@ export function KeyValueEditor({
                     type="checkbox"
                     checked={row.enabled ?? true}
                     disabled={isView}
-                    onChange={e =>
+                    onChange={(e) =>
                       updateRow(row.id, {
                         enabled: e.target.checked,
                       })
@@ -365,13 +403,11 @@ export function KeyValueEditor({
                   value={row.key}
                   placeholder={keyPlaceholder}
                   disabled={isView || row.readonly}
-                  onChange={e =>
-                    updateRow(row.id, { key: e.target.value })
-                  }
+                  onChange={(e) => updateRow(row.id, { key: e.target.value })}
                   className={clsx(
-                    'flex-1 bg-transparent text-xs outline-none',
-                    'text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]',
-                    keyError && 'text-[var(--error)]'
+                    "flex-1 bg-transparent text-xs outline-none",
+                    "text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]",
+                    keyError && "text-[var(--error)]",
                   )}
                 />
 
@@ -380,21 +416,17 @@ export function KeyValueEditor({
                   <input
                     value={row.value}
                     placeholder={valuePlaceholder}
-                    type={
-                      isSecret && !isRevealed
-                        ? 'password'
-                        : 'text'
-                    }
+                    type={isSecret && !isRevealed ? "password" : "text"}
                     disabled={isView || row.readonly}
-                    onChange={e =>
+                    onChange={(e) =>
                       updateRow(row.id, {
                         value: e.target.value,
                       })
                     }
                     className={clsx(
-                      'w-full bg-transparent text-xs outline-none pr-6',
-                      'text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]',
-                      valueError && 'text-[var(--error)]'
+                      "w-full bg-transparent text-xs outline-none pr-6",
+                      "text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]",
+                      valueError && "text-[var(--error)]",
                     )}
                   />
 
@@ -425,10 +457,10 @@ export function KeyValueEditor({
                   </button>
                 )}
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }
