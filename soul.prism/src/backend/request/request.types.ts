@@ -9,7 +9,6 @@ export interface CreateRequestInput {
   headers?: Record<string, string> | null;
   body?: string | null;
   collectionId: string;
-  createdById: string;
 }
 
 export interface UpdateRequestInput {

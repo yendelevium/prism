@@ -51,6 +51,11 @@ export interface RequestItem {
   url: string;
 
   /**
+   * Search params associated with the request.
+   */
+  params: Record<string, string>;
+
+  /**
    * HTTP headers associated with the request.
    *
    * Keys should be treated as case-insensitive, though they are
@@ -103,6 +108,10 @@ export interface CollectionItem {
   requests: RequestItem[];
 }
 
+export function getSearchParams(url: string): Record<string, string> {
+  const params = new URL(url).searchParams;
+  return Object.fromEntries(params.entries());
+}
 
 
 
@@ -111,6 +120,7 @@ export const requestToRequestItem = (request: Request) => {
     body: request.body,
     collection_id: request.collectionId,
     headers: request.headers,
+    params: getSearchParams(request.url),
     id: request.id,
     method: request.method,
     name: request.name,

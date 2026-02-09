@@ -9,12 +9,15 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { CollectionItem, collectionToCollectionItem, RequestItem } from '../../../@types/collectionItem';
+import { CollectionItem, collectionToCollectionItem, HttpMethod, RequestItem, requestToRequestItem } from '../../../@types/collectionItem';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { createCollectionAction } from '@/backend/collection/collection.actions';
 import { unwrap } from '@/@types/actionResult';
 import { useSelectionStore } from '@/stores/useSelectionStore';
 import { toast } from 'sonner';
+import { CreateRequestInput, Request } from '@/backend/request/request.types';
+import { createRequestAction } from '@/backend/request/request.actions';
+import { useRequestStore } from '@/stores/useRequestStore';
 
 
 /**
@@ -57,6 +60,9 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const isLoading = useCollectionStore(s => s.isLoading);
   const setCollections = useCollectionStore(s => s.setCollections);
   const currentWorkspace = useSelectionStore(s => s.workspace);
+  const currentRequest = useSelectionStore(s => s.request);
+  const setRequest = useSelectionStore(s => s.setRequest);
+  const setRequestStore = useRequestStore(s => s.setRequest);
 
   /**
    * Tracks which collection folders are expanded.
@@ -66,13 +72,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const [expandedFolders, setExpandedFolders] = useState<
     Record<string, boolean>
   >({ 'col-1': true });
-
-  /**
-   * Identifier of the currently selected request.
-   *
-   * Used exclusively for visual highlighting.
-   */
-  const [activeReqId, setActiveReqId] = useState<string | null>(null);
 
   /**
    * Toggle the expanded state of a collection folder.
@@ -94,6 +93,35 @@ export const CollectionsSidebarPanel: React.FC = () => {
     catch (err: any) {
       toast.error(err.message);
       return;
+    }
+  }
+
+  const createRequest = async (collectionId: string) => {
+    try {
+      // Create a blank request
+      const newRequestInput = {
+        body: "",
+        collectionId: collectionId,
+        headers: {},
+        method: "GET" as HttpMethod,
+        name: "Untitled",
+        url: "https://prism-amrita-app.com/exampleURL",
+      } as CreateRequestInput;
+
+      const newRequest = unwrap(await createRequestAction(newRequestInput));
+      toast.success("Successfully created request");
+
+      const newRequestItem = requestToRequestItem(newRequest);
+      setCollections(
+        collections.map(c => 
+          c.id === collectionId 
+            ? { ...c, requests: [...c.requests, newRequestItem] } // Update the requests for this particular collection
+            : c
+        )
+      );
+    }
+    catch (err: any) {
+      toast.error(err.message);
     }
   }
 
@@ -203,7 +231,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {/* Create request */}
                 <button
-                  onClick={() => {}}
+                  onClick={() => createRequest(col.id)}
                   className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                   style={{ color: 'var(--accent)' }}
                   title="Add request"
@@ -232,11 +260,14 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 {col.requests.map(req => (
                   <div
                     key={req.id}
-                    onClick={() => setActiveReqId(req.id)}
+                    onClick={() => {
+                      //setRequest(req); // Selection Store
+                      setRequestStore(req); // Request Store
+                    }}
                     className={`
                       flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2
                       ${
-                        activeReqId === req.id
+                        currentRequest?.id === req.id
                           ? 'bg-[var(--bg-panel)] border-[var(--accent)]'
                           : 'border-transparent hover:bg-[var(--bg-secondary)]'
                       }
@@ -260,7 +291,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                       className="text-xs truncate"
                       style={{
                         color:
-                          activeReqId === req.id
+                          currentRequest?.id === req.id
                             ? 'var(--text-primary)'
                             : 'var(--text-secondary)',
                       }}

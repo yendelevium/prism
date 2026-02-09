@@ -2,37 +2,19 @@
 
 import { useState } from "react";
 import CodeEditor from "@/components/editors/CodeEditor";
-import { KeyValueEditor, KeyValueRow, rowsToObject } from "../editors/KeyValueEditor";
+import { KeyValueEditor, KeyValueRow, objectToRows, rowsToObject } from "../editors/KeyValueEditor";
 import { useRequestStore } from "@/stores/useRequestStore";
 
 const tabs = ["Params", "Headers", "Body", "Auth", "Tests"];
 
 export default function RequestTabs() {
   const [activeTab, setActiveTab] = useState("Params");
-  const [body, setBodyText] = useState(`{
-    "example": true
-  }`);
+  const params = useRequestStore(s => s.params);
+  const headers = useRequestStore(s => s.headers);
+  const body = useRequestStore(s => s.body);
   const setParams = useRequestStore(s => s.setParams);
   const setHeaders = useRequestStore(s => s.setHeaders);
   const setBody = useRequestStore(s => s.setBody);
-
-  const [paramRows, setParamRows] = useState<KeyValueRow[]>([
-    {
-      id: '1',
-      key: 'API_BASE_URL_WITH_A_REALLY_LONG_NAME',
-      value: 'https://api.example.com',
-    },
-    {
-      id: '2',
-      key: 'API_KEY',
-      value: 'secret-key',
-      secret: true,
-    },
-  ])
-
-
-  const [headerRows, setHeaderRows] = useState<KeyValueRow[]>([]);
-
 
   return (
     <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
@@ -61,9 +43,8 @@ export default function RequestTabs() {
         {activeTab === "Body" && (
           <CodeEditor
             language="json"
-            value={body}
+            value={body ?? ""}
             onChange={(body) => {
-              setBodyText(body ?? "");
               setBody(body ?? "");
             }}
           />
@@ -72,9 +53,8 @@ export default function RequestTabs() {
         {activeTab === "Params" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={paramRows}
+              rows={objectToRows(params)}
               onChange={(rows) => {
-                setParamRows(rows);
                 setParams(rowsToObject(rows));
               }}
               title="Query Parameters"
@@ -94,9 +74,8 @@ export default function RequestTabs() {
         {activeTab === "Headers" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={headerRows}
+              rows={objectToRows(headers)}
               onChange={(rows) => {
-                setHeaderRows(rows);
                 setHeaders(rowsToObject(rows))
               }}
               title="Request Headers"

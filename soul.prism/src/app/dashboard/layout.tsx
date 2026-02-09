@@ -10,6 +10,7 @@ import { unwrap } from "@/@types/actionResult";
 import { listCollectionsByWorkspaceAction } from "@/backend/collection/collection.actions";
 import { collectionToCollectionItem } from "../../@types/collectionItem";
 import { WorkspaceCollectionSync } from "../providers/WorkspaceCollectionSync";
+import { RequestDetailsSync } from "../providers/RequestDetailsSync";
 
 const userId = "user_1";
 
@@ -26,6 +27,7 @@ export default async function DashboardLayout({
     <DataStoreProvider workspaces={data.workspacesData}>
       <EnvironmentProvider>
         <WorkspaceCollectionSync/>
+        <RequestDetailsSync/>
         
         <div className="flex flex-col h-full">
           <div className="flex-shrink-0 h-14">
