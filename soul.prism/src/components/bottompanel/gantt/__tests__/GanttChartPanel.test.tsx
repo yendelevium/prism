@@ -60,10 +60,10 @@ describe("TraceGanttClient", () => {
     );
 
     // First span is ok → success color
-    expect(durationBars[0].getAttribute("fill")).toBe("var(--success)");
+    expect(durationBars[0].getAttribute("fill")).toBe("#A3BE8C");
 
     // Second span is error → error color
-    expect(durationBars[1].getAttribute("fill")).toBe("var(--error)");
+    expect(durationBars[1].getAttribute("fill")).toBe("#BF616A");
   });
 
   it("computes offset and depth correctly", () => {

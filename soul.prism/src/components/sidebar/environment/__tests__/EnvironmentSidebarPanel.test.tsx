@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react"
 import EnvSidebarClient from "../EnvironmentSidebarPanel"
 import userEvent from "@testing-library/user-event"
+import { EnvironmentProvider } from "@/components/context/EnvironmentContext";
 
 const baseEnvironments = [
     {
@@ -24,14 +25,26 @@ const baseEnvironments = [
     },
 ]
 
+export function renderWithProviders(ui: React.ReactElement) {
+  return render(
+    <EnvironmentProvider>
+      {ui}
+    </EnvironmentProvider>
+  );
+}
+
+
 jest.mock('lucide-react', () => ({
   Settings2: () => <span data-testid="settings-icon" />,
   Plus: () => <span data-testid="plus-icon" />,
   Trash2: () => <span data-testid="trash-icon" />,
   Globe: () => <span data-testid="globe-icon" />,
+  Star: () => <span data-testid="star-icon" />, 
 }));
 
 jest.mock('../../../editors/KeyValueEditor', () => ({
+  __esModule: true,
+
   KeyValueEditor: ({ onChange }: any) => (
     <button
       data-testid="mock-kv-editor"
@@ -49,7 +62,11 @@ jest.mock('../../../editors/KeyValueEditor', () => ({
       Mock Editor
     </button>
   ),
+
+  KeyValueRow: {},
 }));
+
+
 
 
 describe('EnvSidebarClient', () => {
@@ -64,7 +81,7 @@ describe('EnvSidebarClient', () => {
 
 
   it('renders nothing when given nothing', () => {
-    render(
+    renderWithProviders(
         <EnvSidebarClient initialEnvironments={[]} />
     )
 
@@ -76,7 +93,7 @@ describe('EnvSidebarClient', () => {
     
     const user = userEvent.setup();
 
-    render(
+    renderWithProviders(
         <EnvSidebarClient initialEnvironments={[]} />
     )
 
@@ -90,7 +107,7 @@ describe('EnvSidebarClient', () => {
 
   
   it('opens modal when environment is clicked', () => {
-    render(
+    renderWithProviders(
       <EnvSidebarClient initialEnvironments={baseEnvironments} />
     );
 
@@ -102,7 +119,7 @@ describe('EnvSidebarClient', () => {
   });
 
   it('deletes an environment', () => {
-    render(
+    renderWithProviders(
       <EnvSidebarClient initialEnvironments={baseEnvironments} />
     );
 
@@ -117,7 +134,7 @@ describe('EnvSidebarClient', () => {
   });
 
   it('updates variables and saves changes', () => {
-    render(
+    renderWithProviders(
       <EnvSidebarClient initialEnvironments={baseEnvironments} />
     );
 
@@ -139,7 +156,7 @@ describe('EnvSidebarClient', () => {
   });
 
   it('cancels editing without saving', () => {
-    render(
+    renderWithProviders(
       <EnvSidebarClient initialEnvironments={baseEnvironments} />
     );
 
