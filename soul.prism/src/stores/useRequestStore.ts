@@ -24,6 +24,9 @@ interface RequestState {
   headers: KeyValueRow[];
   body: string | null;
 
+  isLoading: boolean;
+  isExecuting: boolean;
+
   // inside useRequestStore
 
   response: {
@@ -50,14 +53,18 @@ interface RequestState {
   setHeaders: (h: KeyValueRow[]) => void;
   setBody: (b: string | null) => void;
 
+  setLoading: (l: boolean) => void;
+
   saveRequest: () => Promise<void>;
 
   execute: (eV: Record<string, string>) => Promise<void>;
 }
 
 export const useRequestStore = create<RequestState>((set, get) => {
+
   const debouncedSave = debounce(async () => {
     await get().saveRequest();
+    set({ isLoading: false});
   }, 800);
 
   return {
@@ -69,6 +76,9 @@ export const useRequestStore = create<RequestState>((set, get) => {
     params: [],
     headers: [],
     body: null,
+
+    isLoading: false,
+    isExecuting: false,
 
     response: {
       status: null,
@@ -98,34 +108,42 @@ export const useRequestStore = create<RequestState>((set, get) => {
     },
 
     setName: (name) => {
+      set({ isLoading: true});
       set({ name });
       debouncedSave();
     },
 
     setMethod: (method) => {
+      set({ isLoading: true});
       set({ method });
       debouncedSave();
     },
 
     setUrl: (url) => {
+      set({ isLoading: true});
       set({ url });
       debouncedSave();
     },
 
     setParams: (params) => {
+      set({ isLoading: true});
       set({ params });
       debouncedSave();
     },
 
     setHeaders: (headers) => {
+      set({ isLoading: true});
       set({ headers });
       debouncedSave();
     },
 
     setBody: (body) => {
+      set({ isLoading: true});
       set({ body });
       debouncedSave();
     },
+
+    setLoading: (isLoading) => set({ isLoading }),
 
     saveRequest: async () => {
       const { id, name, method, url, params, headers, body } = get();
@@ -148,6 +166,9 @@ export const useRequestStore = create<RequestState>((set, get) => {
     },
 
     execute: async (environmentVariables) => {
+
+      set({ isExecuting: true});
+
       const { method, url, params, headers, body } = get();
 
     // Verify
@@ -203,6 +224,8 @@ export const useRequestStore = create<RequestState>((set, get) => {
           spans: data.spans,
         },
       });
+
+      set({ isExecuting: false});
     },
   };
 });

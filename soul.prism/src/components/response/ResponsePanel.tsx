@@ -5,14 +5,26 @@ import { useRequestStore } from "@/stores/useRequestStore";
 import CodeEditor from "@/components/editors/CodeEditor";
 import ResponseInfo from "./ResponseInfo";
 import { KeyValueEditor, KeyValueRow, objectToRows } from "../editors/KeyValueEditor";
+import { useEffect } from "react";
 
 const tabs = ["Body", "Headers", "Cookies", "Tests"];
 
 export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState("Body");
   const response = useRequestStore(s => s.response);
+  const isExecuting = useRequestStore(s => s.isExecuting);
+  const [highlight, setHighlight] = useState(false);
 
-    if (response.status === null) {
+  useEffect(() => {
+    // if isExecuting changes to false i.e, finished executing
+    if (isExecuting === false) {
+      setHighlight(true);
+      const t = setTimeout(() => setHighlight(false), 600);
+      return () => clearTimeout(t);
+    }
+  }, [isExecuting]);
+
+  if (response.status === null) {
     return (
       <div className="flex flex-1 items-center justify-center p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
         <div className="flex flex-1 p-2 items-center justify-center h-full bg-[var(--bg-primary)]">
@@ -25,7 +37,12 @@ export default function ResponsePanel() {
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
+      <div
+        className={`flex flex-1 flex-col min-h-0 p-4 border-r h-full border-[var(--border-color)]
+          transition-colors duration-500
+          ${highlight ? "bg-[var(--bg-highlight)]" : "bg-[var(--bg-secondary)]"}
+        `}
+      >
       <div className="flex justify-between border-b border-[var(--border-color)] mb-3">
 
         {/* Tabs */}

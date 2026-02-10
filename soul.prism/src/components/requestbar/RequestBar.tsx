@@ -12,11 +12,13 @@ export default function RequestBar() {
     setMethod,
     setUrl,
     execute,
+    isExecuting,
   } = useRequestStore();
   const { variables } = useEnvironment();
 
   // TODO: see if this way of updating the url works, fingers crossed
   const handleSend = async () => {
+    if (isExecuting) return;
     try {
       await execute(variables);
     } catch (err: any) {
@@ -47,9 +49,12 @@ export default function RequestBar() {
 
       <button 
         onClick={handleSend}
-        className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black px-4 py-1 rounded"
+        className="relative bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black px-4 py-1 rounded flex items-center justify-center"
       >
-        Send
+        <span className={isExecuting ? "opacity-0" : "opacity-100"}>
+          Send
+        </span>
+        {isExecuting && <div className="absolute h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />}
       </button>
     </div>
   );
