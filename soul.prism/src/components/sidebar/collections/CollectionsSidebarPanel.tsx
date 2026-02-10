@@ -11,12 +11,12 @@ import {
 } from 'lucide-react';
 import { CollectionItem, collectionToCollectionItem, HttpMethod, RequestItem, requestToRequestItem } from '../../../@types/collectionItem';
 import { useCollectionStore } from '@/stores/useCollectionStore';
-import { createCollectionAction } from '@/backend/collection/collection.actions';
+import { createCollectionAction, deleteCollectionAction } from '@/backend/collection/collection.actions';
 import { unwrap } from '@/@types/actionResult';
 import { useSelectionStore } from '@/stores/useSelectionStore';
 import { toast } from 'sonner';
 import { CreateRequestInput, Request } from '@/backend/request/request.types';
-import { createRequestAction } from '@/backend/request/request.actions';
+import { createRequestAction, deleteRequestAction } from '@/backend/request/request.actions';
 import { useRequestStore } from '@/stores/useRequestStore';
 
 
@@ -64,6 +64,9 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const setRequest = useSelectionStore(s => s.setRequest);
   const setRequestName = useRequestStore(s => s.setName);
 
+  // Only for if the current request in being deleted
+  const setRequestStore = useRequestStore(s => s.setRequest);
+
   // For renaming collections
   const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
   const [editingCollectionName, setEditingCollectionName] = useState("");
@@ -90,7 +93,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
   };
 
   
-
   const createCollection = async () => {
     
     try {
@@ -156,6 +158,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
     );
 
     try {
+      // TODO: actually rename collection, requires backend support
       // await renameCollectionAction(collectionId, newName);
       toast.success("Collection renamed");
     } catch (err: any) {
@@ -186,7 +189,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
     );
 
     try {
-      await setRequestName(newName);
+      setRequestName(newName);
       toast.success("Request renamed");
     } catch (err: any) {
       toast.error(err.message);
@@ -197,6 +200,63 @@ export const CollectionsSidebarPanel: React.FC = () => {
     setEditingRequestId(null);
     setEditingRequestName("");
   };
+
+  const deleteRequest = async (requestId: string) => {
+    // Optimistic update
+    setCollections(
+      collections.map(col => ({
+        ...col,
+        requests: col.requests.filter(r => r.id !== requestId),
+      }))
+    );
+
+    // Clear selection if needed
+    if (currentRequest?.id === requestId) {
+      setRequest(null);
+      setRequestStore({url: ""} as RequestItem);
+    }
+
+    try {
+      await deleteRequestAction(requestId);
+      toast.success("Request deleted");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const deleteCollection = async (collectionId: string) => {
+    // Find the collection being deleted
+    const collectionToDelete = collections.find(c => c.id === collectionId);
+
+    // Optimistic update: remove collection
+    setCollections(
+      collections.filter(c => c.id !== collectionId)
+    );
+
+    // Clear request selection if it belonged to this collection
+    if (
+      currentRequest &&
+      collectionToDelete?.requests.some(r => r.id === currentRequest.id)
+    ) {
+      setRequest(null);
+      setRequestStore({url: ""} as RequestItem);
+    }
+
+    // Clean up expanded state
+    setExpandedFolders(prev => {
+      const next = { ...prev };
+      delete next[collectionId];
+      return next;
+    });
+
+    try {
+      await deleteCollectionAction(collectionId);
+      toast.success("Collection deleted");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
 
 
 
@@ -353,7 +413,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    // TODO: add delete functionality for collections
+                    deleteCollection(col.id)
                   }}
                   className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                   style={{ color: 'var(--error)' }}
@@ -383,6 +443,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                       setEditingRequestName(req.name);
                     }}
                     className={`
+                      group
                       flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2
                       ${
                         currentRequest?.id === req.id
@@ -437,6 +498,21 @@ export const CollectionsSidebarPanel: React.FC = () => {
                         {req.name}
                       </span>
                     )}
+
+                    {/* Request actions */}
+                    <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteRequest(req.id);
+                        }}
+                        className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
+                        style={{ color: 'var(--error)' }}
+                        title="Delete request"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
 
                   </div>
                 ))}

@@ -90,7 +90,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
         id: r.id,
         name: r.name,
         method: r.method,
-        url: new URL(r.url).origin + new URL(r.url).pathname,
+        url: r.url === "" ? "" : new URL(r.url).origin + new URL(r.url).pathname,
         params: r.params ?? [],
         headers: r.headers ?? [],
         body: r.body,
