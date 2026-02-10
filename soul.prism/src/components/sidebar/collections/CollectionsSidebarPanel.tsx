@@ -62,7 +62,16 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const currentWorkspace = useSelectionStore(s => s.workspace);
   const currentRequest = useSelectionStore(s => s.request);
   const setRequest = useSelectionStore(s => s.setRequest);
-  const setRequestStore = useRequestStore(s => s.setRequest);
+  const setRequestName = useRequestStore(s => s.setName);
+
+  // For renaming collections
+  const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
+  const [editingCollectionName, setEditingCollectionName] = useState("");
+
+  // For renaming requests
+  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
+  const [editingRequestName, setEditingRequestName] = useState("");
+
 
   /**
    * Tracks which collection folders are expanded.
@@ -132,6 +141,65 @@ export const CollectionsSidebarPanel: React.FC = () => {
     }
   }
 
+  const commitRenameCollection = async (collectionId: string) => {
+    const newName = editingCollectionName.trim();
+
+    setEditingCollectionId(null);
+
+    if (!newName) return;
+
+    // Optimistic UI update
+    setCollections(
+      collections.map(c =>
+        c.id === collectionId ? { ...c, name: newName } : c
+      )
+    );
+
+    try {
+      // await renameCollectionAction(collectionId, newName);
+      toast.success("Collection renamed");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const cancelRenameCollection = () => {
+    setEditingCollectionId(null);
+    setEditingCollectionName("");
+  };
+
+  const commitRenameRequest = async (requestId: string) => {
+    const newName = editingRequestName.trim();
+
+    setEditingRequestId(null);
+
+    if (!newName) return;
+
+    // Optimistic UI update (collection sidebar)
+    setCollections(
+      collections.map(col => ({
+        ...col,
+        requests: col.requests.map(r =>
+          r.id === requestId ? { ...r, name: newName } : r
+        ),
+      }))
+    );
+
+    try {
+      await setRequestName(newName);
+      toast.success("Request renamed");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const cancelRenameRequest = () => {
+    setEditingRequestId(null);
+    setEditingRequestName("");
+  };
+
+
+
   return (
     <aside
       className="w-full h-full flex flex-col border-r select-none transition-colors duration-300"
@@ -198,6 +266,17 @@ export const CollectionsSidebarPanel: React.FC = () => {
           <div key={col.id} className="mb-1">
             {/* Collection Header */}
             <div
+              onClick={() => {
+                  if(editingCollectionId) return;
+                  toggleFolder(col.id)
+                }
+              }
+              onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setEditingCollectionId(col.id);
+                  setEditingCollectionName(createCollection.name);
+                }
+              }
               className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
             >
               <span
@@ -205,7 +284,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 style={{ color: 'var(--border-color)' }}
               >
                 <button
-                  onClick={() => toggleFolder(col.id)}
                   className="mr-1 p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                   aria-label="Toggle collection"
                 >
@@ -227,18 +305,43 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 }}
               />
 
-              <span
-                className="text-sm truncate flex-1"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                {col.name}
-              </span>
+              {editingCollectionId === col.id ? (
+                <input
+                  autoFocus
+                  value={editingCollectionName}
+                  onChange={(e) => setEditingCollectionName(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      commitRenameCollection(col.id);
+                    }
+                    if (e.key === "Escape") {
+                      cancelRenameCollection();
+                    }
+                  }}
+                  onBlur={() => commitRenameCollection(col.id)}
+                  className="text-sm flex-1 bg-transparent outline-none border-none px-1"
+                  style={{ color: 'var(--text-primary)' }}
+                />
+              ) : (
+                <span
+                  className="text-sm truncate flex-1"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {col.name}
+                </span>
+              )}
+
 
               {/* Actions */}
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {/* Create request */}
                 <button
-                  onClick={() => createRequest(col.id)}
+                  onClick={(e) => {
+                      e.stopPropagation();
+                      createRequest(col.id);
+                    }
+                  }
                   className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                   style={{ color: 'var(--accent)' }}
                   title="Add request"
@@ -248,7 +351,10 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
                 {/* Delete collection */}
                 <button
-                  onClick={() => {}}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // TODO: add delete functionality for collections
+                  }}
                   className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                   style={{ color: 'var(--error)' }}
                   title="Delete collection"
@@ -268,7 +374,13 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   <div
                     key={req.id}
                     onClick={() => {
+                      if (editingRequestId) return;
                       setRequest(req); // Selection Store
+                    }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      setEditingRequestId(req.id);
+                      setEditingRequestName(req.name);
                     }}
                     className={`
                       flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2
@@ -279,6 +391,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                       }
                     `}
                   >
+
                     {/* HTTP method */}
                     <span
                       className="text-[9px] font-bold w-10 shrink-0"
@@ -293,17 +406,38 @@ export const CollectionsSidebarPanel: React.FC = () => {
                     </span>
 
                     {/* Request name */}
-                    <span
-                      className="text-xs truncate"
-                      style={{
-                        color:
-                          currentRequest?.id === req.id
-                            ? 'var(--text-primary)'
-                            : 'var(--text-secondary)',
-                      }}
-                    >
-                      {req.name}
-                    </span>
+                    {editingRequestId === req.id ? (
+                      <input
+                        autoFocus
+                        value={editingRequestName}
+                        onChange={(e) => setEditingRequestName(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            commitRenameRequest(req.id);
+                          }
+                          if (e.key === "Escape") {
+                            cancelRenameRequest();
+                          }
+                        }}
+                        onBlur={() => commitRenameRequest(req.id)}
+                        className="text-xs bg-transparent outline-none border-none flex-1"
+                        style={{ color: 'var(--text-primary)' }}
+                      />
+                    ) : (
+                      <span
+                        className="text-xs truncate"
+                        style={{
+                          color:
+                            currentRequest?.id === req.id
+                              ? 'var(--text-primary)'
+                              : 'var(--text-secondary)',
+                        }}
+                      >
+                        {req.name}
+                      </span>
+                    )}
+
                   </div>
                 ))}
               </div>

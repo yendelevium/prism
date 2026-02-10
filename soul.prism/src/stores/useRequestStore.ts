@@ -43,6 +43,7 @@ interface RequestState {
 
   setRequest: (r: RequestItem) => void;
 
+  setName: (n: string) => void;
   setMethod: (m: HttpMethod) => void;
   setUrl: (url: string) => void;
   setParams: (p: KeyValueRow[]) => void;
@@ -94,6 +95,11 @@ export const useRequestStore = create<RequestState>((set, get) => {
         headers: r.headers ?? [],
         body: r.body,
       });
+    },
+
+    setName: (name) => {
+      set({ name });
+      debouncedSave();
     },
 
     setMethod: (method) => {
