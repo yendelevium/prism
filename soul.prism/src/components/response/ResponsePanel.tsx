@@ -12,6 +12,18 @@ export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState("Body");
   const response = useRequestStore(s => s.response);
 
+    if (response.status === null) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
+        <div className="flex flex-1 p-2 items-center justify-center h-full bg-[var(--bg-primary)]">
+          <span className="text-sm text-[var(--text-secondary)]">
+            Send a request to see the response
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
       <div className="flex justify-between border-b border-[var(--border-color)] mb-3">
