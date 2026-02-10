@@ -132,7 +132,7 @@ soul.prism/
 │   │   ├── sidebar/              # Navigation sidebar
 │   │   ├── topbar/               # Top navigation bar
 │   │   ├── requestbar/           # Request method/URL bar
-│   │   ├── editors/              # Monaco-based editors
+│   │   ├── editors/              # Monaco-based editor for body, non-monaco key-value editor for the params and headers
 │   │   ├── request/              # Request builder components
 │   │   ├── response/             # Response viewer components
 │   │   ├── bottompanel/          # Tabs panel (params, body, etc.)
@@ -144,10 +144,11 @@ soul.prism/
 │   │   ├── useRequestStore.ts    # Current request state
 │   │   ├── useSelectionStore.ts  # UI selection state
 │   │   └── useWorkspaceStore.ts  # Active workspace state
+│   │   └── useCollectionStore.ts # Collection state
 │   │
 │   ├── utils/                    # Utility functions
 │   ├── @types/                   # TypeScript type definitions
-│   └── middleware.ts             # Next.js middleware (auth)
+│   └── proxy.ts                  # Next.js middleware (auth)
 │
 ├── prisma/
 │   ├── schema.prisma             # Database schema
@@ -341,8 +342,9 @@ The main interface for constructing HTTP requests:
 | Component | Location | Description |
 |-----------|----------|-------------|
 | `Requestbar` | `components/requestbar/` | Method selector + URL input + Send button |
-| `BottomPanel` | `components/bottompanel/` | Tabs for Params, Headers, Body, Auth |
-| `JsonEditor` | `components/editors/` | Monaco-based JSON body editor |
+| `RequestTabs` | `components/requestbar/` | Tabs for Params, Headers, Body, Auth |
+| `BottomPanel` | `components/bottompanel/` | Logs, Gantt Chart, Service Map |
+| `CodeEditor` | `components/editors/` | Monaco-based JSON body editor |
 | `ResponseViewer` | `components/response/` | Displays response body, headers, timing |
 
 ### Tracing Visualization
@@ -351,8 +353,8 @@ Displays distributed traces as a flame graph or timeline:
 
 | Component | Location | Description |
 |-----------|----------|-------------|
-| `TracePanel` | `components/bottompanel/` | Trace ID display and span list |
-| `SpanTree` | `components/bottompanel/` | Hierarchical span visualization |
+| `SpanDetailsPanel` | `components/bottompanel/` | Trace ID display and span list |
+| `GanttChartPanel` | `components/bottompanel/` | Hierarchical span visualization |
 
 ### Analytics Dashboard
 

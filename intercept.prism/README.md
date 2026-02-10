@@ -111,22 +111,24 @@ intercept.prism/
 │   │   ├── request.go            # Request record buffering
 │   │   ├── execution.go          # Execution record buffering
 │   │   ├── span.go               # Span record buffering
-│   │   └── flush.go              # Async database flush logic
+│   │   └── store.go              # Async database flush logic
 │   │
 │   ├── database/
-│   │   ├── connect.go            # PostgreSQL connection pool
-│   │   ├── request.go            # Request CRUD queries
-│   │   ├── execution.go          # Execution CRUD queries
-│   │   ├── span.go               # Span CRUD queries
-│   │   └── queries.sql.go        # SQLC generated queries
+|   │   ├── sqlc_schema/
+|   |   │   └──schema.sql         # Schema for sqlc code generation ONLY
+│   │   ├── db.go                 # sqlc generated file
+│   │   ├── models.go             # sqlc generated file
+│   │   ├── pool.go               # PostgreSQL connection pool
+│   │   ├── queries.sql           # SQL queries
+│   │   └── queries.sql.go        # sqlc generated queries
 │   │
 │   └── tracing/
-│       ├── traceid.go            # W3C Trace ID generation
-│       └── spanid.go             # Span ID generation
+│       ├── reciever.go           # OTEL parsing
+│       └── reciever_test.go      # Reciever tests
 │
 ├── model/
 │   ├── rest.go                   # Request/Response models
-│   └── span.go                   # Span/Trace models
+│   └── tracing.go                # Span/Trace models
 │
 ├── docs/
 │   ├── swagger.json              # OpenAPI specification
@@ -169,38 +171,12 @@ intercept.prism/
 8. **Async Flush** – Background goroutine writes buffered data to DB
 
 ### Async Database Writes
-
 To minimize response latency, database writes are decoupled from the request/response cycle:
 
-```go
-// Non-blocking add to buffer
-store.AddRequest(requestRecord)
-store.AddExecution(executionRecord)
-store.AddSpan(spanRecord)
-
-// Background goroutine flushes every N seconds or M records
-go store.FlushLoop(ctx)
-```
-
 ### Distributed Tracing
-
-intercept.prism generates and propagates W3C Trace Context headers:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    traceparent header                       │
-│   00-{trace-id}-{span-id}-{flags}                           │
-│   00-abc123...def456...-fedcba...-01                        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-- **Version**: `00` (current W3C version)
-- **Trace ID**: 32-character hex string (shared across all spans in a trace)
-- **Span ID**: 16-character hex string (unique per span)
-- **Flags**: `01` (sampled)
+intercept.prism generates and propagates W3C Trace Context headers.
 
 ## Environment Variables
-
 Create a `.env` file based on `.example.env`:
 
 ```bash
@@ -210,8 +186,6 @@ DATABASE_URL=postgresql://username:password@localhost:5433/prism?sslmode=disable
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | Required |
-| `PORT` | HTTP server port | `7000` |
-| `GIN_MODE` | Gin framework mode (`debug`/`release`) | `debug` |
 
 ## API Reference
 
@@ -359,8 +333,7 @@ Tests are suffixed with `_test.go` and colocated with source files:
 | File | Coverage |
 |------|----------|
 | `routes/rest_test.go` | REST proxy handler tests |
-| `tracing/traceid_test.go` | Trace ID generation tests |
-| `tracing/spanid_test.go` | Span ID generation tests |
+| `tracing/reciever_test.go` | OTEL endpoint tests |
 
 ### Writing Tests
 
