@@ -12,6 +12,8 @@ import { collectionToCollectionItem } from "../../@types/collectionItem";
 import { WorkspaceCollectionSync } from "../providers/WorkspaceCollectionSync";
 import { RequestDetailsSync } from "../providers/RequestDetailsSync";
 
+
+export const dynamic = 'force-dynamic'; // <--- Add this
 const userId = "user_1";
 
 export default async function DashboardLayout({

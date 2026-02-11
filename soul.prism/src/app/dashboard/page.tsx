@@ -5,6 +5,8 @@ import RequestTabs from "@/components/request/RequestTabs";
 import ResponsePanel from "@/components/response/ResponsePanel";
 import BottomPanelServer from "@/components/bottompanel/BottomPanelServer";
 
+
+export const dynamic = 'force-dynamic'; // <--- Add this
 /**
  * Page component for the main dashboard layout.
  *

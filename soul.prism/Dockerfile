@@ -1,6 +1,6 @@
 # Original https://www.angelospanag.me/blog/containerising-nextjs-using-docker-and-bun#full-dockerfile
 # Modified to our requirements
-FROM oven/bun AS base
+FROM oven/bun:1.3.2 AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -17,6 +17,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Disable telemetry during the build
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
 RUN bun run build
 
