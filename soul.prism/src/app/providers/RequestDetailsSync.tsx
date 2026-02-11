@@ -30,7 +30,7 @@ export function RequestDetailsSync() {
                 setLoading(false);
             }
             catch (err: any) {
-                toast.error("Could not load that request");
+                toast.error(`Could not load that request: ${err.message}`);
                 return;
             }
 

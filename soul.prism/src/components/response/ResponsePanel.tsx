@@ -71,7 +71,7 @@ export default function ResponsePanel() {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col min-h-0 opacity-60 select-text">
+      <div className="flex flex-1 flex-col min-h-0 opacity-70 select-text">
         {activeTab === "Body" && (
           <CodeEditor
             language="json"
