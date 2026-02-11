@@ -46,8 +46,10 @@ func executeRequest(c *gin.Context) {
 	}
 	log.Println("Request Received")
 
+	// Get the request ID from the body
+	requestID := reqBody.RequestID
+
 	// Generate IDs upfront
-	requestID := uuid.New().String()
 	executionID := uuid.New().String()
 	spanID := tracing.GenerateSpanID()
 	traceID := tracing.GenerateTraceID()
@@ -126,16 +128,6 @@ func executeRequest(c *gin.Context) {
 	}
 
 	// Queue records for async DB write
-	store.AddRequest(store.RequestRecord{
-		ID:           requestID,
-		Method:       reqBody.Method,
-		URL:          reqBody.URL,
-		Headers:      reqBody.Headers,
-		Body:         reqBody.Body,
-		CollectionID: reqBody.CollectionID,
-		CreatedByID:  reqBody.CreatedByID,
-	})
-
 	store.AddExecution(store.ExecutionRecord{
 		ID:         executionID,
 		RequestID:  requestID,
@@ -156,7 +148,7 @@ func executeRequest(c *gin.Context) {
 		Tags:        tags,
 	})
 
-	log.Println("Queued Request, Execution, and Span for async DB write")
+	log.Println("Queued Execution, and Span for async DB write")
 
 	// Build span info for response (for client-side display)
 	rootSpan := model.SpanInfo{

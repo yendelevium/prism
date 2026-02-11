@@ -6,6 +6,7 @@ type RestRequest struct {
 	URL          string            `json:"url"`
 	Body         string            `json:"body"`
 	Headers      map[string]string `json:"headers"`
+	RequestID    string            `json:"request_id"`
 	CollectionID string            `json:"collection_id"`
 	CreatedByID  string            `json:"created_by_id"`
 }
