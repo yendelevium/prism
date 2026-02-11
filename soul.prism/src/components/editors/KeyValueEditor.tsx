@@ -238,6 +238,7 @@ export function rowsToObject(
  * @returns - the KeyValueRow array
  */
 export function objectToRows(obj: Record<string, string>) {
+  if (!obj) {return [];}
   return Object.entries(obj).map(([key, value], index) => ({
     id: `${key}-${index}`,
     key,
