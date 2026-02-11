@@ -1,4 +1,8 @@
-# PRISM [WIP]
+<h1>
+  <img src="./images/prism_logo_1.jpg" alt="Logo" width="45" style="vertical-align: middle;">
+  PRISM [WIP]
+</h1>
+
 _Currently a work in progress_
 
 > **A unified platform for API testing, distributed tracing, chaos injection, test automation, and analytics.**
