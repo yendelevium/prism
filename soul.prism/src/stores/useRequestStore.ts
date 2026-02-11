@@ -56,6 +56,7 @@ interface RequestState {
   setBody: (b: string | null) => void;
 
   setLoading: (l: boolean) => void;
+  setExecuting: (e: boolean) => void;
 
   saveRequest: () => Promise<void>;
 
@@ -151,6 +152,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
     },
 
     setLoading: (isLoading) => set({ isLoading }),
+    setExecuting: (isExecuting) => set({ isExecuting }),
 
     saveRequest: async () => {
       const { id, name, method, url, params, headers, body } = get();
@@ -174,13 +176,14 @@ export const useRequestStore = create<RequestState>((set, get) => {
 
     execute: async (environmentVariables, userId, requestId, collectionId) => {
 
-      set({ isExecuting: true});
-
       const { method, url, params, headers, body } = get();
 
     // Verify
       if (!url) {
         throw new Error("URL is required");
+      }
+      if (!method) {
+        throw new Error("Method is required");
       }
 
     // Parse env variables
@@ -204,8 +207,6 @@ export const useRequestStore = create<RequestState>((set, get) => {
         created_by_id: userId,
       };
 
-      console.log(payload);
-
       // Send to intercept.prism
       const res = await fetch("/api/intercept", {
         method: "POST",
@@ -213,9 +214,10 @@ export const useRequestStore = create<RequestState>((set, get) => {
         body: JSON.stringify(payload),
       });
 
+      if (!res.ok) {
+        throw new Error("Internal error");
+      }
       const data = (await res.json()) as InterceptorResponse;
-
-    console.log(data)
 
     // Store response
       set({

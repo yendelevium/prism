@@ -15,6 +15,7 @@ export default function RequestBar() {
     setUrl,
     execute,
     isExecuting,
+    setExecuting,
   } = useRequestStore();
   const currentRequest = useSelectionStore(s => s.request);
   const currentCollection = useSelectionStore(s => s.collection)
@@ -24,9 +25,21 @@ export default function RequestBar() {
   const handleSend = async () => {
     if (isExecuting) return;
     try {
+
+      if (!currentAuth.userId) {
+        throw new Error("No user detected. Please sign-in again");
+      }
+      if (!currentCollection?.id || !currentRequest?.id) {
+        throw new Error("Please select a request to execute");
+      }
+
+      setExecuting(true);
       await execute(variables, currentAuth.userId!, currentCollection!.id, currentRequest!.id);
     } catch (err: any) {
-      toast.error(err.message ?? "Failed to send request");
+      toast.error(`Failed to send request: ${err.message}`);
+    }
+    finally {
+      setExecuting(false);
     }
   };
 
