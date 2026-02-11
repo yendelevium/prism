@@ -17,3 +17,6 @@ test:
 
 docs:
 	swag init -g cmd/intercept.prism/main.go -o docs
+
+generate:
+	sqlc generate
