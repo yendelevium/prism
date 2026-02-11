@@ -11,6 +11,8 @@ import { RequestItem } from "@/@types/collectionItem";
 import { toast } from "sonner";
 import { unwrap } from "@/@types/actionResult";
 import { KeyValueRow, rowsToObject, rowsToSearchParams } from "@/components/editors/KeyValueEditor";
+import { useSelectionStore } from "./useSelectionStore";
+import { useAuth } from "@clerk/nextjs";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -57,7 +59,12 @@ interface RequestState {
 
   saveRequest: () => Promise<void>;
 
-  execute: (eV: Record<string, string>) => Promise<void>;
+  execute: (
+    eV: Record<string, string>,
+    userId: string,
+    requestId: string,
+    collectionId: string,
+  ) => Promise<void>;
 }
 
 export const useRequestStore = create<RequestState>((set, get) => {
@@ -165,7 +172,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
       }
     },
 
-    execute: async (environmentVariables) => {
+    execute: async (environmentVariables, userId, requestId, collectionId) => {
 
       set({ isExecuting: true});
 
@@ -183,6 +190,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
       try {
         parsedUrl = new URL(envUrl);
       } catch {
+        set({ isExecuting: false });
         throw new Error("Invalid URL");
       }
 
@@ -191,8 +199,9 @@ export const useRequestStore = create<RequestState>((set, get) => {
         url: parsedUrl + '?' + rowsToSearchParams(params).toString(),
         headers: rowsToObject(headers),
         body,
-        collection_id: "c_1",  // TODO: implement with actual collection id
-        created_by_id: "user_1",  // TODO: implement with actual used id
+        request_id: requestId,
+        collection_id: collectionId,
+        created_by_id: userId,
       };
 
       console.log(payload);

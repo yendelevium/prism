@@ -4,6 +4,8 @@ import { useRequestStore } from "@/stores/useRequestStore";
 import Dropdown from "../common/Dropdown";
 import { toast } from "sonner";
 import { useEnvironment } from "../context/EnvironmentContext";
+import { useSelectionStore } from "@/stores/useSelectionStore";
+import { useAuth } from "@clerk/nextjs";
 
 export default function RequestBar() {
   const {
@@ -14,13 +16,15 @@ export default function RequestBar() {
     execute,
     isExecuting,
   } = useRequestStore();
+  const currentRequest = useSelectionStore(s => s.request);
+  const currentCollection = useSelectionStore(s => s.collection)
+  const currentAuth = useAuth();
   const { variables } = useEnvironment();
 
-  // TODO: see if this way of updating the url works, fingers crossed
   const handleSend = async () => {
     if (isExecuting) return;
     try {
-      await execute(variables);
+      await execute(variables, currentAuth.userId!, currentCollection!.id, currentRequest!.id);
     } catch (err: any) {
       toast.error(err.message ?? "Failed to send request");
     }

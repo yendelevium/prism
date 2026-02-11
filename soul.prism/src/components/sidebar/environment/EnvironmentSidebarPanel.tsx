@@ -14,6 +14,7 @@ import {
   KeyValueRow,
 } from '../../editors/KeyValueEditor';
 import { Environment } from './types';
+import { useSelectionStore } from '@/stores/useSelectionStore';
 
 /**
  * Props for {@link EnvSidebarClient}.
@@ -67,6 +68,7 @@ export function EnvSidebarClient({
   );
 
   const { setVariables } = useEnvironment();
+  const workspace = useSelectionStore(s => s.workspace);
 
   // Sync active environment variables to context
   useEffect(() => {
@@ -97,7 +99,7 @@ export function EnvSidebarClient({
       id: crypto.randomUUID(),
       name: 'New Environment',
       variables: [],
-      workspace_id: 'default', // TODO: derive from workspace context
+      workspace_id: workspace!.id,
       created_at: new Date().toISOString(),
     };
 
