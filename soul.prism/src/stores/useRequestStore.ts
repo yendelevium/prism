@@ -11,6 +11,8 @@ import { RequestItem } from "@/@types/collectionItem";
 import { toast } from "sonner";
 import { unwrap } from "@/@types/actionResult";
 import { KeyValueRow, rowsToObject, rowsToSearchParams } from "@/components/editors/KeyValueEditor";
+import { useSelectionStore } from "./useSelectionStore";
+import { useAuth } from "@clerk/nextjs";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -23,6 +25,9 @@ interface RequestState {
   params: KeyValueRow[];
   headers: KeyValueRow[];
   body: string | null;
+
+  isLoading: boolean;
+  isExecuting: boolean;
 
   // inside useRequestStore
 
@@ -43,20 +48,31 @@ interface RequestState {
 
   setRequest: (r: RequestItem) => void;
 
+  setName: (n: string) => void;
   setMethod: (m: HttpMethod) => void;
   setUrl: (url: string) => void;
   setParams: (p: KeyValueRow[]) => void;
   setHeaders: (h: KeyValueRow[]) => void;
   setBody: (b: string | null) => void;
 
+  setLoading: (l: boolean) => void;
+  setExecuting: (e: boolean) => void;
+
   saveRequest: () => Promise<void>;
 
-  execute: (eV: Record<string, string>) => Promise<void>;
+  execute: (
+    eV: Record<string, string>,
+    userId: string,
+    requestId: string,
+    collectionId: string,
+  ) => Promise<void>;
 }
 
 export const useRequestStore = create<RequestState>((set, get) => {
+
   const debouncedSave = debounce(async () => {
     await get().saveRequest();
+    set({ isLoading: false});
   }, 800);
 
   return {
@@ -68,6 +84,9 @@ export const useRequestStore = create<RequestState>((set, get) => {
     params: [],
     headers: [],
     body: null,
+
+    isLoading: false,
+    isExecuting: false,
 
     response: {
       status: null,
@@ -89,37 +108,51 @@ export const useRequestStore = create<RequestState>((set, get) => {
         id: r.id,
         name: r.name,
         method: r.method,
-        url: new URL(r.url).origin + new URL(r.url).pathname,
+        url: r.url === "" ? "" : new URL(r.url).origin + new URL(r.url).pathname,
         params: r.params ?? [],
         headers: r.headers ?? [],
         body: r.body,
       });
     },
 
+    setName: (name) => {
+      set({ isLoading: true});
+      set({ name });
+      debouncedSave();
+    },
+
     setMethod: (method) => {
+      set({ isLoading: true});
       set({ method });
       debouncedSave();
     },
 
     setUrl: (url) => {
+      set({ isLoading: true});
       set({ url });
       debouncedSave();
     },
 
     setParams: (params) => {
+      set({ isLoading: true});
       set({ params });
       debouncedSave();
     },
 
     setHeaders: (headers) => {
+      set({ isLoading: true});
       set({ headers });
       debouncedSave();
     },
 
     setBody: (body) => {
+      set({ isLoading: true});
       set({ body });
       debouncedSave();
     },
+
+    setLoading: (isLoading) => set({ isLoading }),
+    setExecuting: (isExecuting) => set({ isExecuting }),
 
     saveRequest: async () => {
       const { id, name, method, url, params, headers, body } = get();
@@ -141,12 +174,16 @@ export const useRequestStore = create<RequestState>((set, get) => {
       }
     },
 
-    execute: async (environmentVariables) => {
+    execute: async (environmentVariables, userId, requestId, collectionId) => {
+
       const { method, url, params, headers, body } = get();
 
     // Verify
       if (!url) {
         throw new Error("URL is required");
+      }
+      if (!method) {
+        throw new Error("Method is required");
       }
 
     // Parse env variables
@@ -156,6 +193,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
       try {
         parsedUrl = new URL(envUrl);
       } catch {
+        set({ isExecuting: false });
         throw new Error("Invalid URL");
       }
 
@@ -164,11 +202,10 @@ export const useRequestStore = create<RequestState>((set, get) => {
         url: parsedUrl + '?' + rowsToSearchParams(params).toString(),
         headers: rowsToObject(headers),
         body,
-        collection_id: "c_1",  // TODO: implement with actual collection id
-        created_by_id: "user_1",  // TODO: implement with actual used id
+        request_id: requestId,
+        collection_id: collectionId,
+        created_by_id: userId,
       };
-
-      console.log(payload);
 
       // Send to intercept.prism
       const res = await fetch("/api/intercept", {
@@ -177,9 +214,10 @@ export const useRequestStore = create<RequestState>((set, get) => {
         body: JSON.stringify(payload),
       });
 
+      if (!res.ok) {
+        throw new Error("Internal error");
+      }
       const data = (await res.json()) as InterceptorResponse;
-
-    console.log(data)
 
     // Store response
       set({
@@ -197,6 +235,8 @@ export const useRequestStore = create<RequestState>((set, get) => {
           spans: data.spans,
         },
       });
+
+      set({ isExecuting: false});
     },
   };
 });

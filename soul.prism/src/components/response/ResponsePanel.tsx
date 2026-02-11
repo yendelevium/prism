@@ -5,15 +5,113 @@ import { useRequestStore } from "@/stores/useRequestStore";
 import CodeEditor from "@/components/editors/CodeEditor";
 import ResponseInfo from "./ResponseInfo";
 import { KeyValueEditor, KeyValueRow, objectToRows } from "../editors/KeyValueEditor";
+import { useEffect } from "react";
+import { Clipboard, Copy, Save } from "lucide-react";
+import { toast } from "sonner";
 
 const tabs = ["Body", "Headers", "Cookies", "Tests"];
+
+/**
+ * Helper to detect MIME types
+ * @param headers 
+ * @param body 
+ * @returns 
+ */
+function detectLanguage(
+  headers: Record<string, string> | undefined,
+  body: string | null
+): string {
+  const contentType =
+    headers?.["content-type"] ||
+    headers?.["Content-Type"] ||
+    "";
+
+  if (contentType.includes("application/json")) return "json";
+  if (contentType.includes("text/html")) return "html";
+  if (contentType.includes("application/xml")) return "xml";
+  if (contentType.includes("text/xml")) return "xml";
+  if (contentType.includes("text/css")) return "css";
+  if (contentType.includes("javascript")) return "javascript";
+  if (contentType.includes("text/plain")) return "plaintext";
+
+  // Fallback: try JSON parse
+  if (body) {
+    try {
+      JSON.parse(body);
+      return "json";
+    } catch {
+      return "plaintext";
+    }
+  }
+
+  return "plaintext";
+}
+
 
 export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState("Body");
   const response = useRequestStore(s => s.response);
+  const isExecuting = useRequestStore(s => s.isExecuting);
+  const [highlight, setHighlight] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      let textToCopy = "";
+
+      if (activeTab === "Body") {
+        textToCopy = response.body ?? "";
+      }
+
+      if (activeTab === "Headers") {
+        textToCopy = JSON.stringify(response.headers, null, 2);
+      }
+
+      if (activeTab === "Cookies") {
+        textToCopy = "Cookies not implemented yet";
+      }
+
+      await navigator.clipboard.writeText(textToCopy);
+
+      toast.success("Copied to clipboard");
+
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch (err) {
+      toast.error("Failed to copy");
+      console.error("Copy failed", err);
+    }
+  }
+
+  useEffect(() => {
+    // if isExecuting changes to false i.e, finished executing
+    if (isExecuting === false) {
+      setHighlight(true);
+      const t = setTimeout(() => setHighlight(false), 600);
+      return () => clearTimeout(t);
+    }
+  }, [isExecuting]);
+
+  if (response.status === null) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
+        <div className="flex flex-1 p-2 items-center justify-center h-full bg-[var(--bg-primary)]">
+          <span className="text-sm text-[var(--text-secondary)]">
+            Send a request to see the response
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
+    <div
+      className={`flex flex-1 flex-col min-h-0 p-4 border-r h-full border-[var(--border-color)]
+        transition-colors duration-500
+        ${highlight ? "bg-[var(--bg-highlight)]" : "bg-[var(--bg-secondary)]"}
+      `}
+    >
+      
       <div className="flex justify-between border-b border-[var(--border-color)] mb-3">
 
         {/* Tabs */}
@@ -36,15 +134,31 @@ export default function ResponsePanel() {
           ))}
         </div>
 
-        <ResponseInfo statusCode={response.status} responseTime={response.time}/>
+        <div className="flex items-start gap-3">
+          <button
+            onClick={handleCopy}
+            disabled={isExecuting || copied}
+              className={`text-xs px-2 py-1
+                ${isExecuting ? "opacity-50 cursor-not-allowed" : "hover:bg-[var(--bg-primary)]"}
+            `}
+          >
+            <Clipboard size={16} stroke="#88C0D0"/>
+          </button>
+
+          <ResponseInfo
+            statusCode={response.status}
+            responseTime={response.time}
+          />
+        </div>
+
 
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col min-h-0">
+      <div className="flex flex-1 flex-col min-h-0 opacity-70 select-text">
         {activeTab === "Body" && (
           <CodeEditor
-            language="json"
+            language={detectLanguage(response.headers, response.body)}
             value={response.body ?? "No Body"}
             readOnly
           />

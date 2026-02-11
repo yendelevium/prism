@@ -4,6 +4,9 @@
   --bg-secondary: #3B4252;   /* nord1 */
   --bg-panel: #434C5E;       /* nord2 */
 
+  /* Highlight */
+  --bg-highlight: rgba(163, 190, 255, 0.2); /* light blue accent tint */
+
   /* Borders */
   --border-color: #4C566A;   /* nord3 */
 

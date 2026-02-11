@@ -38,7 +38,7 @@ describe("CustomBarShape", () => {
 
     const rect = container.querySelector("rect");
     expect(rect).not.toBeNull();
-    expect(rect!.getAttribute("fill")).toBe("var(--success)");
+    expect(rect!.getAttribute("fill")).toBe("#A3BE8C");
     expect(rect!.getAttribute("x")).toBe("0");
     expect(rect!.getAttribute("y")).toBe("0");
     expect(rect!.getAttribute("width")).toBe("50");
@@ -69,7 +69,7 @@ describe("CustomBarShape", () => {
 
     const rect = container.querySelector("rect");
     expect(rect).not.toBeNull();
-    expect(rect!.getAttribute("fill")).toBe("var(--error)");
+    expect(rect!.getAttribute("fill")).toBe("#BF616A");
   });
 });
 

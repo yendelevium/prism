@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import IconButton from '../common/IconButton';
 import { Layers } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export type SidebarSection = 'Collections' | 'Environments' | 'Workspaces' | 'History' | null;
 
@@ -28,6 +29,7 @@ export default function Sidebar( {
   none: React.ReactNode;
 }) {
   const [activeSection, setActiveSection] = useState<SidebarSection>(null);
+  const router = useRouter();
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -57,7 +59,10 @@ export default function Sidebar( {
         </div>
 
         <div className="flex flex-col items-center gap-3 py-3">
-          <IconButton icon={ChartBarIcon} />
+          <IconButton
+            icon={ChartBarIcon}
+            onClick={() => router.push('/analytics')}
+          />
           <IconButton icon={Cog6ToothIcon} />
         </div>
       </aside>
