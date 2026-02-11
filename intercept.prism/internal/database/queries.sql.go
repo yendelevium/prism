@@ -11,56 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getServiceGraph = `-- name: GetServiceGraph :many
-SELECT 
-    s1."serviceName" as source_service,
-    s2."serviceName" as target_service,
-    COUNT(*) as call_count,
-    AVG(s2."duration") as avg_duration,
-    SUM(CASE WHEN s2."status" = 'ERROR' THEN 1 ELSE 0 END) as error_count
-FROM "Span" s1
-INNER JOIN "Span" s2 
-    ON s1."traceId" = s2."traceId" 
-    AND s1."spanId" = s2."parentSpanId"
-WHERE s1."serviceName" IS NOT NULL 
-    AND s2."serviceName" IS NOT NULL
-GROUP BY s1."serviceName", s2."serviceName"
-`
-
-type GetServiceGraphRow struct {
-	SourceService string
-	TargetService string
-	CallCount     int64
-	AvgDuration   float64
-	ErrorCount    int64
-}
-
-func (q *Queries) GetServiceGraph(ctx context.Context) ([]GetServiceGraphRow, error) {
-	rows, err := q.db.Query(ctx, getServiceGraph)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetServiceGraphRow
-	for rows.Next() {
-		var i GetServiceGraphRow
-		if err := rows.Scan(
-			&i.SourceService,
-			&i.TargetService,
-			&i.CallCount,
-			&i.AvgDuration,
-			&i.ErrorCount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const insertExecution = `-- name: InsertExecution :one
 INSERT INTO "Execution" ("id", "requestId", "traceId", "statusCode", "latencyMs")
 VALUES ($1, $2, $3, $4, $5)
@@ -82,39 +32,6 @@ func (q *Queries) InsertExecution(ctx context.Context, arg InsertExecutionParams
 		arg.TraceId,
 		arg.StatusCode,
 		arg.LatencyMs,
-	)
-	var id string
-	err := row.Scan(&id)
-	return id, err
-}
-
-const insertRequest = `-- name: InsertRequest :one
-INSERT INTO "Request" ("id", "name", "method", "url", "headers", "body", "collectionId", "createdById")
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING "id"
-`
-
-type InsertRequestParams struct {
-	ID           string
-	Name         string
-	Method       HttpMethod
-	Url          string
-	Headers      []byte
-	Body         pgtype.Text
-	CollectionId string
-	CreatedById  string
-}
-
-func (q *Queries) InsertRequest(ctx context.Context, arg InsertRequestParams) (string, error) {
-	row := q.db.QueryRow(ctx, insertRequest,
-		arg.ID,
-		arg.Name,
-		arg.Method,
-		arg.Url,
-		arg.Headers,
-		arg.Body,
-		arg.CollectionId,
-		arg.CreatedById,
 	)
 	var id string
 	err := row.Scan(&id)
