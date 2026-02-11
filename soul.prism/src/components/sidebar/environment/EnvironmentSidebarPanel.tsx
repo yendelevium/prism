@@ -83,7 +83,6 @@ export function EnvSidebarClient({
       });
     }
 
-    console.log('[ENV] Setting variables:', { activeEnvId, vars, activeEnvName: active?.name });
     setVariables(vars);
   }, [activeEnvId, envs, setVariables]);
 

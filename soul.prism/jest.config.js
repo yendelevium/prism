@@ -13,6 +13,10 @@ const customJestConfig = {
         '<rootDir>/.next/',
         '<rootDir>/src/backend/' 
     ],
+
+    moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+    },
 }
 
 module.exports = createJestConfig(customJestConfig)

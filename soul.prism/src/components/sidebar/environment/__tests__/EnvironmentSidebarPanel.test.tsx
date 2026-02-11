@@ -66,8 +66,28 @@ jest.mock('../../../editors/KeyValueEditor', () => ({
   KeyValueRow: {},
 }));
 
+jest.mock("@/stores/useSelectionStore", () => ({
+  useSelectionStore: jest.fn(),
+}))
 
+import { useSelectionStore } from "@/stores/useSelectionStore";
+const mockedUseSelectionStore = jest.mocked(useSelectionStore);
 
+const mockWorkspace = {
+  id: 'ws_01',
+  name: 'Workspace 1',
+  users: [],
+  created_at: "2026-02-09 05:10:51.145",
+  created_by: "user_1",
+}
+
+beforeEach(() => {
+  mockedUseSelectionStore.mockImplementation((selector: any) =>
+    selector({
+      workspace: mockWorkspace,
+    })
+  );
+});
 
 describe('EnvSidebarClient', () => {
 
