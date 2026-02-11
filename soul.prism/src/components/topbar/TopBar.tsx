@@ -22,7 +22,9 @@ export default function Topbar() {
       <div className="flex items-center gap-4">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-red-500" />
+          <div className="w-8 h-8 rounded-full overflow-clip">
+            <img src={"/prism_logo_1.jpg"} />
+          </div>
         </div>
       </div>
 
