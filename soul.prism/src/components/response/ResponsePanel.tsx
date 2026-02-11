@@ -37,12 +37,13 @@ export default function ResponsePanel() {
   }
 
   return (
-      <div
-        className={`flex flex-1 flex-col min-h-0 p-4 border-r h-full border-[var(--border-color)]
-          transition-colors duration-500
-          ${highlight ? "bg-[var(--bg-highlight)]" : "bg-[var(--bg-secondary)]"}
-        `}
-      >
+    <div
+      className={`flex flex-1 flex-col min-h-0 p-4 border-r h-full border-[var(--border-color)]
+        transition-colors duration-500
+        ${highlight ? "bg-[var(--bg-highlight)]" : "bg-[var(--bg-secondary)]"}
+      `}
+    >
+      
       <div className="flex justify-between border-b border-[var(--border-color)] mb-3">
 
         {/* Tabs */}
@@ -70,7 +71,7 @@ export default function ResponsePanel() {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col min-h-0">
+      <div className="flex flex-1 flex-col min-h-0 opacity-60 select-text">
         {activeTab === "Body" && (
           <CodeEditor
             language="json"
