@@ -9,9 +9,11 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:watch": "vitest --watch",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "jest",
+    "test:frontend:watch": "jest --watch",
+    "test:backend": "vitest run",
+    "test:backend:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
