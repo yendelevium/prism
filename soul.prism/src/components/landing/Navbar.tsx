@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -19,9 +19,7 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <a href="/" className="flex items-center gap-2.5 group">
-                        <div className="relative w-8 h-8 rounded-full bg-destructive flex items-center justify-center glow-primary-strong">
-                            <Zap className="w-4 h-4 text-destructive-foreground" />
-                        </div>
+                        <img src="/prism_logo_1.jpg" alt="Prism Logo" className="relative w-8 h-8 rounded-full object-cover glow-primary-strong" />
                         <span className="text-lg font-bold tracking-tight text-foreground font-mono">
                             Pr<span className="text-gradient-primary">ism</span>
                         </span>
