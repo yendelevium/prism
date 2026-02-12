@@ -27,11 +27,11 @@ const Navbar = () => {
 
                     {/* CTA */}
                     <div className="hidden md:flex items-center gap-3">
-                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                            Sign In
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
+                            <a href="/sign-in">Sign In</a>
                         </Button>
-                        <Button size="sm" className="font-semibold">
-                            Log In
+                        <Button size="sm" className="font-semibold" asChild>
+                            <a href="/sign-up">Log In</a>
                         </Button>
                     </div>
 
@@ -56,11 +56,11 @@ const Navbar = () => {
                         className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl overflow-hidden"
                     >
                         <div className="px-4 py-4 flex flex-col gap-2">
-                            <Button variant="ghost" size="sm" className="justify-start text-muted-foreground">
-                                Sign In
+                            <Button variant="ghost" size="sm" className="justify-start text-muted-foreground" asChild>
+                                <a href="/sign-in">Sign In</a>
                             </Button>
-                            <Button size="sm" className="font-semibold">
-                                Log In
+                            <Button size="sm" className="font-semibold" asChild>
+                                <a href="/sign-up">Log In</a>
                             </Button>
                         </div>
                     </motion.div>
