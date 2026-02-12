@@ -4,6 +4,10 @@ import "./globals.css";
 import "./index.css";
 import "./styles/theme.css";
 
+import { ClerkProvider } from "@clerk/nextjs";
+import QueryProvider from "./providers/QueryProviders";
+import { Toaster } from "@/components/toast/toaster";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,12 +29,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}
-      >
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}
+        >
+          <QueryProvider>
+            {children}
+            <Toaster />
+          </QueryProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
