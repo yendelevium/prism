@@ -1,14 +1,14 @@
 "use client";
 
-import HeroSection from "@/components/homepage/HeroSection";
-import FeaturesSection from "@/components/homepage/FeaturesSection";
-import TracingPreview from "@/components/homepage/TracingPreview";
-import WorkflowsPreview from "@/components/homepage/WorkflowsPreview";
-import ChaosPreview from "@/components/homepage/ChaosPreview";
-import AnalyticsPreview from "@/components/homepage/AnalyticsPreview";
-import CTASection from "@/components/homepage/CTASection";
-import Footer from "@/components/homepage/Footer";
-import Navbar from "@/components/homepage/Navbar";
+import HeroSection from "@/components/landing/HeroSection";
+import FeaturesSection from "@/components/landing/FeaturesSection";
+import TracingPreview from "@/components/landing/TracingPreview";
+import WorkflowsPreview from "@/components/landing/WorkflowsPreview";
+import ChaosPreview from "@/components/landing/ChaosPreview";
+import AnalyticsPreview from "@/components/landing/AnalyticsPreview";
+import CTASection from "@/components/landing/CTASection";
+import Footer from "@/components/landing/Footer";
+import Navbar from "@/components/landing/Navbar";
 
 export default function Home() {
   return (
