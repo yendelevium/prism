@@ -26,6 +26,7 @@ export default function RequestBar() {
     if (isExecuting) return;
     try {
 
+      console.log(currentCollection, currentRequest);
       if (!currentAuth.userId) {
         throw new Error("No user detected. Please sign-in again");
       }
@@ -34,7 +35,7 @@ export default function RequestBar() {
       }
 
       setExecuting(true);
-      await execute(variables, currentAuth.userId!, currentCollection!.id, currentRequest!.id);
+      await execute(variables, currentAuth.userId!, currentRequest!.id, currentCollection!.id);
     } catch (err: any) {
       toast.error(`Failed to send request: ${err.message}`);
     }
@@ -64,7 +65,7 @@ export default function RequestBar() {
         className="flex-1 bg-transparent border border-[var(--border-color)] rounded px-3 py-1"
       />
 
-      <button 
+      <button
         onClick={handleSend}
         className="relative bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black px-4 py-1 rounded flex items-center justify-center"
       >
