@@ -8,7 +8,7 @@ export interface Span {
   startTime: bigint;
   duration: bigint;
   status?: string | null;
-  tags?: unknown;
+  tags?: Record<string, string>;
   createdAt: Date;
 }
 

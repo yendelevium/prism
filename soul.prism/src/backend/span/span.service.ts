@@ -40,7 +40,7 @@ export async function listSpansByTraceId(
     startTime: string;
     duration: string;
     status: string | null;
-    tags: unknown;
+    tags: Record<string, string>;
     createdAt: Date;
   }>(
     `SELECT "id","traceId","spanId","parentSpanId","operation","serviceName",
@@ -81,7 +81,7 @@ export async function getSpanById(
     startTime: string;
     duration: string;
     status: string | null;
-    tags: unknown;
+    tags: Record<string, string>;
     createdAt: Date;
   }>(
     `SELECT "id","traceId","spanId","parentSpanId","operation","serviceName",
