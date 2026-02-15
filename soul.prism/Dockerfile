@@ -8,16 +8,20 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+RUN rm -f bun.lock && bun install --verbose # Reinstall bun stuff coz it causes problems TvT
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
 # Disable telemetry during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+
+# Generate Prisma Client explicitly
+RUN bunx prisma generate
 
 RUN bun run build
 
