@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/yendelevium/intercept.prism/docs" // Swagger docs
@@ -18,6 +20,16 @@ import (
 // @host            localhost:7000
 // @BasePath        /
 func main() {
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "7000"
+	}
+
 	log.Println("Starting intercept.prism")
 	database.InitDB()
 
@@ -37,5 +49,5 @@ func main() {
 			"message": "pong",
 		})
 	})
-	r.Run(":7000")
+	r.Run(":" + port)
 }

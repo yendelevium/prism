@@ -1,3 +1,8 @@
+build:
+# 	Just checks if the images are built
+#   Will be useful as a PR build check so we can fail fast
+	docker compose build
+
 compose-up:
 	docker compose up --build
 
@@ -12,6 +17,7 @@ configure:
 # 	Install lefthook
 	go install github.com/evilmartians/lefthook/v2@v2.1.1
 	lefthook install
+	$(MAKE) -C soul.prism migrate-up
 
 # In a Makefile, .PHONY is a special built-in target used to tell Make that a specific target name is not a file.
 # By default, Make assumes every target (the word before the colon :) is the name of a file you want to create. .PHONY overrides this behavior.

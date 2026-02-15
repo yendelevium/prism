@@ -21,6 +21,7 @@ test:
 migrate-up:
 # ONLY RUN during dev
 # Prisma only has migrate up??
+	bunx prisma generate
 	bunx prisma migrate dev
 
 format:

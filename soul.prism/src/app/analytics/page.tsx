@@ -27,9 +27,6 @@ import type { ReactElement } from "react";
 import type { PieLabelRenderProps, TooltipProps } from "recharts";
 import { Payload } from "recharts/types/component/DefaultTooltipContent";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
 type TimeRange = "1h" | "24h" | "7d" | "30d";
 
 interface Summary {
