@@ -1,7 +1,7 @@
-build:
+compose-up:
 	docker compose up --build
 
-down:
+compose-down:
 	docker compose down
 	docker compose  -f ./compose.db.yml down
 	docker compose  -f ./soul.prism/compose.yml down
@@ -10,4 +10,11 @@ down:
 configure:
 	docker volume create pg_duckdb_data
 
-# Add for testing both services
+# In a Makefile, .PHONY is a special built-in target used to tell Make that a specific target name is not a file.
+# By default, Make assumes every target (the word before the colon :) is the name of a file you want to create. .PHONY overrides this behavior.
+.PHONY: test
+
+# Runs tests in both directories sequentially
+test:
+	$(MAKE) -C soul.prism test
+	$(MAKE) -C intercept.prism test

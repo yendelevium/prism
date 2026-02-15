@@ -2,10 +2,10 @@ dev:
 	docker compose -f ../compose.db.yml up -d
 	bun next dev
 
-build:
+compose-up:
 	docker compose up --build
 
-down:
+compose-down:
 	docker compose down
 	docker compose -f ../compose.yml down
 	docker compose  -f ../compose.db.yml down
@@ -16,3 +16,8 @@ docs:
 
 test:
 	bun run test
+
+migrate-up:
+# ONLY RUN during dev
+# Prisma only has migrate up??
+	npx prisma migrate dev

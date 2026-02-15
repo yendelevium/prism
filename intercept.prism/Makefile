@@ -3,10 +3,10 @@ dev:
 	go build -o intercept.prism cmd/intercept.prism/main.go
 	./intercept.prism
 
-build:
+compose-up:
 	docker compose up --build
 
-down:
+compose-down:
 	docker compose down
 	docker compose -f ../compose.yml down
 	docker compose  -f ../compose.db.yml down
