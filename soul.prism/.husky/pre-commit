@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-. "$(dirname -- "$0")/_/husky.sh" #Idk its recommended though
-
-# Move into the subfolder before running make
-cd soul.prism
-make test
-make format

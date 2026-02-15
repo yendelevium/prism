@@ -1,0 +1,5 @@
+pre-commit:
+  commands:
+    proxy-test:
+      root: "intercept.prism/"
+      run: make test

@@ -1,0 +1,9 @@
+pre-commit:
+  commands:
+    nextjs-format:
+      root: "soul.prism/"
+      run: make format
+    
+    nextjs-test:
+      root: "soul.prism/"
+      run: make test
