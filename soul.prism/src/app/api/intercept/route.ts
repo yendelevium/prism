@@ -7,8 +7,10 @@ export async function POST(req: Request) {
   const payload = await req.json();
 
   try {
-    const interceptUrl =
-      process.env.INTERCEPT_URL || "http://localhost:7000/rest/";
+    let interceptUrl =
+      process.env.INTERCEPT_URL || "http://localhost:7000";
+      
+    interceptUrl = interceptUrl+"/rest";
     const res = await fetch(interceptUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

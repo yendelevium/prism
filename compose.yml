@@ -9,6 +9,8 @@ services:
       target: build-release-stage
     ports:
       - 7000:7000
+    environment:
+      DATABASE_URL: postgresql://username:password@db:5432/prism?search_path=public
 
   soul.prism:
     build:
@@ -17,3 +19,6 @@ services:
       target: runner
     ports:
       - 3000:3000
+    environment:
+      INTERCEPT_URL: http://intercept.prism:7000
+      DATABASE_URL: postgresql://username:password@db:5432/prism?search_path=public
