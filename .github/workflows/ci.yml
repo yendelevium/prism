@@ -49,7 +49,7 @@ jobs:
           git diff --exit-code
       # Run Tests (fails if it fails)
       - name: Run Tests
-          run: make test
+        run: make test  
 
       # Docker Build (Dry Run)
       # This confirms your Dockerfiles are valid and context paths are correct
