@@ -15,7 +15,7 @@
     "test:backend": "vitest run",
     "test:backend:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepare": "husky"
+    "prepare": "cd .. && husky soul.prism/.husky"
   },
   "dependencies": {
     "@clerk/backend": "^2.30.1",
