@@ -1,6 +1,6 @@
 dev: 
 	docker compose -f ../compose.db.yml up -d
-	bun next dev
+	bun dev
 
 compose-up:
 	docker compose up --build
@@ -12,15 +12,16 @@ compose-down:
 	docker compose -f ../intercept.prism/compose.yml down
 
 docs:
-	bun run gen-docs
+	bun gen-docs
 
 test:
+# Don't put `bun test` as it runs bun's internal test runner and thats weird idk why
 	bun run test
 
 migrate-up:
 # ONLY RUN during dev
 # Prisma only has migrate up??
-	npx prisma migrate dev
+	bunx prisma migrate dev
 
 format:
-	bunx @biomejs/biome format --write .
+	bun format
