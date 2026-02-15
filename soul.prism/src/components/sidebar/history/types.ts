@@ -15,7 +15,7 @@ export type HistoryItem = {
   /**
    * HTTP method used for the request.
    */
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method: "GET" | "POST" | "PUT" | "DELETE";
 
   /**
    * Final resolved request URL at execution time.

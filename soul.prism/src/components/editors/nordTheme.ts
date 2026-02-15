@@ -15,6 +15,6 @@ export const nordTheme = {
     "editorCursor.foreground": "#88C0D0",
     "editor.selectionBackground": "#81868fff",
     "editor.inactiveSelectionBackground": "#3B4252",
-    "editor.lineHighlightBorder": "#4C566A"
+    "editor.lineHighlightBorder": "#4C566A",
   },
 };

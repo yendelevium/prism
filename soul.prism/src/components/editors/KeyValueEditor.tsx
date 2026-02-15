@@ -210,16 +210,13 @@ export function urlToKeyValueRows(url: string): KeyValueRow[] {
   return rows;
 }
 
-
-/** * Converts an array of KeyValueRow to a javascript object 
- * 
- * @remark Only converts rows that are enabled 
- * @param rows - the KeyValueRows to be converted 
- * @returns - the object 
- * */ 
-export function rowsToObject(
-  rows: KeyValueRow[],
-) {
+/** * Converts an array of KeyValueRow to a javascript object
+ *
+ * @remark Only converts rows that are enabled
+ * @param rows - the KeyValueRows to be converted
+ * @returns - the object
+ * */
+export function rowsToObject(rows: KeyValueRow[]) {
   return rows
     .filter((r) => r.enabled !== false && r.key)
     .reduce(
@@ -238,7 +235,9 @@ export function rowsToObject(
  * @returns - the KeyValueRow array
  */
 export function objectToRows(obj: Record<string, string>) {
-  if (!obj) {return [];}
+  if (!obj) {
+    return [];
+  }
   return Object.entries(obj).map(([key, value], index) => ({
     id: `${key}-${index}`,
     key,

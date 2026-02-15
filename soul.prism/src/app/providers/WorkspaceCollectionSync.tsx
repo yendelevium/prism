@@ -8,9 +8,9 @@ import { collectionToCollectionItem } from "@/@types/collectionItem";
 import { unwrap } from "@/@types/actionResult";
 
 export function WorkspaceCollectionSync() {
-  const workspace = useSelectionStore(s => s.workspace); // Getting workspace from selectionStore
-  const setCollections = useCollectionStore(s => s.setCollections); // Getting the setCollections method
-  const setLoading = useCollectionStore(s => s.setLoading);
+  const workspace = useSelectionStore((s) => s.workspace); // Getting workspace from selectionStore
+  const setCollections = useCollectionStore((s) => s.setCollections); // Getting the setCollections method
+  const setLoading = useCollectionStore((s) => s.setLoading);
 
   useEffect(() => {
     if (!workspace) {
@@ -22,11 +22,11 @@ export function WorkspaceCollectionSync() {
 
     const loadCollections = async () => {
       const raw = unwrap(
-        await listCollectionsByWorkspaceAction(workspace.id) // Fetch collections for the new workspace
+        await listCollectionsByWorkspaceAction(workspace.id), // Fetch collections for the new workspace
       );
 
       const items = await Promise.all(
-        raw.map(c => collectionToCollectionItem(c)) // Convert them to CollectionItem format
+        raw.map((c) => collectionToCollectionItem(c)), // Convert them to CollectionItem format
       );
 
       setCollections(items); // Store the collections in Zustand

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ChevronRight,
   ChevronDown,
@@ -8,17 +8,28 @@ import {
   Search,
   Plus,
   Trash2,
-} from 'lucide-react';
-import { CollectionItem, collectionToCollectionItem, HttpMethod, RequestItem, requestToRequestItem } from '../../../@types/collectionItem';
-import { useCollectionStore } from '@/stores/useCollectionStore';
-import { createCollectionAction, deleteCollectionAction } from '@/backend/collection/collection.actions';
-import { unwrap } from '@/@types/actionResult';
-import { useSelectionStore } from '@/stores/useSelectionStore';
-import { toast } from 'sonner';
-import { CreateRequestInput, Request } from '@/backend/request/request.types';
-import { createRequestAction, deleteRequestAction } from '@/backend/request/request.actions';
-import { useRequestStore } from '@/stores/useRequestStore';
-
+} from "lucide-react";
+import {
+  CollectionItem,
+  collectionToCollectionItem,
+  HttpMethod,
+  RequestItem,
+  requestToRequestItem,
+} from "../../../@types/collectionItem";
+import { useCollectionStore } from "@/stores/useCollectionStore";
+import {
+  createCollectionAction,
+  deleteCollectionAction,
+} from "@/backend/collection/collection.actions";
+import { unwrap } from "@/@types/actionResult";
+import { useSelectionStore } from "@/stores/useSelectionStore";
+import { toast } from "sonner";
+import { CreateRequestInput, Request } from "@/backend/request/request.types";
+import {
+  createRequestAction,
+  deleteRequestAction,
+} from "@/backend/request/request.actions";
+import { useRequestStore } from "@/stores/useRequestStore";
 
 /**
  * Maps HTTP methods to CSS color variables.
@@ -39,8 +50,6 @@ export const methodColorMap: Record<string, string> = {
   DELETE: "var(--error)",
 };
 
-
-
 /**
  * Sidebar navigation panel for browsing request collections.
  *
@@ -55,26 +64,26 @@ export const methodColorMap: Record<string, string> = {
  * it does not perform routing, persistence, or data fetching.
  */
 export const CollectionsSidebarPanel: React.FC = () => {
-
-  const collections = useCollectionStore(s => s.collections);
-  const isLoading = useCollectionStore(s => s.isLoading);
-  const setCollections = useCollectionStore(s => s.setCollections);
-  const currentWorkspace = useSelectionStore(s => s.workspace);
-  const currentRequest = useSelectionStore(s => s.request);
-  const setRequest = useSelectionStore(s => s.setRequest);
-  const setRequestName = useRequestStore(s => s.setName);
+  const collections = useCollectionStore((s) => s.collections);
+  const isLoading = useCollectionStore((s) => s.isLoading);
+  const setCollections = useCollectionStore((s) => s.setCollections);
+  const currentWorkspace = useSelectionStore((s) => s.workspace);
+  const currentRequest = useSelectionStore((s) => s.request);
+  const setRequest = useSelectionStore((s) => s.setRequest);
+  const setRequestName = useRequestStore((s) => s.setName);
 
   // Only for if the current request in being deleted
-  const setRequestStore = useRequestStore(s => s.setRequest);
+  const setRequestStore = useRequestStore((s) => s.setRequest);
 
   // For renaming collections
-  const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
+  const [editingCollectionId, setEditingCollectionId] = useState<string | null>(
+    null,
+  );
   const [editingCollectionName, setEditingCollectionName] = useState("");
 
   // For renaming requests
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [editingRequestName, setEditingRequestName] = useState("");
-
 
   /**
    * Tracks which collection folders are expanded.
@@ -83,29 +92,28 @@ export const CollectionsSidebarPanel: React.FC = () => {
    */
   const [expandedFolders, setExpandedFolders] = useState<
     Record<string, boolean>
-  >({ 'col-1': true });
+  >({ "col-1": true });
 
   /**
    * Toggle the expanded state of a collection folder.
    */
   const toggleFolder = (id: string) => {
-    setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedFolders((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  
   const createCollection = async () => {
-    
     try {
-      const newCollection = unwrap(await createCollectionAction('Untitled', currentWorkspace!.id));
+      const newCollection = unwrap(
+        await createCollectionAction("Untitled", currentWorkspace!.id),
+      );
       const newCollectionItem = await collectionToCollectionItem(newCollection);
       setCollections([...collections, newCollectionItem]);
       toast.success("Successfully created collection");
-    }
-    catch (err: any) {
+    } catch (err: any) {
       toast.error(err.message);
       return;
     }
-  }
+  };
 
   const createRequest = async (collectionId: string) => {
     try {
@@ -124,24 +132,23 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
       const newRequestItem = requestToRequestItem(newRequest);
       setCollections(
-        collections.map(c => 
-          c.id === collectionId 
+        collections.map((c) =>
+          c.id === collectionId
             ? { ...c, requests: [...c.requests, newRequestItem] } // Update the requests for this particular collection
-            : c
-        )
+            : c,
+        ),
       );
 
-      setExpandedFolders(prev => ({
+      setExpandedFolders((prev) => ({
         ...prev,
         [collectionId]: true,
       }));
 
       setRequest(newRequestItem);
-    }
-    catch (err: any) {
+    } catch (err: any) {
       toast.error(err.message);
     }
-  }
+  };
 
   const commitRenameCollection = async (collectionId: string) => {
     const newName = editingCollectionName.trim();
@@ -152,9 +159,9 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
     // Optimistic UI update
     setCollections(
-      collections.map(c =>
-        c.id === collectionId ? { ...c, name: newName } : c
-      )
+      collections.map((c) =>
+        c.id === collectionId ? { ...c, name: newName } : c,
+      ),
     );
 
     try {
@@ -180,12 +187,12 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
     // Optimistic UI update (collection sidebar)
     setCollections(
-      collections.map(col => ({
+      collections.map((col) => ({
         ...col,
-        requests: col.requests.map(r =>
-          r.id === requestId ? { ...r, name: newName } : r
+        requests: col.requests.map((r) =>
+          r.id === requestId ? { ...r, name: newName } : r,
         ),
-      }))
+      })),
     );
 
     try {
@@ -204,16 +211,16 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const deleteRequest = async (requestId: string) => {
     // Optimistic update
     setCollections(
-      collections.map(col => ({
+      collections.map((col) => ({
         ...col,
-        requests: col.requests.filter(r => r.id !== requestId),
-      }))
+        requests: col.requests.filter((r) => r.id !== requestId),
+      })),
     );
 
     // Clear selection if needed
     if (currentRequest?.id === requestId) {
       setRequest(null);
-      setRequestStore({url: ""} as RequestItem);
+      setRequestStore({ url: "" } as RequestItem);
     }
 
     try {
@@ -226,24 +233,22 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
   const deleteCollection = async (collectionId: string) => {
     // Find the collection being deleted
-    const collectionToDelete = collections.find(c => c.id === collectionId);
+    const collectionToDelete = collections.find((c) => c.id === collectionId);
 
     // Optimistic update: remove collection
-    setCollections(
-      collections.filter(c => c.id !== collectionId)
-    );
+    setCollections(collections.filter((c) => c.id !== collectionId));
 
     // Clear request selection if it belonged to this collection
     if (
       currentRequest &&
-      collectionToDelete?.requests.some(r => r.id === currentRequest.id)
+      collectionToDelete?.requests.some((r) => r.id === currentRequest.id)
     ) {
       setRequest(null);
-      setRequestStore({url: ""} as RequestItem);
+      setRequestStore({ url: "" } as RequestItem);
     }
 
     // Clean up expanded state
-    setExpandedFolders(prev => {
+    setExpandedFolders((prev) => {
       const next = { ...prev };
       delete next[collectionId];
       return next;
@@ -257,25 +262,22 @@ export const CollectionsSidebarPanel: React.FC = () => {
     }
   };
 
-
-
-
   return (
     <aside
       className="w-full h-full flex flex-col border-r select-none transition-colors duration-300"
       style={{
-        backgroundColor: 'var(--bg-primary)',
-        borderColor: 'var(--border-color)',
+        backgroundColor: "var(--bg-primary)",
+        borderColor: "var(--border-color)",
       }}
     >
       {/* Header */}
       <div
         className="p-4 flex items-center justify-between border-b shrink-0"
-        style={{ borderColor: 'var(--border-color)' }}
+        style={{ borderColor: "var(--border-color)" }}
       >
         <h2
           className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
-          style={{ color: 'var(--text-secondary)' }}
+          style={{ color: "var(--text-secondary)" }}
         >
           <Folder size={12} />
           Collections
@@ -284,7 +286,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
         {/* Add collection */}
         <button
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
-          style={{ color: 'var(--accent)' }}
+          style={{ color: "var(--accent)" }}
           onClick={createCollection}
         >
           <Plus size={14} />
@@ -296,20 +298,20 @@ export const CollectionsSidebarPanel: React.FC = () => {
         <div
           className="flex items-center px-2 py-1.5 rounded border transition-all"
           style={{
-            backgroundColor: 'var(--bg-secondary)',
-            borderColor: 'var(--border-color)',
+            backgroundColor: "var(--bg-secondary)",
+            borderColor: "var(--border-color)",
           }}
         >
           <Search
             size={14}
             className="mr-2"
-            style={{ color: 'var(--border-color)' }}
+            style={{ color: "var(--border-color)" }}
           />
           <input
             type="text"
             placeholder="Search..."
             className="bg-transparent text-xs w-full outline-none"
-            style={{ color: 'var(--text-primary)' }}
+            style={{ color: "var(--text-primary)" }}
           />
         </div>
       </div>
@@ -322,204 +324,197 @@ export const CollectionsSidebarPanel: React.FC = () => {
             Loading collections…
           </div>
         )}
-        {!isLoading && (collections.map(col => (
-          <div key={col.id} className="mb-1">
-            {/* Collection Header */}
-            <div
-              onClick={() => {
-                  if(editingCollectionId) return;
-                  toggleFolder(col.id)
-                }
-              }
-              onDoubleClick={(e) => {
+        {!isLoading &&
+          collections.map((col) => (
+            <div key={col.id} className="mb-1">
+              {/* Collection Header */}
+              <div
+                onClick={() => {
+                  if (editingCollectionId) return;
+                  toggleFolder(col.id);
+                }}
+                onDoubleClick={(e) => {
                   e.stopPropagation();
                   setEditingCollectionId(col.id);
                   setEditingCollectionName(createCollection.name);
-                }
-              }
-              className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
-            >
-              <span
-                className="mr-1"
-                style={{ color: 'var(--border-color)' }}
-              >
-                <button
-                  className="mr-1 p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
-                  aria-label="Toggle collection"
-                >
-                  {expandedFolders[col.id] ? (
-                    <ChevronDown size={14} />
-                  ) : (
-                    <ChevronRight size={14} />
-                  )}
-                </button>
-              </span>
-
-              <Folder
-                size={14}
-                className="mr-2"
-                style={{
-                  color: expandedFolders[col.id]
-                    ? 'var(--accent)'
-                    : 'var(--border-color)',
                 }}
-              />
-
-              {editingCollectionId === col.id ? (
-                <input
-                  autoFocus
-                  value={editingCollectionName}
-                  onChange={(e) => setEditingCollectionName(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      commitRenameCollection(col.id);
-                    }
-                    if (e.key === "Escape") {
-                      cancelRenameCollection();
-                    }
-                  }}
-                  onBlur={() => commitRenameCollection(col.id)}
-                  className="text-sm flex-1 bg-transparent outline-none border-none px-1"
-                  style={{ color: 'var(--text-primary)' }}
-                />
-              ) : (
-                <span
-                  className="text-sm truncate flex-1"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {col.name}
+                className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
+              >
+                <span className="mr-1" style={{ color: "var(--border-color)" }}>
+                  <button
+                    className="mr-1 p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                    aria-label="Toggle collection"
+                  >
+                    {expandedFolders[col.id] ? (
+                      <ChevronDown size={14} />
+                    ) : (
+                      <ChevronRight size={14} />
+                    )}
+                  </button>
                 </span>
-              )}
 
+                <Folder
+                  size={14}
+                  className="mr-2"
+                  style={{
+                    color: expandedFolders[col.id]
+                      ? "var(--accent)"
+                      : "var(--border-color)",
+                  }}
+                />
 
-              {/* Actions */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {/* Create request */}
-                <button
-                  onClick={(e) => {
+                {editingCollectionId === col.id ? (
+                  <input
+                    autoFocus
+                    value={editingCollectionName}
+                    onChange={(e) => setEditingCollectionName(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        commitRenameCollection(col.id);
+                      }
+                      if (e.key === "Escape") {
+                        cancelRenameCollection();
+                      }
+                    }}
+                    onBlur={() => commitRenameCollection(col.id)}
+                    className="text-sm flex-1 bg-transparent outline-none border-none px-1"
+                    style={{ color: "var(--text-primary)" }}
+                  />
+                ) : (
+                  <span
+                    className="text-sm truncate flex-1"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {col.name}
+                  </span>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Create request */}
+                  <button
+                    onClick={(e) => {
                       e.stopPropagation();
                       createRequest(col.id);
-                    }
-                  }
-                  className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
-                  style={{ color: 'var(--accent)' }}
-                  title="Add request"
-                >
-                  <Plus size={12} />
-                </button>
-
-                {/* Delete collection */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteCollection(col.id)
-                  }}
-                  className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
-                  style={{ color: 'var(--error)' }}
-                  title="Delete collection"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            </div>
-
-            {/* Requests */}
-            {expandedFolders[col.id] && (
-              <div
-                className="ml-6 border-l"
-                style={{ borderColor: 'var(--border-color)' }}
-              >
-                {col.requests.map(req => (
-                  <div
-                    key={req.id}
-                    onClick={() => {
-                      if (editingRequestId) return;
-                      setRequest(req); // Selection Store
                     }}
-                    onDoubleClick={(e) => {
+                    className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                    style={{ color: "var(--accent)" }}
+                    title="Add request"
+                  >
+                    <Plus size={12} />
+                  </button>
+
+                  {/* Delete collection */}
+                  <button
+                    onClick={(e) => {
                       e.stopPropagation();
-                      setEditingRequestId(req.id);
-                      setEditingRequestName(req.name);
+                      deleteCollection(col.id);
                     }}
-                    className={`
+                    className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                    style={{ color: "var(--error)" }}
+                    title="Delete collection"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Requests */}
+              {expandedFolders[col.id] && (
+                <div
+                  className="ml-6 border-l"
+                  style={{ borderColor: "var(--border-color)" }}
+                >
+                  {col.requests.map((req) => (
+                    <div
+                      key={req.id}
+                      onClick={() => {
+                        if (editingRequestId) return;
+                        setRequest(req); // Selection Store
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setEditingRequestId(req.id);
+                        setEditingRequestName(req.name);
+                      }}
+                      className={`
                       group
                       flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2
                       ${
                         currentRequest?.id === req.id
-                          ? 'bg-[var(--bg-panel)] border-[var(--accent)]'
-                          : 'border-transparent hover:bg-[var(--bg-secondary)]'
+                          ? "bg-[var(--bg-panel)] border-[var(--accent)]"
+                          : "border-transparent hover:bg-[var(--bg-secondary)]"
                       }
                     `}
-                  >
-
-                    {/* HTTP method */}
-                    <span
-                      className="text-[9px] font-bold w-10 shrink-0"
-                      style={{
-                        color:
-                          methodColorMap[
-                            req.method.toUpperCase()
-                          ] || 'var(--text-secondary)',
-                      }}
                     >
-                      {req.method.toUpperCase()}
-                    </span>
-
-                    {/* Request name */}
-                    {editingRequestId === req.id ? (
-                      <input
-                        autoFocus
-                        value={editingRequestName}
-                        onChange={(e) => setEditingRequestName(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            commitRenameRequest(req.id);
-                          }
-                          if (e.key === "Escape") {
-                            cancelRenameRequest();
-                          }
-                        }}
-                        onBlur={() => commitRenameRequest(req.id)}
-                        className="text-xs bg-transparent outline-none border-none flex-1"
-                        style={{ color: 'var(--text-primary)' }}
-                      />
-                    ) : (
+                      {/* HTTP method */}
                       <span
-                        className="text-xs truncate"
+                        className="text-[9px] font-bold w-10 shrink-0"
                         style={{
                           color:
-                            currentRequest?.id === req.id
-                              ? 'var(--text-primary)'
-                              : 'var(--text-secondary)',
+                            methodColorMap[req.method.toUpperCase()] ||
+                            "var(--text-secondary)",
                         }}
                       >
-                        {req.name}
+                        {req.method.toUpperCase()}
                       </span>
-                    )}
 
-                    {/* Request actions */}
-                    <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteRequest(req.id);
-                        }}
-                        className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
-                        style={{ color: 'var(--error)' }}
-                        title="Delete request"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {/* Request name */}
+                      {editingRequestId === req.id ? (
+                        <input
+                          autoFocus
+                          value={editingRequestName}
+                          onChange={(e) =>
+                            setEditingRequestName(e.target.value)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              commitRenameRequest(req.id);
+                            }
+                            if (e.key === "Escape") {
+                              cancelRenameRequest();
+                            }
+                          }}
+                          onBlur={() => commitRenameRequest(req.id)}
+                          className="text-xs bg-transparent outline-none border-none flex-1"
+                          style={{ color: "var(--text-primary)" }}
+                        />
+                      ) : (
+                        <span
+                          className="text-xs truncate"
+                          style={{
+                            color:
+                              currentRequest?.id === req.id
+                                ? "var(--text-primary)"
+                                : "var(--text-secondary)",
+                          }}
+                        >
+                          {req.name}
+                        </span>
+                      )}
+
+                      {/* Request actions */}
+                      <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteRequest(req.id);
+                          }}
+                          className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
+                          style={{ color: "var(--error)" }}
+                          title="Delete request"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
-
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )))}
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
       </nav>
     </aside>
   );

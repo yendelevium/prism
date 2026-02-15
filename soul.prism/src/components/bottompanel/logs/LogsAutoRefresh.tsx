@@ -1,9 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function LogsAutoRefresh({ children }: { children: React.ReactNode }) {
+export default function LogsAutoRefresh({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
 
   useEffect(() => {
@@ -16,4 +20,3 @@ export default function LogsAutoRefresh({ children }: { children: React.ReactNod
 
   return <>{children}</>;
 }
-

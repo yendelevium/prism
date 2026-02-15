@@ -1,7 +1,11 @@
 import "dotenv/config";
 import { PrismaClient, type HttpMethod } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import type { CreateRequestInput, Request, UpdateRequestInput } from "./request.types";
+import type {
+  CreateRequestInput,
+  Request,
+  UpdateRequestInput,
+} from "./request.types";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   __prismPrismaClient?: PrismaClient;
@@ -26,7 +30,6 @@ function getPrisma(): PrismaClient {
 
   return client;
 }
-
 
 function normalizeHeaders(
   headers: Record<string, string> | null | undefined,

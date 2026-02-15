@@ -1,2 +1,1 @@
-
-export type BottomView = 'logs' | 'gantt' | 'servicemap';
+export type BottomView = "logs" | "gantt" | "servicemap";

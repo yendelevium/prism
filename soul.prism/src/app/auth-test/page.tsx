@@ -24,8 +24,7 @@ export default async function AuthTestPage() {
           {user.primaryEmailAddress?.emailAddress ?? "N/A"}
         </div>
         <div>
-          <span className="font-medium">Name:</span>{" "}
-          {user.fullName ?? "N/A"}
+          <span className="font-medium">Name:</span> {user.fullName ?? "N/A"}
         </div>
       </div>
     </main>

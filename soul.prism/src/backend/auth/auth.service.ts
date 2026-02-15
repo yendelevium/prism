@@ -28,7 +28,9 @@ function getPrisma(): PrismaClient {
   return client;
 }
 
-function getPrimaryEmail(user: Awaited<ReturnType<typeof currentUser>>): string | null {
+function getPrimaryEmail(
+  user: Awaited<ReturnType<typeof currentUser>>,
+): string | null {
   if (!user || user.emailAddresses.length === 0) {
     return null;
   }

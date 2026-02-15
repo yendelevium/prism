@@ -56,7 +56,7 @@ describe("TraceGanttClient", () => {
 
     // Skip offset bars (first bar) and check the visible duration bar
     const durationBars = Array.from(rects).filter(
-      (r) => r.getAttribute("fill") !== null
+      (r) => r.getAttribute("fill") !== null,
     );
 
     // First span is ok → success color
@@ -77,7 +77,6 @@ describe("TraceGanttClient", () => {
     expect(xValues[0]).toBe(-180); // Or just check relative
     // Each child should be indented by 16 pixels per depth
     expect(xValues[1] - xValues[0]).toBe(16); // depth 1
-
   });
 
   it("handles zoom and reset button clicks", () => {

@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useRequestStore } from "@/stores/useRequestStore";
 import CodeEditor from "@/components/editors/CodeEditor";
 import ResponseInfo from "./ResponseInfo";
-import { KeyValueEditor, KeyValueRow, objectToRows } from "../editors/KeyValueEditor";
+import {
+  KeyValueEditor,
+  KeyValueRow,
+  objectToRows,
+} from "../editors/KeyValueEditor";
 import { useEffect } from "react";
 import { Clipboard, Copy, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -13,18 +17,16 @@ const tabs = ["Body", "Headers", "Cookies", "Tests"];
 
 /**
  * Helper to detect MIME types
- * @param headers 
- * @param body 
- * @returns 
+ * @param headers
+ * @param body
+ * @returns
  */
 function detectLanguage(
   headers: Record<string, string> | undefined,
-  body: string | null
+  body: string | null,
 ): string {
   const contentType =
-    headers?.["content-type"] ||
-    headers?.["Content-Type"] ||
-    "";
+    headers?.["content-type"] || headers?.["Content-Type"] || "";
 
   if (contentType.includes("application/json")) return "json";
   if (contentType.includes("text/html")) return "html";
@@ -47,11 +49,10 @@ function detectLanguage(
   return "plaintext";
 }
 
-
 export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState("Body");
-  const response = useRequestStore(s => s.response);
-  const isExecuting = useRequestStore(s => s.isExecuting);
+  const response = useRequestStore((s) => s.response);
+  const isExecuting = useRequestStore((s) => s.isExecuting);
   const [highlight, setHighlight] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -111,12 +112,10 @@ export default function ResponsePanel() {
         ${highlight ? "bg-[var(--bg-highlight)]" : "bg-[var(--bg-secondary)]"}
       `}
     >
-      
       <div className="flex justify-between border-b border-[var(--border-color)] mb-3">
-
         {/* Tabs */}
         <div className="flex gap-4 text-sm">
-          {tabs.map(tab => (
+          {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -138,11 +137,11 @@ export default function ResponsePanel() {
           <button
             onClick={handleCopy}
             disabled={isExecuting || copied}
-              className={`text-xs px-2 py-1
+            className={`text-xs px-2 py-1
                 ${isExecuting ? "opacity-50 cursor-not-allowed" : "hover:bg-[var(--bg-primary)]"}
             `}
           >
-            <Clipboard size={16} stroke="#88C0D0"/>
+            <Clipboard size={16} stroke="#88C0D0" />
           </button>
 
           <ResponseInfo
@@ -150,8 +149,6 @@ export default function ResponsePanel() {
             responseTime={response.time}
           />
         </div>
-
-
       </div>
 
       {/* Content */}
@@ -211,4 +208,3 @@ export default function ResponsePanel() {
     </div>
   );
 }
-

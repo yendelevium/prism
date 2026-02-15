@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Dropdown from '@/components/common/Dropdown';
-import { UserCircleIcon } from '@heroicons/react/24/solid';
-import IconButton from '../common/IconButton';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useSelectionStore } from '@/stores/useSelectionStore';
+import { useState } from "react";
+import Dropdown from "@/components/common/Dropdown";
+import { UserCircleIcon } from "@heroicons/react/24/solid";
+import IconButton from "../common/IconButton";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useSelectionStore } from "@/stores/useSelectionStore";
 
-type Protocol = 'REST' | 'GraphQL' | 'gRPC';
+type Protocol = "REST" | "GraphQL" | "gRPC";
 
 export default function Topbar() {
-  const [protocol, setProtocol] = useState<Protocol>('REST');
-  const workspaces = useWorkspaceStore(s => s.workspaces);
-  const currentWorkspace = useSelectionStore(s => s.workspace);
-  const setCurrentWorkspace = useSelectionStore(s => s.setWorkspace);
-  const [env, setEnv] = useState('Development');
+  const [protocol, setProtocol] = useState<Protocol>("REST");
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const currentWorkspace = useSelectionStore((s) => s.workspace);
+  const setCurrentWorkspace = useSelectionStore((s) => s.setWorkspace);
+  const [env, setEnv] = useState("Development");
 
   return (
     <header className="flex items-center justify-between h-14 px-4 border-[var(--border-color)] bg-[var(--bg-primary)]">
@@ -33,7 +33,7 @@ export default function Topbar() {
         <Dropdown
           label="Protocol"
           value={protocol}
-          options={["REST", "GraphQL", "gRPC"].map(protocol => ({
+          options={["REST", "GraphQL", "gRPC"].map((protocol) => ({
             value: protocol as Protocol,
             label: protocol,
           }))}
@@ -44,20 +44,24 @@ export default function Topbar() {
         <Dropdown
           label="Workspace"
           value={currentWorkspace?.id ?? ""}
-          options={workspaces.map(ws => ({
+          options={workspaces.map((ws) => ({
             value: ws.id,
             label: ws.name,
           }))}
-          onChange={(newWsId) => setCurrentWorkspace(workspaces.find(w => w.id === newWsId) ?? null)}
+          onChange={(newWsId) =>
+            setCurrentWorkspace(
+              workspaces.find((w) => w.id === newWsId) ?? null,
+            )
+          }
         />
 
         {/* Environment Selector */}
         <Dropdown
           label="Env"
           value={env}
-          options={['Development', 'Staging', 'Production'].map(env => ({
+          options={["Development", "Staging", "Production"].map((env) => ({
             value: env,
-            label: env
+            label: env,
           }))}
           onChange={setEnv}
         />

@@ -11,8 +11,8 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Span, GanttData } from "./types";
-import { useState } from 'react';
-import SpanDetailPanel from './SpanDetailPanel';
+import { useState } from "react";
+import SpanDetailPanel from "./SpanDetailPanel";
 
 const NORD = {
   bgPrimary: "#2E3440",
@@ -56,9 +56,7 @@ export const TreeTick = (props: any) => {
   const { x, y, payload, fullData } = props;
 
   // Resolve the full span object from the tick value (span_id)
-  const dataItem = fullData.find(
-    (d: GanttData) => d.span_id === payload.value
-  );
+  const dataItem = fullData.find((d: GanttData) => d.span_id === payload.value);
 
   // Recharts may invoke tick renderers during layout passes
   if (!dataItem) return null;
@@ -71,8 +69,9 @@ export const TreeTick = (props: any) => {
       {/* Hierarchy guide line connecting this span to its parent */}
       {dataItem.depth > 0 && (
         <path
-          d={`M ${-190 + (dataItem.depth - 1) * 16} ${-20} V 0 H ${-185 + indent
-            }`}
+          d={`M ${-190 + (dataItem.depth - 1) * 16} ${-20} V 0 H ${
+            -185 + indent
+          }`}
           fill="none"
           stroke="var(--border-color)"
           strokeWidth="1"
@@ -120,8 +119,8 @@ export const TreeTick = (props: any) => {
  */
 export const CustomBarShape = (props: any) => {
   const { x, y, width, height, payload, dataKey, onClick } = props;
-  if (dataKey === 'offset' || !payload) return null;
-  const fill = payload.status === 'error' ? NORD.error : NORD.success;
+  if (dataKey === "offset" || !payload) return null;
+  const fill = payload.status === "error" ? NORD.error : NORD.success;
   return (
     <rect
       x={x}
@@ -130,7 +129,7 @@ export const CustomBarShape = (props: any) => {
       height={height}
       fill={fill}
       rx={2}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: "pointer" }}
       onClick={() => onClick?.(payload)}
     />
   );
@@ -192,9 +191,7 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
   /**
    * Chart dimensions are derived from data density to preserve readability.
    */
-  const totalDuration = Math.max(
-    ...data.map((d) => d.offset + d.duration)
-  );
+  const totalDuration = Math.max(...data.map((d) => d.offset + d.duration));
 
   const chartWidth = Math.max(1200, totalDuration * 1.5);
   const chartHeight = data.length * 60 + 100;
@@ -297,9 +294,7 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                     type="category"
                     dataKey="span_id"
                     width={1}
-                    tick={(props) => (
-                      <TreeTick {...props} fullData={data} />
-                    )}
+                    tick={(props) => <TreeTick {...props} fullData={data} />}
                     axisLine={{ stroke: "var(--border-color)" }}
                   />
 
@@ -312,8 +307,7 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                           <div
                             style={{
                               background: "var(--bg-panel)",
-                              border:
-                                "1px solid var(--border-color)",
+                              border: "1px solid var(--border-color)",
                               padding: "8px",
                               borderRadius: "4px",
                               color: "var(--text-primary)",

@@ -34,8 +34,12 @@ describe("workspace.actions", () => {
   });
 
   it("creates workspace for authenticated user", async () => {
-    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
-    (createWorkspace as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "ws-1" });
+    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
+    (createWorkspace as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "ws-1",
+    });
 
     const result = await createWorkspaceAction("Test");
 
@@ -45,7 +49,9 @@ describe("workspace.actions", () => {
   });
 
   it("lists workspaces for authenticated user", async () => {
-    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
+    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
     (listWorkspacesForUser as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
     const result = await listWorkspacesAction();
@@ -55,8 +61,12 @@ describe("workspace.actions", () => {
   });
 
   it("enforces workspace access when fetching by id", async () => {
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
-    (getWorkspaceById as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "ws-1" });
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
+    (getWorkspaceById as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "ws-1",
+    });
 
     const result = await getWorkspaceByIdAction("ws-1");
 

@@ -1,14 +1,12 @@
-
 const variantStyles = {
-    default: 'text-[var(--text-secondary)] hover:text-[var(--accent)]',
-    active: 'bg-[var(--bg-panel)] text-[var(--accent)]'
-}
-
+  default: "text-[var(--text-secondary)] hover:text-[var(--accent)]",
+  active: "bg-[var(--bg-panel)] text-[var(--accent)]",
+};
 
 export default function IconButton({
   icon: Icon,
   onClick,
-  variant = 'default'
+  variant = "default",
 }: IconButtonProps) {
   return (
     <button
@@ -20,11 +18,10 @@ export default function IconButton({
   );
 }
 
-
-export type IconButtonVariant = 'default' | 'active'
+export type IconButtonVariant = "default" | "active";
 
 export type IconButtonProps = {
-    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-    onClick?: () => void
-    variant?: IconButtonVariant
-}
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  onClick?: () => void;
+  variant?: IconButtonVariant;
+};

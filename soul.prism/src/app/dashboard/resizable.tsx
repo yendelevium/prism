@@ -69,7 +69,6 @@ export default function DashboardHome({
   responsePanel,
   bottomPanelServer,
 }: DashboardHomeProps) {
-
   /**
    * Creates a layout change handler for a given group.
    * Persists the updated layout to a cookie with a 1-year max-age.
@@ -84,16 +83,16 @@ export default function DashboardHome({
   return (
     <div className="h-screen w-full bg-[var(--bg-primary)] overflow-hidden">
       {/* Vertical Panel Group */}
-      <Group 
-        orientation="vertical" 
+      <Group
+        orientation="vertical"
         id="dashboard-vertical-layout"
         defaultLayout={defaultLayoutVertical}
         onLayoutChange={onLayoutChange("dashboard-vertical-layout")}
       >
         {/* Top horizontal panel group */}
         <Panel id="top-section" minSize={200}>
-          <Group 
-            orientation="horizontal" 
+          <Group
+            orientation="horizontal"
             id="dashboard-horizontal-layout"
             defaultLayout={defaultLayoutHorizontal}
             onLayoutChange={onLayoutChange("dashboard-horizontal-layout")}
@@ -116,9 +115,7 @@ export default function DashboardHome({
 
         {/* Bottom Utility Panel */}
         <Panel id="bottom-utility-panel" minSize={220}>
-          <div className="h-full overflow-hidden">
-            {bottomPanelServer}
-          </div>
+          <div className="h-full overflow-hidden">{bottomPanelServer}</div>
         </Panel>
       </Group>
     </div>

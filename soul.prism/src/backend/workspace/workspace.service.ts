@@ -45,10 +45,10 @@ export async function createWorkspace(
 
     if (userCheck.rows.length === 0) {
       const email = `${userId}@example.local`;
-      await client.query(
-        'INSERT INTO "User" ("id", "email") VALUES ($1, $2)',
-        [userId, email],
-      );
+      await client.query('INSERT INTO "User" ("id", "email") VALUES ($1, $2)', [
+        userId,
+        email,
+      ]);
     }
 
     const workspaceResult = await client.query<{

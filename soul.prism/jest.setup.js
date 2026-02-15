@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+import "@testing-library/jest-dom";
 
 // Mocking Browsers ResizeObserver class
 global.ResizeObserver = class {

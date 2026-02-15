@@ -10,7 +10,11 @@ import { updateRequestAction } from "@/backend/request/request.actions";
 import { RequestItem } from "@/@types/collectionItem";
 import { toast } from "sonner";
 import { unwrap } from "@/@types/actionResult";
-import { KeyValueRow, rowsToObject, rowsToSearchParams } from "@/components/editors/KeyValueEditor";
+import {
+  KeyValueRow,
+  rowsToObject,
+  rowsToSearchParams,
+} from "@/components/editors/KeyValueEditor";
 import { useSelectionStore } from "./useSelectionStore";
 import { useAuth } from "@clerk/nextjs";
 
@@ -69,10 +73,9 @@ interface RequestState {
 }
 
 export const useRequestStore = create<RequestState>((set, get) => {
-
   const debouncedSave = debounce(async () => {
     await get().saveRequest();
-    set({ isLoading: false});
+    set({ isLoading: false });
   }, 800);
 
   return {
@@ -108,7 +111,8 @@ export const useRequestStore = create<RequestState>((set, get) => {
         id: r.id,
         name: r.name,
         method: r.method,
-        url: r.url === "" ? "" : new URL(r.url).origin + new URL(r.url).pathname,
+        url:
+          r.url === "" ? "" : new URL(r.url).origin + new URL(r.url).pathname,
         params: r.params ?? [],
         headers: r.headers ?? [],
         body: r.body,
@@ -116,37 +120,37 @@ export const useRequestStore = create<RequestState>((set, get) => {
     },
 
     setName: (name) => {
-      set({ isLoading: true});
+      set({ isLoading: true });
       set({ name });
       debouncedSave();
     },
 
     setMethod: (method) => {
-      set({ isLoading: true});
+      set({ isLoading: true });
       set({ method });
       debouncedSave();
     },
 
     setUrl: (url) => {
-      set({ isLoading: true});
+      set({ isLoading: true });
       set({ url });
       debouncedSave();
     },
 
     setParams: (params) => {
-      set({ isLoading: true});
+      set({ isLoading: true });
       set({ params });
       debouncedSave();
     },
 
     setHeaders: (headers) => {
-      set({ isLoading: true});
+      set({ isLoading: true });
       set({ headers });
       debouncedSave();
     },
 
     setBody: (body) => {
-      set({ isLoading: true});
+      set({ isLoading: true });
       set({ body });
       debouncedSave();
     },
@@ -163,22 +167,20 @@ export const useRequestStore = create<RequestState>((set, get) => {
         headers: rowsToObject(headers),
         method: method,
         name: name,
-        url: url + '?' + rowsToSearchParams(params).toString(),
-      }
+        url: url + "?" + rowsToSearchParams(params).toString(),
+      };
 
       try {
         unwrap(await updateRequestAction(id, updateRequestInput));
-      }
-      catch (err: any) {
+      } catch (err: any) {
         toast.error(err.message);
       }
     },
 
     execute: async (environmentVariables, userId, requestId, collectionId) => {
-
       const { method, url, params, headers, body } = get();
 
-    // Verify
+      // Verify
       if (!url) {
         throw new Error("URL is required");
       }
@@ -186,7 +188,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
         throw new Error("Method is required");
       }
 
-    // Parse env variables
+      // Parse env variables
       const envUrl = requestParser(url, environmentVariables);
 
       let parsedUrl: URL;
@@ -199,7 +201,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
 
       const payload = {
         method,
-        url: parsedUrl + '?' + rowsToSearchParams(params).toString(),
+        url: parsedUrl + "?" + rowsToSearchParams(params).toString(),
         headers: rowsToObject(headers),
         body,
         request_id: requestId,
@@ -219,7 +221,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
       }
       const data = (await res.json()) as InterceptorResponse;
 
-    // Store response
+      // Store response
       set({
         response: {
           status: data.status,
@@ -236,7 +238,7 @@ export const useRequestStore = create<RequestState>((set, get) => {
         },
       });
 
-      set({ isExecuting: false});
+      set({ isExecuting: false });
     },
   };
 });
@@ -247,4 +249,3 @@ function parseDurationMs(v: string): number {
   const n = Number(v.replace(/ms$/, ""));
   return Number.isFinite(n) ? n : 0;
 }
-

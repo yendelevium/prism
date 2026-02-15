@@ -55,13 +55,19 @@ describe("request.actions", () => {
   });
 
   it("creates request for authenticated user and workspace", async () => {
-    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
+    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
     (getCollectionById as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: "col-1",
       workspaceId: "ws-1",
     });
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
-    (createRequest as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "req-1" });
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
+    (createRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "req-1",
+    });
 
     const result = await createRequestAction({
       name: "Get Users",
@@ -105,7 +111,9 @@ describe("request.actions", () => {
       id: "col-1",
       workspaceId: "ws-1",
     });
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
 
     const result = await getRequestByIdAction("req-1");
 

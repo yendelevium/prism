@@ -21,3 +21,6 @@ migrate-up:
 # ONLY RUN during dev
 # Prisma only has migrate up??
 	npx prisma migrate dev
+
+format:
+	bunx @biomejs/biome format --write .
