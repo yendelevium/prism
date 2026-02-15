@@ -20,3 +20,6 @@ docs:
 
 generate:
 	sqlc generate
+
+format:
+	gofmt -l .

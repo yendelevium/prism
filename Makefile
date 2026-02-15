@@ -28,6 +28,10 @@ test:
 	$(MAKE) -C soul.prism test
 	$(MAKE) -C intercept.prism test
 
+format:
+	$(MAKE) -C soul.prism format
+	$(MAKE) -C intercept.prism format
+
 clean:
 	$(MAKE) compose-down
 	docker volume rm pg_duckdb_data
