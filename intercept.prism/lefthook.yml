@@ -1,5 +1,10 @@
 pre-commit:
   commands:
+    proxy-format:
+      root: "intercept.prism/"
+      run: make format
+      stage_fixed: true
+
     proxy-test:
       root: "intercept.prism/"
       run: make test
