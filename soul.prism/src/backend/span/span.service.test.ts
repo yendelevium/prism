@@ -28,10 +28,7 @@ vi.mock("pg", () => {
   return { Pool };
 });
 
-import {
-  listSpansByTraceId,
-  getSpanById,
-} from "./span.service";
+import { listSpansByTraceId, getSpanById } from "./span.service";
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -81,10 +78,9 @@ describe("span.service", () => {
         createdAt: new Date(now),
       },
     ]);
-    expect(mocks.poolQueryMock).toHaveBeenCalledWith(
-      expect.any(String),
-      ["trace-1"]
-    );
+    expect(mocks.poolQueryMock).toHaveBeenCalledWith(expect.any(String), [
+      "trace-1",
+    ]);
   });
 
   it("returns undefined when span is not found", async () => {

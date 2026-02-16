@@ -1,4 +1,4 @@
-import { KeyValueRow } from '../../editors/KeyValueEditor';
+import { KeyValueRow } from "../../editors/KeyValueEditor";
 
 /**
  * Represents an execution environment for requests.
@@ -52,7 +52,4 @@ export interface Environment {
  * This type intentionally excludes immutable and server-managed
  * fields such as `workspace_id` and `created_at`.
  */
-export type EnvironmentUpdate = Pick<
-  Environment,
-  'id' | 'name' | 'variables'
->;
+export type EnvironmentUpdate = Pick<Environment, "id" | "name" | "variables">;

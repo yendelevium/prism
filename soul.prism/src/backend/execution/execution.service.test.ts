@@ -24,7 +24,10 @@ vi.mock("@prisma/client", () => {
   return { PrismaClient };
 });
 
-import { getExecutionById, listExecutionsByRequestId } from "./execution.service";
+import {
+  getExecutionById,
+  listExecutionsByRequestId,
+} from "./execution.service";
 
 beforeEach(() => {
   vi.resetAllMocks();

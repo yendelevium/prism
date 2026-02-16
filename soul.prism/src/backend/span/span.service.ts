@@ -25,9 +25,7 @@ function getPool(): Pool {
   return pool;
 }
 
-export async function listSpansByTraceId(
-  traceId: string,
-): Promise<Span[]> {
+export async function listSpansByTraceId(traceId: string): Promise<Span[]> {
   const pool = getPool();
 
   const result = await pool.query<{
@@ -66,9 +64,7 @@ export async function listSpansByTraceId(
   }));
 }
 
-export async function getSpanById(
-  id: string,
-): Promise<Span | undefined> {
+export async function getSpanById(id: string): Promise<Span | undefined> {
   const pool = getPool();
 
   const result = await pool.query<{

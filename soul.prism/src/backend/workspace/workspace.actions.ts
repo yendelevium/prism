@@ -32,8 +32,9 @@ export async function createWorkspaceAction(
   }
 }
 
-export async function listWorkspacesAction(
-): Promise<ActionResult<Workspace[]>> {
+export async function listWorkspacesAction(): Promise<
+  ActionResult<Workspace[]>
+> {
   try {
     const user = await requireUser();
     const workspaces = await listWorkspacesForUser(user.id);

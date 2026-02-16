@@ -1,12 +1,10 @@
-
-export type ActionResult<T> = 
-    | { success: true, data: T}
-    | { success: false, error: string};
-
+export type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
 
 /**
  * Function to easily retrieve and make use of the results of server actions that return ActionResult<T>
- * 
+ *
  * @example Use unwrap with await
  *          ```ts
  *              try {

@@ -12,6 +12,7 @@ import { collectionToCollectionItem } from "../../@types/collectionItem";
 import { WorkspaceCollectionSync } from "../providers/WorkspaceCollectionSync";
 import { RequestDetailsSync } from "../providers/RequestDetailsSync";
 
+export const dynamic = "force-dynamic"; // <--- Add this
 const userId = "user_1";
 
 export default async function DashboardLayout({
@@ -26,9 +27,9 @@ export default async function DashboardLayout({
   return (
     <DataStoreProvider workspaces={data.workspacesData}>
       <EnvironmentProvider>
-        <WorkspaceCollectionSync/>
-        <RequestDetailsSync/>
-        
+        <WorkspaceCollectionSync />
+        <RequestDetailsSync />
+
         <div className="flex flex-col h-full">
           <div className="flex-shrink-0 h-14">
             <Topbar />
@@ -52,9 +53,9 @@ export default async function DashboardLayout({
 }
 
 async function getInitData() {
-  const workspacesData = unwrap(
-    await listWorkspacesAction()
-  ).map(ws => parseBackendWorkspace(ws)); 
-  
-  return {workspacesData: workspacesData};
+  const workspacesData = unwrap(await listWorkspacesAction()).map((ws) =>
+    parseBackendWorkspace(ws),
+  );
+
+  return { workspacesData: workspacesData };
 }

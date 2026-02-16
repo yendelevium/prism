@@ -42,9 +42,7 @@ export default function ResponseInfo({
       {responseTime !== null && (
         <>
           <span className="text-[var(--border-color)]">•</span>
-          <span className="text-[var(--text-secondary)]">
-            {responseTime}ms
-          </span>
+          <span className="text-[var(--text-secondary)]">{responseTime}ms</span>
         </>
       )}
     </div>

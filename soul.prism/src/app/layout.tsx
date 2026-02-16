@@ -20,7 +20,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Prism | Unified API Platform",
-  description: "Unified API testing, distributed tracing, and chaos engineering platform.",
+  description:
+    "Unified API testing, distributed tracing, and chaos engineering platform.",
 };
 
 export default function RootLayout({

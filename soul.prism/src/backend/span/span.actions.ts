@@ -1,9 +1,6 @@
 "use server";
 
-import {
-  listSpansByTraceId,
-  getSpanById,
-} from "@/backend/span/span.service";
+import { listSpansByTraceId, getSpanById } from "@/backend/span/span.service";
 import type { Span } from "@/backend/span/span.types";
 import { requireUser } from "@/backend/auth/auth.utils";
 

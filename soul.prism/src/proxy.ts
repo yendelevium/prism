@@ -9,7 +9,11 @@ export default clerkMiddleware(async (auth, req) => {
   // Logged-in users visiting landing/auth pages → redirect to /dashboard
   if (userId) {
     const path = req.nextUrl.pathname;
-    if (path === "/" || path.startsWith("/sign-in") || path.startsWith("/sign-up")) {
+    if (
+      path === "/" ||
+      path.startsWith("/sign-in") ||
+      path.startsWith("/sign-up")
+    ) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }
@@ -22,9 +26,5 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  matcher: [
-    "/((?!.+\\.[\\w]+$|_next).*)",
-    "/",
-    "/(api|trpc)(.*)",
-  ],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };

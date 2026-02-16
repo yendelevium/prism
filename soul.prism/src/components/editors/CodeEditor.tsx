@@ -10,10 +10,9 @@ import { nordTheme } from "./nordTheme";
  * during server-side rendering. The editor is therefore loaded dynamically
  * with SSR explicitly disabled.
  */
-const MonacoEditor = dynamic(
-  () => import("@monaco-editor/react"),
-  { ssr: false }
-);
+const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+});
 
 /**
  * Props for {@link CodeEditor}.
@@ -76,34 +75,28 @@ export default function CodeEditor({
        * Fill the available vertical space of the parent container.
        */
       height="100%"
-
       /**
        * Language mode used for syntax highlighting and tooling.
        */
       language={language}
-
       /**
        * Controlled editor value.
        */
       value={value}
-
       /**
        * Change handler for editor content updates.
        */
       onChange={onChange}
-
       /**
        * Register the custom Nord theme before the editor mounts.
        */
       beforeMount={(monaco) => {
         monaco.editor.defineTheme("nord", nordTheme);
       }}
-
       /**
        * Apply the registered Nord theme.
        */
       theme="nord"
-
       /**
        * Monaco editor configuration options.
        */

@@ -1,4 +1,4 @@
-import type { Node } from 'reactflow';
+import type { Node } from "reactflow";
 export interface ServiceMetrics {
   totalCalls: number;
   avgLatency: number;

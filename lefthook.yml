@@ -1,0 +1,3 @@
+extends:
+  - intercept.prism/lefthook.yml
+  - soul.prism/lefthook.yml

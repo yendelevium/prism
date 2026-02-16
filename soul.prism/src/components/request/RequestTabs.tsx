@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import CodeEditor from "@/components/editors/CodeEditor";
-import { KeyValueEditor, KeyValueRow, objectToRows, rowsToObject } from "../editors/KeyValueEditor";
+import {
+  KeyValueEditor,
+  KeyValueRow,
+  objectToRows,
+  rowsToObject,
+} from "../editors/KeyValueEditor";
 import { useRequestStore } from "@/stores/useRequestStore";
 import { Check } from "lucide-react";
 
@@ -10,20 +15,20 @@ const tabs = ["Params", "Headers", "Body", "Auth", "Tests"];
 
 export default function RequestTabs() {
   const [activeTab, setActiveTab] = useState("Params");
-  const params = useRequestStore(s => s.params);
-  const headers = useRequestStore(s => s.headers);
-  const body = useRequestStore(s => s.body);
-  const isLoading = useRequestStore(s => s.isLoading);
-  const setParams = useRequestStore(s => s.setParams);
-  const setHeaders = useRequestStore(s => s.setHeaders);
-  const setBody = useRequestStore(s => s.setBody);
+  const params = useRequestStore((s) => s.params);
+  const headers = useRequestStore((s) => s.headers);
+  const body = useRequestStore((s) => s.body);
+  const isLoading = useRequestStore((s) => s.isLoading);
+  const setParams = useRequestStore((s) => s.setParams);
+  const setHeaders = useRequestStore((s) => s.setHeaders);
+  const setBody = useRequestStore((s) => s.setBody);
 
   return (
     <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
       {/* Tabs */}
       <div className="flex gap-4 justify-between text-sm border-b border-[var(--border-color)] mb-3">
         <div className="flex gap-4 text-sm">
-          {tabs.map(tab => (
+          {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -41,12 +46,10 @@ export default function RequestTabs() {
           ))}
         </div>
         <div>
-          {
-            isLoading && <div className="h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
-          }
-          {
-            !isLoading && <Check stroke="#88C0D0"/>
-          }
+          {isLoading && (
+            <div className="h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+          )}
+          {!isLoading && <Check stroke="#88C0D0" />}
         </div>
       </div>
 
@@ -80,7 +83,6 @@ export default function RequestTabs() {
           </div>
         )}
 
-
         {activeTab === "Headers" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
@@ -98,8 +100,6 @@ export default function RequestTabs() {
             />
           </div>
         )}
-
-
 
         {(activeTab === "Auth" || activeTab === "Tests") && (
           <div className="text-[var(--text-secondary)] p-2">

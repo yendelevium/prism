@@ -18,10 +18,7 @@ vi.mock("@/backend/span/span.service", () => ({
   getSpanById: mocks.getSpanByIdMock,
 }));
 
-import {
-  listSpansByTraceIdAction,
-  getSpanByIdAction,
-} from "./span.actions";
+import { listSpansByTraceIdAction, getSpanByIdAction } from "./span.actions";
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -37,9 +34,7 @@ describe("span.actions", () => {
 
   it("lists spans for authenticated user", async () => {
     mocks.requireUserMock.mockResolvedValue({ id: "user-1" });
-    mocks.listSpansByTraceIdMock.mockResolvedValue([
-      { id: "span-1" },
-    ]);
+    mocks.listSpansByTraceIdMock.mockResolvedValue([{ id: "span-1" }]);
 
     const result = await listSpansByTraceIdAction("trace-1");
 

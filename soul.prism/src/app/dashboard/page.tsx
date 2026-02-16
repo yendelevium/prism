@@ -5,6 +5,7 @@ import RequestTabs from "@/components/request/RequestTabs";
 import ResponsePanel from "@/components/response/ResponsePanel";
 import BottomPanelServer from "@/components/bottompanel/BottomPanelServer";
 
+export const dynamic = "force-dynamic"; // <--- Add this
 /**
  * Page component for the main dashboard layout.
  *
@@ -25,12 +26,12 @@ export default async function Page() {
   /**
    * Cookie key for storing horizontal layout preferences.
    */
-  const groupIdHorizontal = 'dashboard-horizontal-layout';
+  const groupIdHorizontal = "dashboard-horizontal-layout";
 
   /**
    * Cookie key for storing vertical layout preferences.
    */
-  const groupIdVertical = 'dashboard-vertical-layout';
+  const groupIdVertical = "dashboard-vertical-layout";
 
   /**
    * API to access Next.js cookies.

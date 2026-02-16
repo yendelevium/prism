@@ -1,6 +1,6 @@
 /**
  * @module Theme
- * 
+ *
  * This module represents the theme used across the application.
  * The styles are located in `theme.css`.
  *
@@ -20,4 +20,4 @@
  * - `--warning`
  * ```
  */
-export const theme = 'See src/app/styles/theme.css';
+export const theme = "See src/app/styles/theme.css";

@@ -1,33 +1,27 @@
-'use client';
+"use client";
 
-import React, { useState, useTransition } from 'react';
-import {
-  Layers,
-  Plus,
-  Users,
-  X,
-  UserPlus,
-  Trash2,
-} from 'lucide-react';
-import { Workspace } from '@/@types/workspace'; 
-import { createNewWorkspace } from './WorkspaceServer';
-import { toast } from 'sonner';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { createWorkspaceAction } from '@/backend/workspace/workspace.actions';
-import { unwrap } from '@/@types/actionResult';
+import React, { useState, useTransition } from "react";
+import { Layers, Plus, Users, X, UserPlus, Trash2 } from "lucide-react";
+import { Workspace } from "@/@types/workspace";
+import { createNewWorkspace } from "./WorkspaceServer";
+import { toast } from "sonner";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { createWorkspaceAction } from "@/backend/workspace/workspace.actions";
+import { unwrap } from "@/@types/actionResult";
 
 export function WorkspaceSidebarClient() {
-  const workspaces = useWorkspaceStore(s => s.workspaces);
-  const setWorkspaces = useWorkspaceStore(s => s.setWorkspaces);
-  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
-  const [newUserEmail, setNewUserEmail] = useState('');
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const setWorkspaces = useWorkspaceStore((s) => s.setWorkspaces);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const [newUserEmail, setNewUserEmail] = useState("");
 
   const addWorkspace = () => {
-
     const newWs: Workspace = {
       id: crypto.randomUUID(),
-      name: 'New Workspace',
-      created_by: '', // In production, get from auth context
+      name: "New Workspace",
+      created_by: "", // In production, get from auth context
       users: [],
       created_at: new Date().toISOString(),
     };
@@ -38,25 +32,25 @@ export function WorkspaceSidebarClient() {
   const saveChanges = async () => {
     if (!editingWorkspace) return;
 
-    const exists = workspaces.find(w => w.id === editingWorkspace.id);
+    const exists = workspaces.find((w) => w.id === editingWorkspace.id);
     if (!exists) {
       try {
         unwrap(await createWorkspaceAction(editingWorkspace.name));
-        setWorkspaces([editingWorkspace, ...workspaces])
+        setWorkspaces([editingWorkspace, ...workspaces]);
         toast.success("Workspace Saved");
-      }
-      catch (err: any) {
+      } catch (err: any) {
         toast.error(err.message ?? "Something went wrong");
         return;
       }
-    }
-    else {
-      
+    } else {
       // TODO: Write server action to actually update workspace in DB
-      setWorkspaces(workspaces.map(ws => ws.id === editingWorkspace.id ? editingWorkspace : ws));
-
+      setWorkspaces(
+        workspaces.map((ws) =>
+          ws.id === editingWorkspace.id ? editingWorkspace : ws,
+        ),
+      );
     }
-   
+
     setEditingWorkspace(null);
   };
 
@@ -68,14 +62,14 @@ export function WorkspaceSidebarClient() {
       ...editingWorkspace,
       users: [...editingWorkspace.users, newUserEmail.trim()],
     });
-    setNewUserEmail('');
+    setNewUserEmail("");
   };
 
   const removeUser = (userToRemove: string) => {
     if (!editingWorkspace) return;
     setEditingWorkspace({
       ...editingWorkspace,
-      users: editingWorkspace.users.filter(u => u !== userToRemove),
+      users: editingWorkspace.users.filter((u) => u !== userToRemove),
     });
   };
 
@@ -83,18 +77,18 @@ export function WorkspaceSidebarClient() {
     <aside
       className="w-full h-full flex flex-col border-r select-none overflow-hidden"
       style={{
-        backgroundColor: 'var(--bg-primary)',
-        borderColor: 'var(--border-color)',
+        backgroundColor: "var(--bg-primary)",
+        borderColor: "var(--border-color)",
       }}
     >
       {/* Sidebar Header */}
       <div
         className="p-4 flex items-center justify-between border-b shrink-0"
-        style={{ borderColor: 'var(--border-color)' }}
+        style={{ borderColor: "var(--border-color)" }}
       >
         <h2
           className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
-          style={{ color: 'var(--text-secondary)' }}
+          style={{ color: "var(--text-secondary)" }}
         >
           <Layers size={12} />
           Workspaces
@@ -103,7 +97,7 @@ export function WorkspaceSidebarClient() {
         <button
           onClick={addWorkspace}
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
-          style={{ color: 'var(--accent)' }}
+          style={{ color: "var(--accent)" }}
           aria-label="Add Workspace"
         >
           <Plus size={14} />
@@ -112,7 +106,7 @@ export function WorkspaceSidebarClient() {
 
       {/* Workspace List */}
       <div className="flex-1 overflow-y-auto scrollbar-hide py-2">
-        {workspaces.map(ws => (
+        {workspaces.map((ws) => (
           <div
             key={ws.id}
             onClick={() => setEditingWorkspace(ws)}
@@ -121,13 +115,16 @@ export function WorkspaceSidebarClient() {
             <div className="flex flex-col min-w-0">
               <span
                 className="text-xs font-mono tracking-tight truncate"
-                style={{ color: 'var(--text-primary)' }}
+                style={{ color: "var(--text-primary)" }}
               >
                 {ws.name}
               </span>
               <div className="flex items-center gap-2 mt-1 opacity-40">
-                 <Users size={10} style={{ color: 'var(--text-secondary)' }} />
-                 <span className="text-[9px] font-mono uppercase" style={{ color: 'var(--text-secondary)' }}>
+                <Users size={10} style={{ color: "var(--text-secondary)" }} />
+                <span
+                  className="text-[9px] font-mono uppercase"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   {ws.users.length} members
                 </span>
               </div>
@@ -142,25 +139,33 @@ export function WorkspaceSidebarClient() {
           <div
             className="w-full max-w-md rounded-lg border shadow-2xl overflow-hidden"
             style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderColor: 'var(--border-color)',
+              backgroundColor: "var(--bg-primary)",
+              borderColor: "var(--border-color)",
             }}
           >
             {/* Modal Header */}
             <div
               className="flex items-center justify-between p-3 border-b"
               style={{
-                backgroundColor: 'var(--bg-secondary)',
-                borderColor: 'var(--border-color)',
+                backgroundColor: "var(--bg-secondary)",
+                borderColor: "var(--border-color)",
               }}
             >
               <input
                 autoFocus
                 className="bg-transparent text-sm font-mono font-bold text-[var(--accent)] outline-none border-b border-transparent focus:border-[var(--accent)] px-1"
                 value={editingWorkspace.name}
-                onChange={e => setEditingWorkspace({...editingWorkspace, name: e.target.value})}
+                onChange={(e) =>
+                  setEditingWorkspace({
+                    ...editingWorkspace,
+                    name: e.target.value,
+                  })
+                }
               />
-              <span className="text-[10px] uppercase font-bold tracking-tighter opacity-50" style={{ color: 'var(--text-secondary)' }}>
+              <span
+                className="text-[10px] uppercase font-bold tracking-tighter opacity-50"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 Workspace Settings
               </span>
             </div>
@@ -169,24 +174,39 @@ export function WorkspaceSidebarClient() {
             <div className="p-4 space-y-4">
               {/* Meta Info */}
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] uppercase font-bold opacity-40" style={{ color: 'var(--text-secondary)' }}>Created By</label>
-                <span className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{editingWorkspace.created_by}</span>
+                <label
+                  className="text-[9px] uppercase font-bold opacity-40"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Created By
+                </label>
+                <span
+                  className="text-xs font-mono"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {editingWorkspace.created_by}
+                </span>
               </div>
 
               {/* User Management */}
               <div className="flex flex-col gap-2">
-                <label className="text-[9px] uppercase font-bold opacity-40" style={{ color: 'var(--text-secondary)' }}>Manage Access</label>
-                
+                <label
+                  className="text-[9px] uppercase font-bold opacity-40"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Manage Access
+                </label>
+
                 {/* Add User Input */}
                 <div className="flex gap-2">
-                  <input 
+                  <input
                     className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded px-2 py-1 text-xs font-mono outline-none focus:border-[var(--accent)]"
                     placeholder="user@example.com"
                     value={newUserEmail}
                     onChange={(e) => setNewUserEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addUser()}
+                    onKeyDown={(e) => e.key === "Enter" && addUser()}
                   />
-                  <button 
+                  <button
                     onClick={addUser}
                     className="p-1.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:text-[var(--accent)] transition-colors"
                   >
@@ -196,10 +216,16 @@ export function WorkspaceSidebarClient() {
 
                 {/* Users List */}
                 <div className="max-h-40 overflow-y-auto border border-[var(--border-color)] rounded bg-[var(--bg-secondary)]/30">
-                  {editingWorkspace.users.map(user => (
-                    <div key={user} className="flex items-center justify-between p-2 border-b last:border-0" style={{ borderColor: 'var(--border-color)' }}>
-                      <span className="text-xs font-mono text-[var(--text-primary)]">{user}</span>
-                      <button 
+                  {editingWorkspace.users.map((user) => (
+                    <div
+                      key={user}
+                      className="flex items-center justify-between p-2 border-b last:border-0"
+                      style={{ borderColor: "var(--border-color)" }}
+                    >
+                      <span className="text-xs font-mono text-[var(--text-primary)]">
+                        {user}
+                      </span>
+                      <button
                         onClick={() => removeUser(user)}
                         className="text-[var(--text-secondary)] hover:text-[var(--error)] transition-colors"
                       >
@@ -212,7 +238,10 @@ export function WorkspaceSidebarClient() {
             </div>
 
             {/* Footer Actions */}
-            <div className="p-3 border-t flex justify-end gap-2" style={{ borderColor: 'var(--border-color)' }}>
+            <div
+              className="p-3 border-t flex justify-end gap-2"
+              style={{ borderColor: "var(--border-color)" }}
+            >
               <button
                 onClick={() => setEditingWorkspace(null)}
                 className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
@@ -223,8 +252,8 @@ export function WorkspaceSidebarClient() {
                 onClick={saveChanges}
                 className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all"
                 style={{
-                  backgroundColor: 'var(--accent)',
-                  color: 'var(--bg-primary)',
+                  backgroundColor: "var(--accent)",
+                  color: "var(--bg-primary)",
                 }}
               >
                 Save Changes

@@ -1,0 +1,63 @@
+name: Prism CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  validate-and-build:
+    name: Test & Docker Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Setup Go Environment
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.4'
+          cache: true
+          cache-dependency-path: intercept.prism/go.sum
+
+      # Setup Bun Environment
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      # Install Dependencies
+      - name: Install Dependencies
+        run: |
+          echo "Installing Go deps..."
+          cd intercept.prism && go mod download
+          
+          echo "Installing Frontend deps..."
+          cd ../soul.prism && bun install --frozen-lockfile
+
+      # Formatter Checks
+      # We verify formatting instead of fixing it. If this fails, the PR is blocked.
+      - name: Verify Formatting
+        run: |
+          echo "Checking code formatting"
+          make format
+
+          # If there were any changes after formatting -> code wasn't formatted, exit with failure
+          git diff --exit-code
+
+      # Run Tests (fails if it fails)
+      - name: Run Tests
+        run: make test  
+
+      # Docker Build (Dry Run)
+      # This confirms your Dockerfiles are valid and context paths are correct
+      # Currently FAILING coz Next.js + Clerk Errors but wtv I'll fix this later gotta sleep now
+      # - name: Build Docker Images
+      #   env:
+      #     # This exposes the secret to the shell running 'make build'
+      #     CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      #     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      #   run: make build

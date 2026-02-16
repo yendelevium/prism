@@ -1,20 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import {
-  Settings2,
-  Plus,
-  Trash2,
-  Globe,
-  Star,
-} from 'lucide-react';
-import { useEnvironment } from '../../context/EnvironmentContext';
-import {
-  KeyValueEditor,
-  KeyValueRow,
-} from '../../editors/KeyValueEditor';
-import { Environment } from './types';
-import { useSelectionStore } from '@/stores/useSelectionStore';
+import React, { useState, useEffect } from "react";
+import { Settings2, Plus, Trash2, Globe, Star } from "lucide-react";
+import { useEnvironment } from "../../context/EnvironmentContext";
+import { KeyValueEditor, KeyValueRow } from "../../editors/KeyValueEditor";
+import { Environment } from "./types";
+import { useSelectionStore } from "@/stores/useSelectionStore";
 
 /**
  * Props for {@link EnvSidebarClient}.
@@ -51,32 +42,29 @@ export function EnvSidebarClient({
    * Acts as a working copy of the provided environments until
    * changes are explicitly saved.
    */
-  const [envs, setEnvs] = useState<Environment[]>(
-    initialEnvironments
-  );
+  const [envs, setEnvs] = useState<Environment[]>(initialEnvironments);
 
   /**
    * Currently edited environment.
    *
    * When non-null, the modal editor is displayed.
    */
-  const [editingEnv, setEditingEnv] =
-    useState<Environment | null>(null);
+  const [editingEnv, setEditingEnv] = useState<Environment | null>(null);
 
   const [activeEnvId, setActiveEnvId] = useState<string | null>(
-    initialEnvironments.length > 0 ? initialEnvironments[0].id : null
+    initialEnvironments.length > 0 ? initialEnvironments[0].id : null,
   );
 
   const { setVariables } = useEnvironment();
-  const workspace = useSelectionStore(s => s.workspace);
+  const workspace = useSelectionStore((s) => s.workspace);
 
   // Sync active environment variables to context
   useEffect(() => {
-    const active = envs.find(e => e.id === activeEnvId);
+    const active = envs.find((e) => e.id === activeEnvId);
     const vars: Record<string, string> = {};
 
     if (active) {
-      active.variables.forEach(row => {
+      active.variables.forEach((row) => {
         if (row.enabled !== false && row.key) {
           vars[row.key] = row.value;
         }
@@ -96,7 +84,7 @@ export function EnvSidebarClient({
   const addEnvironment = () => {
     const newEnv: Environment = {
       id: crypto.randomUUID(),
-      name: 'New Environment',
+      name: "New Environment",
       variables: [],
       workspace_id: workspace!.id,
       created_at: new Date().toISOString(),
@@ -111,12 +99,9 @@ export function EnvSidebarClient({
    *
    * Click propagation is stopped to avoid triggering edit mode.
    */
-  const deleteEnvironment = (
-    e: React.MouseEvent,
-    id: string
-  ) => {
+  const deleteEnvironment = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setEnvs(envs.filter(env => env.id !== id));
+    setEnvs(envs.filter((env) => env.id !== id));
   };
 
   /**
@@ -124,9 +109,7 @@ export function EnvSidebarClient({
    *
    * Changes are staged locally until explicitly saved.
    */
-  const handleUpdateVariables = (
-    newRows: KeyValueRow[]
-  ) => {
+  const handleUpdateVariables = (newRows: KeyValueRow[]) => {
     if (!editingEnv) return;
     setEditingEnv({
       ...editingEnv,
@@ -142,10 +125,8 @@ export function EnvSidebarClient({
   const saveChanges = () => {
     if (!editingEnv) return;
 
-    setEnvs(prev =>
-      prev.map(env =>
-        env.id === editingEnv.id ? editingEnv : env
-      )
+    setEnvs((prev) =>
+      prev.map((env) => (env.id === editingEnv.id ? editingEnv : env)),
     );
 
     setEditingEnv(null);
@@ -155,18 +136,18 @@ export function EnvSidebarClient({
     <aside
       className="w-full h-full flex flex-col border-r select-none overflow-hidden"
       style={{
-        backgroundColor: 'var(--bg-primary)',
-        borderColor: 'var(--border-color)',
+        backgroundColor: "var(--bg-primary)",
+        borderColor: "var(--border-color)",
       }}
     >
       {/* Header */}
       <div
         className="p-4 flex items-center justify-between border-b shrink-0"
-        style={{ borderColor: 'var(--border-color)' }}
+        style={{ borderColor: "var(--border-color)" }}
       >
         <h2
           className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
-          style={{ color: 'var(--text-secondary)' }}
+          style={{ color: "var(--text-secondary)" }}
         >
           <Globe size={12} />
           Environments
@@ -176,8 +157,8 @@ export function EnvSidebarClient({
         <button
           onClick={addEnvironment}
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
-          style={{ color: 'var(--accent)' }}
-          aria-label='add'
+          style={{ color: "var(--accent)" }}
+          aria-label="add"
         >
           <Plus size={14} />
         </button>
@@ -190,7 +171,7 @@ export function EnvSidebarClient({
             No environments set
           </div>
         ) : (
-          envs.map(env => (
+          envs.map((env) => (
             <div
               key={env.id}
               onClick={() => setEditingEnv(env)}
@@ -200,13 +181,13 @@ export function EnvSidebarClient({
                 <div className="flex flex-col min-w-0">
                   <span
                     className="text-xs font-mono tracking-tight truncate"
-                    style={{ color: 'var(--text-primary)' }}
+                    style={{ color: "var(--text-primary)" }}
                   >
                     {env.name}
                   </span>
                   <span
                     className="text-[9px] font-mono opacity-40 uppercase"
-                    style={{ color: 'var(--text-secondary)' }}
+                    style={{ color: "var(--text-secondary)" }}
                   >
                     {env.variables.length} Variables
                   </span>
@@ -220,12 +201,18 @@ export function EnvSidebarClient({
                       setActiveEnvId(env.id === activeEnvId ? null : env.id);
                     }}
                     className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent)]"
-                    title={env.id === activeEnvId ? "Deactivate Environment" : "Set Active"}
+                    title={
+                      env.id === activeEnvId
+                        ? "Deactivate Environment"
+                        : "Set Active"
+                    }
                   >
                     <Star
                       size={12}
                       fill={env.id === activeEnvId ? "currentColor" : "none"}
-                      className={env.id === activeEnvId ? "text-[var(--accent)]" : ""}
+                      className={
+                        env.id === activeEnvId ? "text-[var(--accent)]" : ""
+                      }
                     />
                   </button>
                   <button
@@ -235,11 +222,9 @@ export function EnvSidebarClient({
                     <Settings2 size={12} />
                   </button>
                   <button
-                    onClick={e =>
-                      deleteEnvironment(e, env.id)
-                    }
+                    onClick={(e) => deleteEnvironment(e, env.id)}
                     className="p-1 text-[var(--text-secondary)] hover:text-[var(--error)]"
-                    aria-label='delete'
+                    aria-label="delete"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -256,23 +241,23 @@ export function EnvSidebarClient({
           <div
             className="w-full max-w-lg rounded-lg border shadow-2xl overflow-hidden"
             style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderColor: 'var(--border-color)',
+              backgroundColor: "var(--bg-primary)",
+              borderColor: "var(--border-color)",
             }}
           >
             {/* Modal Header */}
             <div
               className="flex items-center justify-between p-3 border-b"
               style={{
-                backgroundColor: 'var(--bg-secondary)',
-                borderColor: 'var(--border-color)',
+                backgroundColor: "var(--bg-secondary)",
+                borderColor: "var(--border-color)",
               }}
             >
               <input
                 autoFocus
                 className="bg-transparent text-sm font-mono font-bold text-[var(--accent)] outline-none border-b border-transparent focus:border-[var(--accent)] px-1"
                 value={editingEnv.name}
-                onChange={e =>
+                onChange={(e) =>
                   setEditingEnv({
                     ...editingEnv,
                     name: e.target.value,
@@ -282,7 +267,7 @@ export function EnvSidebarClient({
 
               <span
                 className="text-[10px] uppercase font-bold tracking-tighter opacity-50"
-                style={{ color: 'var(--text-secondary)' }}
+                style={{ color: "var(--text-secondary)" }}
               >
                 Env Editor
               </span>
@@ -305,7 +290,7 @@ export function EnvSidebarClient({
             {/* Actions */}
             <div
               className="p-3 border-t flex justify-end gap-2"
-              style={{ borderColor: 'var(--border-color)' }}
+              style={{ borderColor: "var(--border-color)" }}
             >
               <button
                 onClick={() => setEditingEnv(null)}
@@ -317,8 +302,8 @@ export function EnvSidebarClient({
                 onClick={saveChanges}
                 className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all"
                 style={{
-                  backgroundColor: 'var(--accent)',
-                  color: 'var(--bg-primary)',
+                  backgroundColor: "var(--accent)",
+                  color: "var(--bg-primary)",
                 }}
               >
                 Save

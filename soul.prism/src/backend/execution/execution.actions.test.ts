@@ -50,8 +50,12 @@ describe("execution.actions", () => {
       id: "col-1",
       workspaceId: "ws-1",
     });
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
-    (listExecutionsByRequestId as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
+    (listExecutionsByRequestId as ReturnType<typeof vi.fn>).mockResolvedValue(
+      [],
+    );
 
     const result = await listExecutionsByRequestIdAction("req-1");
 
@@ -82,7 +86,9 @@ describe("execution.actions", () => {
       id: "col-1",
       workspaceId: "ws-1",
     });
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
 
     const result = await getExecutionByIdAction("ex-1");
 

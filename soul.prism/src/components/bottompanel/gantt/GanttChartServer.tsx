@@ -1,6 +1,6 @@
-import React from 'react';
-import TraceGanttClient from './GanttChartPanel';
-import { Span } from './types';
+import React from "react";
+import TraceGanttClient from "./GanttChartPanel";
+import { Span } from "./types";
 
 export default async function TracePage() {
   // Sample data simulating a distributed trace
@@ -14,7 +14,7 @@ export default async function TracePage() {
       service_name: "gateway",
       start_time: 1715000000000,
       duration: 500,
-      status: 'ok'
+      status: "ok",
     },
     {
       id: 2,
@@ -25,7 +25,7 @@ export default async function TracePage() {
       service_name: "auth-svc",
       start_time: 1715000000050,
       duration: 150,
-      status: 'ok'
+      status: "ok",
     },
     {
       id: 3,
@@ -36,7 +36,7 @@ export default async function TracePage() {
       service_name: "user-svc",
       start_time: 1715000000250,
       duration: 450,
-      status: 'ok'
+      status: "ok",
     },
     {
       id: 4,
@@ -47,7 +47,7 @@ export default async function TracePage() {
       service_name: "user-svc",
       start_time: 1715000000275,
       duration: 100,
-      status: 'ok'
+      status: "ok",
     },
     {
       id: 5,
@@ -58,11 +58,9 @@ export default async function TracePage() {
       service_name: "db-svc",
       start_time: 1715000000400,
       duration: 250,
-      status: 'error'
+      status: "error",
     },
   ];
 
-  return (
-    <TraceGanttClient spans={sampleSpans} />
-  );
+  return <TraceGanttClient spans={sampleSpans} />;
 }

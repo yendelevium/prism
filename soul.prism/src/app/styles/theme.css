@@ -1,25 +1,25 @@
 :root {
   /* Backgrounds */
-  --bg-primary: #2E3440;     /* nord0 */
-  --bg-secondary: #3B4252;   /* nord1 */
-  --bg-panel: #434C5E;       /* nord2 */
+  --bg-primary: #2e3440; /* nord0 */
+  --bg-secondary: #3b4252; /* nord1 */
+  --bg-panel: #434c5e; /* nord2 */
 
   /* Highlight */
   --bg-highlight: rgba(163, 190, 255, 0.2); /* light blue accent tint */
 
   /* Borders */
-  --border-color: #4C566A;   /* nord3 */
+  --border-color: #4c566a; /* nord3 */
 
   /* Text */
-  --text-primary: #ECEFF4;   /* nord6 */
-  --text-secondary: #D8DEE9; /* nord4 */
+  --text-primary: #eceff4; /* nord6 */
+  --text-secondary: #d8dee9; /* nord4 */
 
   /* Accent */
-  --accent: #88C0D0;         /* nord8 */
-  --accent-hover: #81A1C1;   /* nord9 */
+  --accent: #88c0d0; /* nord8 */
+  --accent-hover: #81a1c1; /* nord9 */
 
   /* Status */
-  --success: #A3BE8C;        /* nord14 */
-  --error: #BF616A;          /* nord11 */
-  --warning: #EBCB8B;        /* nord13 */
+  --success: #a3be8c; /* nord14 */
+  --error: #bf616a; /* nord11 */
+  --warning: #ebcb8b; /* nord13 */
 }

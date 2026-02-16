@@ -39,9 +39,15 @@ describe("collection.actions", () => {
   });
 
   it("creates collection for authenticated user with access", async () => {
-    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
-    (createCollection as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "col-1" });
+    (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
+    (createCollection as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "col-1",
+    });
 
     const result = await createCollectionAction("Test", "ws-1");
 
@@ -55,8 +61,12 @@ describe("collection.actions", () => {
   });
 
   it("lists collections when workspaceId is valid", async () => {
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
-    (listCollectionsByWorkspace as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
+    (listCollectionsByWorkspace as ReturnType<typeof vi.fn>).mockResolvedValue(
+      [],
+    );
 
     const result = await listCollectionsByWorkspaceAction("ws-1");
 
@@ -79,7 +89,9 @@ describe("collection.actions", () => {
       id: "col-1",
       workspaceId: "ws-1",
     });
-    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
+    (requireWorkspaceAccess as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "user-1",
+    });
 
     const result = await getCollectionByIdAction("col-1");
 

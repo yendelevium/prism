@@ -10,7 +10,7 @@ export function Toaster() {
       toastOptions={{
         style: {
           // Core Nord Background & Text
-          backgroundColor: "#434C5E", 
+          backgroundColor: "#434C5E",
           color: "#ECEFF4",
           border: "1px solid #4C566A",
           borderRadius: "8px",
@@ -25,8 +25,10 @@ export function Toaster() {
           // Info/Action: Nord Cyan
           info: "!bg-[#88C0D0] !text-[#2E3440] !border-[#88C0D0]",
           description: "group-[.toast]:text-[#D8DEE9] opacity-90",
-          actionButton: "group-[.toast]:bg-[#2E3440] group-[.toast]:text-[#ECEFF4]",
-          cancelButton: "group-[.toast]:bg-[#3B4252] group-[.toast]:text-[#ECEFF4]",
+          actionButton:
+            "group-[.toast]:bg-[#2E3440] group-[.toast]:text-[#ECEFF4]",
+          cancelButton:
+            "group-[.toast]:bg-[#3B4252] group-[.toast]:text-[#ECEFF4]",
         },
       }}
     />

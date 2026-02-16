@@ -1,0 +1,10 @@
+pre-commit:
+  commands:
+    nextjs-format:
+      root: "soul.prism/"
+      run: make format
+      stage_fixed: true
+    
+    nextjs-test:
+      root: "soul.prism/"
+      run: make test

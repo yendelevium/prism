@@ -2,7 +2,11 @@ import { Collection } from "@/backend/collection/collection.types";
 import { unwrap } from "./actionResult";
 import { Request } from "@/backend/request/request.types";
 import { getRequestsByCollectionAction } from "@/backend/request/request.actions";
-import { KeyValueRow, objectToRows, urlToKeyValueRows } from "@/components/editors/KeyValueEditor";
+import {
+  KeyValueRow,
+  objectToRows,
+  urlToKeyValueRows,
+} from "@/components/editors/KeyValueEditor";
 import { JsonValue } from "@prisma/client/runtime/client";
 
 /**
@@ -13,12 +17,7 @@ import { JsonValue } from "@prisma/client/runtime/client";
  * normalization across the application. Values are always
  * uppercase and map directly to wire-level HTTP verbs.
  */
-export type HttpMethod =
-  | 'GET'
-  | 'POST'
-  | 'DELETE'
-  | 'PUT'
-  | 'PATCH';
+export type HttpMethod = "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
 
 /**
  * Represents a single HTTP request definition.
@@ -110,25 +109,28 @@ export interface CollectionItem {
   requests: RequestItem[];
 }
 
-
 export const requestToRequestItem = (request: Request) => {
   return {
     body: request.body,
     collection_id: request.collectionId,
-    headers: objectToRows(request.headers ? request.headers as Record<string, string> : {}),
+    headers: objectToRows(
+      request.headers ? (request.headers as Record<string, string>) : {},
+    ),
     params: urlToKeyValueRows(request.url),
     id: request.id,
     method: request.method,
     name: request.name,
     url: request.url,
   } as RequestItem;
-}
+};
 
 export const collectionToCollectionItem = async (collection: Collection) => {
   return {
     id: collection.id,
     name: collection.name,
-    requests: unwrap(await getRequestsByCollectionAction(collection.id)).map(c => requestToRequestItem(c)),
-    workspace_id: collection.workspaceId
+    requests: unwrap(await getRequestsByCollectionAction(collection.id)).map(
+      (c) => requestToRequestItem(c),
+    ),
+    workspace_id: collection.workspaceId,
   } as CollectionItem;
-}
+};
