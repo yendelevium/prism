@@ -13,7 +13,7 @@ compose-down:
 	docker compose -f ./intercept.prism/compose.yml down
 
 configure:
-# 	docker volume create pg_duckdb_data
+	docker volume create pg_duckdb_data
 # 	Install lefthook
 	go install github.com/evilmartians/lefthook/v2@v2.1.1
 	lefthook install
