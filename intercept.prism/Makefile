@@ -1,4 +1,5 @@
 ENV_FILE ?= .env
+COMPOSE_ENV_FILE := $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE),)
 
 dev:
 	docker compose -f ../compose.db.yml up -d
@@ -6,7 +7,7 @@ dev:
 	./intercept.prism
 
 compose-up:
-	docker compose --env-file $(ENV_FILE) up --build
+	docker compose $(COMPOSE_ENV_FILE) up --build
 
 compose-down:
 	docker compose down
