@@ -7,5 +7,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner
+      args:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     ports:
       - 3000:3000
+    environment:
+      DATABASE_URL: postgresql://username:password@db:5432/prism?search_path=public

@@ -1,10 +1,12 @@
+ENV_FILE ?= soul.prism/.env
+
 build:
 # 	Just checks if the images are built
 #   Will be useful as a PR build check so we can fail fast
-	docker compose build
+	docker compose --env-file $(ENV_FILE) build
 
 compose-up:
-	docker compose up --build
+	docker compose --env-file $(ENV_FILE) up --build
 
 compose-down:
 	docker compose down

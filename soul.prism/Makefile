@@ -1,9 +1,11 @@
+ENV_FILE ?= .env
+
 dev: 
 	docker compose -f ../compose.db.yml up -d
 	bun dev
 
 compose-up:
-	docker compose up --build
+	docker compose --env-file $(ENV_FILE) up --build
 
 compose-down:
 	docker compose down

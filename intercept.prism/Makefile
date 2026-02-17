@@ -1,10 +1,12 @@
+ENV_FILE ?= .env
+
 dev:
 	docker compose -f ../compose.db.yml up -d
 	go build -o intercept.prism cmd/intercept.prism/main.go
 	./intercept.prism
 
 compose-up:
-	docker compose up --build
+	docker compose --env-file $(ENV_FILE) up --build
 
 compose-down:
 	docker compose down

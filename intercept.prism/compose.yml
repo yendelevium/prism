@@ -9,5 +9,5 @@ services:
       target: build-release-stage
     ports:
       - 7000:7000
-
-
+    environment:
+      DATABASE_URL: postgresql://username:password@db:5432/prism?search_path=public
