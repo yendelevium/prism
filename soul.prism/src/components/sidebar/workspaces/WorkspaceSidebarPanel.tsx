@@ -2,16 +2,22 @@
 
 import React, { useState, useTransition } from "react";
 import { Layers, Plus, Users, X, UserPlus, Trash2 } from "lucide-react";
-import { Workspace } from "@/@types/workspace";
+import { parseBackendWorkspace, Workspace } from "@/@types/workspace";
 import { createNewWorkspace } from "./WorkspaceServer";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { createWorkspaceAction } from "@/backend/workspace/workspace.actions";
+import {
+  createWorkspaceAction,
+  deleteWorkspaceAction,
+  updateWorkspaceAction,
+} from "@/backend/workspace/workspace.actions";
 import { unwrap } from "@/@types/actionResult";
+import { useSelectionStore } from "@/stores/useSelectionStore";
 
 export function WorkspaceSidebarClient() {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const setWorkspaces = useWorkspaceStore((s) => s.setWorkspaces);
+  const setCurrentWorkspace = useSelectionStore((s) => s.setWorkspace);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
     null,
   );
@@ -35,23 +41,51 @@ export function WorkspaceSidebarClient() {
     const exists = workspaces.find((w) => w.id === editingWorkspace.id);
     if (!exists) {
       try {
-        unwrap(await createWorkspaceAction(editingWorkspace.name));
-        setWorkspaces([editingWorkspace, ...workspaces]);
+        const createdWorkspace = parseBackendWorkspace(
+          unwrap(await createWorkspaceAction(editingWorkspace.name)),
+        );
+        setWorkspaces([createdWorkspace, ...workspaces]);
+        setCurrentWorkspace(createdWorkspace);
         toast.success("Workspace Saved");
       } catch (err: any) {
         toast.error(err.message ?? "Something went wrong");
         return;
       }
     } else {
-      // TODO: Write server action to actually update workspace in DB
-      setWorkspaces(
-        workspaces.map((ws) =>
-          ws.id === editingWorkspace.id ? editingWorkspace : ws,
-        ),
-      );
+      // TODO: Implement updation for more than just names, need to include users in workspace schema
+      try {
+        const updatedWorkspace = parseBackendWorkspace(
+          unwrap(
+            await updateWorkspaceAction(
+              editingWorkspace.id,
+              editingWorkspace.name,
+            ),
+          ),
+        );
+        setWorkspaces(
+          workspaces.map((ws) =>
+            ws.id === editingWorkspace.id ? updatedWorkspace : ws,
+          ),
+        );
+        toast.success("Successfully updated workspace");
+      } catch (err: any) {
+        toast.error(`Failed to update workspace: ${err.message}`);
+      }
     }
 
     setEditingWorkspace(null);
+  };
+
+  const deleteWorkspace = async (workspaceId: string) => {
+    if (!workspaceId.trim()) return;
+
+    try {
+      unwrap(await deleteWorkspaceAction(workspaceId));
+      toast.success("Successfully deleted workspace");
+      setWorkspaces(workspaces.filter((ws) => ws.id !== workspaceId));
+    } catch (err: any) {
+      toast.error(`Failed to delete workspace: ${err.message}`);
+    }
   };
 
   const addUser = () => {
@@ -109,24 +143,41 @@ export function WorkspaceSidebarClient() {
         {workspaces.map((ws) => (
           <div
             key={ws.id}
-            onClick={() => setEditingWorkspace(ws)}
             className="group mx-2 mb-1 px-3 py-2 rounded border border-transparent hover:border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-all cursor-pointer"
           >
-            <div className="flex flex-col min-w-0">
-              <span
-                className="text-xs font-mono tracking-tight truncate"
-                style={{ color: "var(--text-primary)" }}
+            <div className="flex justify-between min-w-0">
+              <div
+                className="flex flex-col min-w-0"
+                onClick={() => setEditingWorkspace(ws)}
               >
-                {ws.name}
-              </span>
-              <div className="flex items-center gap-2 mt-1 opacity-40">
-                <Users size={10} style={{ color: "var(--text-secondary)" }} />
                 <span
-                  className="text-[9px] font-mono uppercase"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="text-xs font-mono tracking-tight truncate"
+                  style={{ color: "var(--text-primary)" }}
                 >
-                  {ws.users.length} members
+                  {ws.name}
                 </span>
+                <div className="flex items-center gap-2 mt-1 opacity-40">
+                  <Users size={10} style={{ color: "var(--text-secondary)" }} />
+                  <span
+                    className="text-[9px] font-mono uppercase"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    {ws.users.length} members
+                  </span>
+                </div>
+              </div>
+              <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteWorkspace(ws.id);
+                  }}
+                  className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
+                  style={{ color: "var(--error)" }}
+                  title="Delete workspace"
+                >
+                  <Trash2 size={12} />
+                </button>
               </div>
             </div>
           </div>

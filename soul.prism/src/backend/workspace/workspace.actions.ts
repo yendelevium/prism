@@ -2,6 +2,8 @@
 
 import {
   createWorkspace,
+  deleteWorkspace,
+  updateWorkspace,
   listWorkspacesForUser,
   getWorkspaceById,
 } from "@/backend/workspace/workspace.service";
@@ -60,6 +62,47 @@ export async function getWorkspaceByIdAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to get workspace", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function deleteWorkspaceAction(
+  workspaceId: string,
+): Promise<ActionResult<null>> {
+  if (!workspaceId?.trim()) {
+    return { success: false, error: "workspaceId is required" };
+  }
+
+  try {
+    const user = await requireUser();
+    await deleteWorkspace(workspaceId, user.id);
+    return { success: true, data: null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to delete workspace", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function updateWorkspaceAction(
+  workspaceId: string,
+  newName: string,
+): Promise<ActionResult<Workspace>> {
+  if (!workspaceId?.trim() || !newName?.trim()) {
+    return { success: false, error: "workspaceId and newName are required" };
+  }
+
+  try {
+    const user = await requireUser();
+    const workspace = await updateWorkspace(
+      workspaceId,
+      user.id,
+      newName.trim(),
+    );
+    return { success: true, data: workspace };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to update workspace", error);
     return { success: false, error: message };
   }
 }
