@@ -16,6 +16,8 @@ import { useSelectionStore } from "@/stores/useSelectionStore";
 
 export function WorkspaceSidebarClient() {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const isLoading = useWorkspaceStore((s) => s.isLoading);
+  const setLoading = useWorkspaceStore((s) => s.setLoading);
   const setWorkspaces = useWorkspaceStore((s) => s.setWorkspaces);
   const setCurrentWorkspace = useSelectionStore((s) => s.setWorkspace);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
@@ -36,7 +38,9 @@ export function WorkspaceSidebarClient() {
   };
 
   const saveChanges = async () => {
-    if (!editingWorkspace) return;
+    if (!editingWorkspace || isLoading) return;
+
+    setLoading(true);
 
     const exists = workspaces.find((w) => w.id === editingWorkspace.id);
     if (!exists) {
@@ -73,11 +77,15 @@ export function WorkspaceSidebarClient() {
       }
     }
 
+    setLoading(false);
+
     setEditingWorkspace(null);
   };
 
   const deleteWorkspace = async (workspaceId: string) => {
-    if (!workspaceId.trim()) return;
+    if (!workspaceId.trim() || isLoading) return;
+
+    setLoading(true);
 
     try {
       unwrap(await deleteWorkspaceAction(workspaceId));
@@ -86,6 +94,8 @@ export function WorkspaceSidebarClient() {
     } catch (err: any) {
       toast.error(`Failed to delete workspace: ${err.message}`);
     }
+
+    setLoading(false);
   };
 
   const addUser = () => {
@@ -140,48 +150,58 @@ export function WorkspaceSidebarClient() {
 
       {/* Workspace List */}
       <div className="flex-1 overflow-y-auto scrollbar-hide py-2">
-        {workspaces.map((ws) => (
-          <div
-            key={ws.id}
-            className="group mx-2 mb-1 px-3 py-2 rounded border border-transparent hover:border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-all cursor-pointer"
-          >
-            <div className="flex justify-between min-w-0">
-              <div
-                className="flex flex-col min-w-0"
-                onClick={() => setEditingWorkspace(ws)}
-              >
-                <span
-                  className="text-xs font-mono tracking-tight truncate"
-                  style={{ color: "var(--text-primary)" }}
+        {isLoading && (
+          <div className="px-4 py-6 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+            <div className="h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+            Loading workspaces…
+          </div>
+        )}
+        {!isLoading &&
+          workspaces.map((ws) => (
+            <div
+              key={ws.id}
+              className="group mx-2 mb-1 px-3 py-2 rounded border border-transparent hover:border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-all cursor-pointer"
+            >
+              <div className="flex justify-between min-w-0">
+                <div
+                  className="flex flex-col min-w-0"
+                  onClick={() => setEditingWorkspace(ws)}
                 >
-                  {ws.name}
-                </span>
-                <div className="flex items-center gap-2 mt-1 opacity-40">
-                  <Users size={10} style={{ color: "var(--text-secondary)" }} />
                   <span
-                    className="text-[9px] font-mono uppercase"
-                    style={{ color: "var(--text-secondary)" }}
+                    className="text-xs font-mono tracking-tight truncate"
+                    style={{ color: "var(--text-primary)" }}
                   >
-                    {ws.users.length} members
+                    {ws.name}
                   </span>
+                  <div className="flex items-center gap-2 mt-1 opacity-40">
+                    <Users
+                      size={10}
+                      style={{ color: "var(--text-secondary)" }}
+                    />
+                    <span
+                      className="text-[9px] font-mono uppercase"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {ws.users.length} members
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteWorkspace(ws.id);
+                    }}
+                    className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
+                    style={{ color: "var(--error)" }}
+                    title="Delete workspace"
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 </div>
               </div>
-              <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteWorkspace(ws.id);
-                  }}
-                  className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
-                  style={{ color: "var(--error)" }}
-                  title="Delete workspace"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* Modal Editor */}
@@ -301,13 +321,14 @@ export function WorkspaceSidebarClient() {
               </button>
               <button
                 onClick={saveChanges}
-                className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all"
-                style={{
-                  backgroundColor: "var(--accent)",
-                  color: "var(--bg-primary)",
-                }}
+                className="relative flex items-center justify-center px-3 py-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[10px] font-bold uppercase rounded transition-all"
               >
-                Save Changes
+                <span className={isLoading ? "opacity-0" : "opacity-100"}>
+                  Save Changes
+                </span>
+                {isLoading && (
+                  <div className="absolute h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+                )}
               </button>
             </div>
           </div>
