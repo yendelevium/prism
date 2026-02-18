@@ -9,6 +9,7 @@ import {
 } from "@/backend/workspace/workspace.service";
 import type { Workspace } from "@/backend/workspace/workspace.types";
 import { requireUser, requireWorkspaceAccess } from "@/backend/auth/auth.utils";
+import { getUsernameByUserId } from "../user/user.service";
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -39,7 +40,13 @@ export async function listWorkspacesAction(): Promise<
 > {
   try {
     const user = await requireUser();
-    const workspaces = await listWorkspacesForUser(user.id);
+    // Return workspaces with ownerName instead of ownerId
+    const workspaces = await Promise.all(
+      (await listWorkspacesForUser(user.id)).map(async (ws) => ({
+        ...ws,
+        ownerId: (await getUsernameByUserId(user.id))!,
+      })),
+    );
     return { success: true, data: workspaces };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -58,6 +65,10 @@ export async function getWorkspaceByIdAction(
   try {
     await requireWorkspaceAccess(workspaceId);
     const workspace = await getWorkspaceById(workspaceId);
+    const workspaceWithOwnerName = {
+      ...workspace,
+      ownerId: getUsernameByUserId(workspace!.ownerId),
+    };
     return { success: true, data: workspace ?? null };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
