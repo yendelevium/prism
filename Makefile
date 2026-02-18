@@ -1,10 +1,14 @@
+ENV_FILE ?= soul.prism/.env
+# Only pass --env-file if the file exists (CI relies on shell env vars instead)
+COMPOSE_ENV_FILE := $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE),)
+
 build:
 # 	Just checks if the images are built
 #   Will be useful as a PR build check so we can fail fast
-	docker compose build
+	docker compose $(COMPOSE_ENV_FILE) build
 
 compose-up:
-	docker compose up --build
+	docker compose $(COMPOSE_ENV_FILE) up --build
 
 compose-down:
 	docker compose down
@@ -13,7 +17,7 @@ compose-down:
 	docker compose -f ./intercept.prism/compose.yml down
 
 configure:
-# 	docker volume create pg_duckdb_data
+	docker volume create pg_duckdb_data
 # 	Install lefthook
 	go install github.com/evilmartians/lefthook/v2@v2.1.1
 	lefthook install

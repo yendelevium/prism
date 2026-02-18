@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  validate-and-build:
+  test-and-docker-build:
     name: Test & Docker Build
     runs-on: ubuntu-latest
     
@@ -54,10 +54,7 @@ jobs:
 
       # Docker Build (Dry Run)
       # This confirms your Dockerfiles are valid and context paths are correct
-      # Currently FAILING coz Next.js + Clerk Errors but wtv I'll fix this later gotta sleep now
-      # - name: Build Docker Images
-      #   env:
-      #     # This exposes the secret to the shell running 'make build'
-      #     CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-      #     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-      #   run: make build
+      - name: Build Docker Images
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        run: make build

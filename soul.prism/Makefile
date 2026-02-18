@@ -1,9 +1,12 @@
+ENV_FILE ?= .env
+COMPOSE_ENV_FILE := $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE),)
+
 dev: 
 	docker compose -f ../compose.db.yml up -d
 	bun dev
 
 compose-up:
-	docker compose up --build
+	docker compose $(COMPOSE_ENV_FILE) up --build
 
 compose-down:
 	docker compose down
