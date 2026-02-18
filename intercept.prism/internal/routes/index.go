@@ -8,5 +8,6 @@ import (
 func AddRoutes(superRouter *gin.RouterGroup) {
 	restRoutes(superRouter)
 	graphqlRoutes(superRouter)
+	grpcRoutes(superRouter)
 	tracing.RegisterOTLPReceiver(superRouter)
 }
