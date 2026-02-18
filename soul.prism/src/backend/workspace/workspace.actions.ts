@@ -66,10 +66,10 @@ export async function getWorkspaceByIdAction(
     await requireWorkspaceAccess(workspaceId);
     const workspace = await getWorkspaceById(workspaceId);
     const workspaceWithOwnerName = {
-      ...workspace,
-      ownerId: getUsernameByUserId(workspace!.ownerId),
+      ...workspace!,
+      ownerId: (await getUsernameByUserId(workspace!.ownerId))!,
     };
-    return { success: true, data: workspace ?? null };
+    return { success: true, data: workspaceWithOwnerName ?? null };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to get workspace", error);
