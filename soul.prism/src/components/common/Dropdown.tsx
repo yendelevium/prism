@@ -34,7 +34,9 @@ export default function Dropdown<T extends string>({
     temp.style.whiteSpace = "nowrap";
     temp.style.font = styles.font;
 
-    temp.textContent = select.options[select.selectedIndex].text;
+    temp.textContent = select.options[select.selectedIndex]
+      ? select.options[select.selectedIndex].text
+      : "";
 
     document.body.appendChild(temp);
     select.style.width = temp.offsetWidth + 30 + "px";
