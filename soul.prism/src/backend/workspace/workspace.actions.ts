@@ -27,7 +27,11 @@ export async function createWorkspaceAction(
   try {
     const user = await requireUser();
     const workspace = await createWorkspace({ name: trimmedName }, user.id);
-    return { success: true, data: workspace };
+    const workspaceWithOwnerName = {
+      ...workspace!,
+      ownerId: (await getUsernameByUserId(workspace!.ownerId))!,
+    };
+    return { success: true, data: workspaceWithOwnerName };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to create workspace", error);
