@@ -12,6 +12,7 @@ import {
 import { useEffect } from "react";
 import { Clipboard, Copy, Save } from "lucide-react";
 import { toast } from "sonner";
+import xmlFormatter from "xml-formatter";
 
 const tabs = ["Body", "Headers", "Cookies", "Tests"];
 
@@ -49,12 +50,38 @@ function detectLanguage(
   return "plaintext";
 }
 
+export function formatBody(language: string, body: string | null): string {
+  if (!body) return "";
+
+  try {
+    if (language === "json") {
+      return JSON.stringify(JSON.parse(body), null, 2);
+    }
+
+    if (language === "xml") {
+      return xmlFormatter(body, {
+        indentation: "  ", // 2 spaces
+        collapseContent: true,
+        lineSeparator: "\n",
+      });
+    }
+
+    return body;
+  } catch {
+    // If parsing fails, return original body
+    return body;
+  }
+}
+
 export default function ResponsePanel() {
   const [activeTab, setActiveTab] = useState("Body");
   const response = useRequestStore((s) => s.response);
   const isExecuting = useRequestStore((s) => s.isExecuting);
   const [highlight, setHighlight] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const language = detectLanguage(response.headers, response.body);
+  const formattedBody = formatBody(language, response.body);
 
   async function handleCopy() {
     try {
@@ -155,9 +182,10 @@ export default function ResponsePanel() {
       <div className="flex flex-1 flex-col min-h-0 opacity-70 select-text">
         {activeTab === "Body" && (
           <CodeEditor
-            language={detectLanguage(response.headers, response.body)}
-            value={response.body ?? "No Body"}
+            language={language}
+            value={formattedBody}
             readOnly
+            autoFormatOnExternalChange
           />
         )}
 
