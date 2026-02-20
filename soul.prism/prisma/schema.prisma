@@ -36,8 +36,8 @@ model UserWorkspace {
   role        WorkspaceRole
   joinedAt    DateTime      @default(now())
 
-  user      User      @relation(fields: [userId], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
 }
@@ -55,8 +55,8 @@ model Collection {
   createdById String
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
-  createdBy User      @relation(fields: [createdById], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
   requests  Request[]
 }
 
@@ -71,8 +71,8 @@ model Request {
   createdById  String
   createdAt    DateTime @default(now())
 
-  collection Collection @relation(fields: [collectionId], references: [id])
-  createdBy  User       @relation(fields: [createdById], references: [id])
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdBy  User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   executions Execution[]
 }
@@ -93,18 +93,18 @@ model Environment {
   workspaceId String
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
 model Execution {
   id          String   @id @default(uuid())
-  requestId   String
+  requestId   String?
   traceId     String
   statusCode  Int?
   latencyMs   Int?
   executedAt  DateTime @default(now())
 
-  request Request @relation(fields: [requestId], references: [id])
+  request Request? @relation(fields: [requestId], references: [id], onDelete: SetNull)
 }
 
 
