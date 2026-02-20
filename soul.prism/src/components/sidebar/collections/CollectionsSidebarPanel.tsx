@@ -20,6 +20,7 @@ import { useCollectionStore } from "@/stores/useCollectionStore";
 import {
   createCollectionAction,
   deleteCollectionAction,
+  updateCollectionAction,
 } from "@/backend/collection/collection.actions";
 import { unwrap } from "@/@types/actionResult";
 import { useSelectionStore } from "@/stores/useSelectionStore";
@@ -30,6 +31,7 @@ import {
   deleteRequestAction,
 } from "@/backend/request/request.actions";
 import { useRequestStore } from "@/stores/useRequestStore";
+import { UpdateCollectionInput } from "@/backend/collection/collection.types";
 
 /**
  * Maps HTTP methods to CSS color variables.
@@ -165,8 +167,9 @@ export const CollectionsSidebarPanel: React.FC = () => {
     );
 
     try {
-      // TODO: actually rename collection, requires backend support
-      // await renameCollectionAction(collectionId, newName);
+      await updateCollectionAction(collectionId, {
+        name: newName,
+      } as UpdateCollectionInput);
       toast.success("Collection renamed");
     } catch (err: any) {
       toast.error(err.message);
@@ -336,7 +339,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   setEditingCollectionId(col.id);
-                  setEditingCollectionName(createCollection.name);
+                  setEditingCollectionName(col.name);
                 }}
                 className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
               >
