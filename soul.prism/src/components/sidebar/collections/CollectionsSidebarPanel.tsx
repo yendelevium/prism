@@ -20,6 +20,7 @@ import { useCollectionStore } from "@/stores/useCollectionStore";
 import {
   createCollectionAction,
   deleteCollectionAction,
+  updateCollectionAction,
 } from "@/backend/collection/collection.actions";
 import { unwrap } from "@/@types/actionResult";
 import { useSelectionStore } from "@/stores/useSelectionStore";
@@ -30,6 +31,7 @@ import {
   deleteRequestAction,
 } from "@/backend/request/request.actions";
 import { useRequestStore } from "@/stores/useRequestStore";
+import { UpdateCollectionInput } from "@/backend/collection/collection.types";
 
 /**
  * Maps HTTP methods to CSS color variables.
@@ -66,6 +68,7 @@ export const methodColorMap: Record<string, string> = {
 export const CollectionsSidebarPanel: React.FC = () => {
   const collections = useCollectionStore((s) => s.collections);
   const isLoading = useCollectionStore((s) => s.isLoading);
+  const setLoading = useCollectionStore((s) => s.setLoading);
   const setCollections = useCollectionStore((s) => s.setCollections);
   const currentWorkspace = useSelectionStore((s) => s.workspace);
   const currentRequest = useSelectionStore((s) => s.request);
@@ -85,6 +88,9 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [editingRequestName, setEditingRequestName] = useState("");
 
+  // For spinners when you create requests or collections
+  const [isLoadingRequest, setLoadingRequest] = useState<boolean>(false);
+
   /**
    * Tracks which collection folders are expanded.
    *
@@ -102,6 +108,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
   };
 
   const createCollection = async () => {
+    setLoading(true);
     try {
       const newCollection = unwrap(
         await createCollectionAction("Untitled", currentWorkspace!.id),
@@ -111,11 +118,13 @@ export const CollectionsSidebarPanel: React.FC = () => {
       toast.success("Successfully created collection");
     } catch (err: any) {
       toast.error(err.message);
-      return;
     }
+    setLoading(false);
+    return;
   };
 
   const createRequest = async (collectionId: string) => {
+    setLoadingRequest(true);
     try {
       // Create a blank request
       const newRequestInput = {
@@ -148,6 +157,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
     } catch (err: any) {
       toast.error(err.message);
     }
+    setLoadingRequest(false);
   };
 
   const commitRenameCollection = async (collectionId: string) => {
@@ -165,8 +175,9 @@ export const CollectionsSidebarPanel: React.FC = () => {
     );
 
     try {
-      // TODO: actually rename collection, requires backend support
-      // await renameCollectionAction(collectionId, newName);
+      await updateCollectionAction(collectionId, {
+        name: newName,
+      } as UpdateCollectionInput);
       toast.success("Collection renamed");
     } catch (err: any) {
       toast.error(err.message);
@@ -336,7 +347,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   setEditingCollectionId(col.id);
-                  setEditingCollectionName(createCollection.name);
+                  setEditingCollectionName(col.name);
                 }}
                 className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
               >
@@ -402,7 +413,10 @@ export const CollectionsSidebarPanel: React.FC = () => {
                     style={{ color: "var(--accent)" }}
                     title="Add request"
                   >
-                    <Plus size={12} />
+                    {isLoadingRequest && (
+                      <div className="h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+                    )}
+                    {!isLoadingRequest && <Plus size={12} />}
                   </button>
 
                   {/* Delete collection */}

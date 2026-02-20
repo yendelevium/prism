@@ -1,7 +1,11 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import type { Collection, CreateCollectionInput } from "./collection.types";
+import type {
+  Collection,
+  CreateCollectionInput,
+  UpdateCollectionInput,
+} from "./collection.types";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   __prismPrismaClient?: PrismaClient;
@@ -81,6 +85,20 @@ export async function getCollectionById(
 
   return prisma.collection.findUnique({
     where: { id: collectionId },
+  });
+}
+
+export async function updateCollection(
+  collectionId: string,
+  input: UpdateCollectionInput,
+): Promise<Collection> {
+  const prisma = getPrisma();
+
+  return prisma.collection.update({
+    where: { id: collectionId },
+    data: {
+      name: input.name.trim(),
+    },
   });
 }
 

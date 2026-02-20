@@ -133,3 +133,97 @@ export async function getWorkspaceById(
     ownerId: row.ownerId ?? "",
   };
 }
+
+// Delete a workspace by ID
+export async function deleteWorkspace(
+  workspaceId: string,
+  userId: string,
+): Promise<void> {
+  const pool = getPool();
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Ensure the user is an admin of the workspace
+    const check = await client.query(
+      'SELECT "role" FROM "UserWorkspace" WHERE "userId" = $1 AND "workspaceId" = $2 LIMIT 1',
+      [userId, workspaceId],
+    );
+
+    if (check.rows.length === 0 || check.rows[0].role !== "admin") {
+      throw new Error("User is not authorized to delete this workspace");
+    }
+
+    // Delete related UserWorkspace entries
+    await client.query('DELETE FROM "UserWorkspace" WHERE "workspaceId" = $1', [
+      workspaceId,
+    ]);
+
+    // Delete the workspace itself
+    await client.query('DELETE FROM "Workspace" WHERE "id" = $1', [
+      workspaceId,
+    ]);
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Update a workspace's name
+export async function updateWorkspace(
+  workspaceId: string,
+  userId: string,
+  newName: string,
+): Promise<Workspace> {
+  const pool = getPool();
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Ensure the user is an admin of the workspace
+    const check = await client.query(
+      'SELECT "role" FROM "UserWorkspace" WHERE "userId" = $1 AND "workspaceId" = $2 LIMIT 1',
+      [userId, workspaceId],
+    );
+
+    if (check.rows.length === 0 || check.rows[0].role !== "admin") {
+      throw new Error("User is not authorized to update this workspace");
+    }
+
+    // Update the workspace name
+    const result = await client.query<{
+      id: string;
+      name: string;
+      createdAt: Date;
+    }>(
+      'UPDATE "Workspace" SET "name" = $1 WHERE "id" = $2 RETURNING "id", "name", "createdAt"',
+      [newName.trim(), workspaceId],
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("Workspace not found");
+    }
+
+    const row = result.rows[0];
+
+    await client.query("COMMIT");
+
+    return {
+      id: row.id,
+      name: row.name,
+      createdAt: new Date(row.createdAt),
+      ownerId: userId, // admin performing the update
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}

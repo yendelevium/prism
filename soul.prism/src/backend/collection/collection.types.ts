@@ -11,6 +11,10 @@ export interface CreateCollectionInput {
   workspaceId: string;
 }
 
+export interface UpdateCollectionInput {
+  name: string;
+}
+
 export interface CollectionResponse {
   data: Collection | Collection[];
 }

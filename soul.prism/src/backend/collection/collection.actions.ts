@@ -4,9 +4,13 @@ import {
   createCollection,
   deleteCollection,
   getCollectionById,
+  updateCollection,
   listCollectionsByWorkspace,
 } from "@/backend/collection/collection.service";
-import type { Collection } from "@/backend/collection/collection.types";
+import type {
+  Collection,
+  UpdateCollectionInput,
+} from "@/backend/collection/collection.types";
 import { requireUser, requireWorkspaceAccess } from "@/backend/auth/auth.utils";
 
 export type ActionResult<T> =
@@ -76,6 +80,38 @@ export async function getCollectionByIdAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to get collection", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function updateCollectionAction(
+  collectionId: string,
+  input: UpdateCollectionInput,
+): Promise<ActionResult<Collection>> {
+  if (!collectionId || collectionId.trim().length === 0) {
+    return { success: false, error: "collectionId is required" };
+  }
+
+  if (
+    input.name === undefined ||
+    typeof input.name !== "string" ||
+    input.name.trim().length === 0
+  ) {
+    return { success: false, error: "name must be a non-empty string" };
+  }
+
+  try {
+    const existing = await getCollectionById(collectionId);
+    if (!existing) {
+      return { success: false, error: "Collection not found" };
+    }
+    await requireWorkspaceAccess(existing.workspaceId);
+
+    const updated = await updateCollection(collectionId, input);
+    return { success: true, data: updated };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to update collection", error);
     return { success: false, error: message };
   }
 }

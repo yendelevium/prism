@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { nordTheme } from "./nordTheme";
+import { useEffect, useRef } from "react";
+import { editor } from "monaco-editor";
 
 /**
  * Client-only Monaco Editor wrapper.
@@ -49,6 +51,15 @@ export type CodeEditorProps = {
    * @defaultValue false
    */
   readOnly?: boolean;
+
+  /**
+   * Whether to reformat on external change
+   *
+   * Mainly used for formatting the response but not the request
+   *
+   * @defaultValue false
+   */
+  autoFormatOnExternalChange?: boolean;
 };
 
 /**
@@ -68,7 +79,28 @@ export default function CodeEditor({
   language,
   onChange,
   readOnly = false,
+  autoFormatOnExternalChange = false,
 }: CodeEditorProps) {
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+
+  useEffect(() => {
+    if (!autoFormatOnExternalChange) return;
+    if (!readOnly) return; // never format editable editors
+    if (!editorRef.current) return;
+    if (!value) return;
+
+    const editor = editorRef.current;
+    const model = editor.getModel();
+    if (!model) return;
+
+    console.log("Language: ", language);
+
+    const disposable = model.onDidChangeContent(() => {
+      editor.getAction("editor.action.formatDocument")?.run();
+      disposable.dispose(); // run only once
+    });
+  }, [value, language, autoFormatOnExternalChange, readOnly]);
+
   return (
     <MonacoEditor
       /**
@@ -88,10 +120,22 @@ export default function CodeEditor({
        */
       onChange={onChange}
       /**
+       * Reference to editor instance
+       */
+      onMount={(editor) => {
+        editorRef.current = editor;
+      }}
+      /**
        * Register the custom Nord theme before the editor mounts.
        */
       beforeMount={(monaco) => {
         monaco.editor.defineTheme("nord", nordTheme);
+
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+          validate: true,
+          allowComments: false,
+          schemas: [],
+        });
       }}
       /**
        * Apply the registered Nord theme.
