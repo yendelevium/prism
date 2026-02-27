@@ -2,7 +2,8 @@
 
 import React from "react";
 import { X } from "lucide-react";
-import type { Span } from "./types";
+import type { Span } from "@/@types/spanItem";
+import { formatDuration } from "./GanttChartPanel";
 
 const NORD = {
   bgPrimary: "#2E3440",
@@ -125,7 +126,7 @@ const SpanDetailPanel: React.FC<SpanDetailPanelProps> = ({ span, onClose }) => {
               className="text-sm font-mono mt-1"
               style={{ color: NORD.textPrimary }}
             >
-              {span.duration}ms
+              {formatDuration(span.duration)}
             </p>
           </div>
 

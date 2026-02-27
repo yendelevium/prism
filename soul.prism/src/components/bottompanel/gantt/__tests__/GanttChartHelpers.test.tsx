@@ -1,10 +1,25 @@
-// __tests__/GanttChartHelpers.test.tsx
 import React from "react";
 import { render } from "@testing-library/react";
 import { CustomBarShape, TreeTick } from "../GanttChartPanel";
 import { GanttData } from "../types";
 
 describe("CustomBarShape", () => {
+  const basePayload: GanttData = {
+    id: "1",
+    trace_id: "t1",
+    span_id: "s1",
+    parent_span_id: null,
+    operation: "op1",
+    service_name: "svc1",
+    start_time: 0,
+    duration: 100,
+    status: "ok",
+    offset: 0,
+    durationMs: 0.1,
+    yIndex: 0,
+    depth: 0,
+  };
+
   it("does not render offset bars", () => {
     const { container } = render(
       <svg>
@@ -14,90 +29,63 @@ describe("CustomBarShape", () => {
           y={0}
           width={10}
           height={10}
-          payload={{}}
+          payload={basePayload}
         />
       </svg>,
     );
+
     expect(container.querySelector("rect")).toBeNull();
   });
 
-  it("renders a duration bar with correct color for success", () => {
-    const payload: GanttData = {
-      id: 1,
-      trace_id: "t1",
-      span_id: "s1",
-      parent_span_id: null,
-      operation: "op1",
-      service_name: "svc1",
-      start_time: 0,
-      duration: 100,
-      status: "ok",
-      offset: 0,
-      yIndex: 0,
-      depth: 0,
-    };
-
+  it("renders success duration bar correctly", () => {
     const { container } = render(
       <svg>
         <CustomBarShape
-          dataKey="duration"
+          dataKey="durationMs"
           x={0}
           y={0}
           width={50}
           height={10}
-          payload={payload}
+          payload={{ ...basePayload, status: "ok" }}
         />
       </svg>,
     );
 
-    const rect = container.querySelector("rect");
-    expect(rect).not.toBeNull();
-    expect(rect!.getAttribute("fill")).toBe("#A3BE8C");
-    expect(rect!.getAttribute("x")).toBe("0");
-    expect(rect!.getAttribute("y")).toBe("0");
-    expect(rect!.getAttribute("width")).toBe("50");
-    expect(rect!.getAttribute("height")).toBe("10");
+    const rect = container.querySelector("rect") as SVGRectElement;
+
+    expect(rect).toBeTruthy();
+    expect(rect.getAttribute("fill")).toBe("#A3BE8C");
+    expect(rect.getAttribute("x")).toBe("0");
+    expect(rect.getAttribute("y")).toBe("0");
+    expect(rect.getAttribute("width")).toBe("50");
+    expect(rect.getAttribute("height")).toBe("10");
   });
 
-  it("renders a duration bar with correct color for error", () => {
-    const payload: GanttData = {
-      id: 2,
-      trace_id: "t1",
-      span_id: "s2",
-      parent_span_id: null,
-      operation: "op2",
-      service_name: "svc2",
-      start_time: 0,
-      duration: 50,
-      status: "error",
-      offset: 0,
-      yIndex: 0,
-      depth: 0,
-    };
-
+  it("renders error duration bar correctly", () => {
     const { container } = render(
       <svg>
         <CustomBarShape
-          dataKey="duration"
+          dataKey="durationMs"
           x={5}
           y={5}
           width={20}
           height={5}
-          payload={payload}
+          payload={{ ...basePayload, status: "error" }}
         />
       </svg>,
     );
 
-    const rect = container.querySelector("rect");
-    expect(rect).not.toBeNull();
-    expect(rect!.getAttribute("fill")).toBe("#BF616A");
+    const rect = container.querySelector("rect") as SVGRectElement;
+
+    expect(rect).toBeTruthy();
+    expect(rect.getAttribute("fill")).toBe("#BF616A");
   });
 });
 
 describe("TreeTick", () => {
   const fullData: GanttData[] = [
     {
-      id: 1,
+      id: "1",
       trace_id: "t1",
       span_id: "s1",
       parent_span_id: null,
@@ -107,11 +95,12 @@ describe("TreeTick", () => {
       duration: 100,
       status: "ok",
       offset: 0,
+      durationMs: 0.1,
       yIndex: 0,
       depth: 0,
     },
     {
-      id: 2,
+      id: "2",
       trace_id: "t1",
       span_id: "s2",
       parent_span_id: "s1",
@@ -121,12 +110,13 @@ describe("TreeTick", () => {
       duration: 50,
       status: "ok",
       offset: 10,
+      durationMs: 0.05,
       yIndex: 1,
       depth: 1,
     },
   ];
 
-  it("renders nothing if the tick value has no matching data", () => {
+  it("renders nothing if tick has no matching span", () => {
     const { container } = render(
       <TreeTick
         x={0}
@@ -136,39 +126,43 @@ describe("TreeTick", () => {
       />,
     );
 
-    expect(container.innerHTML).toBe(""); // nothing rendered
+    expect(container.innerHTML).toBe("");
   });
 
   it("renders root span labels correctly", () => {
-    const { container, getByText } = render(
+    const { container } = render(
       <svg>
         <TreeTick x={0} y={0} payload={{ value: "s1" }} fullData={fullData} />
       </svg>,
     );
 
-    expect(getByText("op1")).toBeInTheDocument();
-    expect(getByText("svc1")).toBeInTheDocument();
+    const texts = container.querySelectorAll("text");
 
-    // root depth → x = -180
-    const text = container.querySelector("text");
-    expect(text!.getAttribute("x")).toBe("-180");
+    expect(texts.length).toBe(2);
+    expect(texts[0].textContent).toContain("op1");
+    expect(texts[1].textContent).toContain("svc1");
+
+    // baseLabelX is always -20
+    expect(texts[0].getAttribute("x")).toBe("-20");
+    expect(container.querySelector("path")).toBeNull();
   });
 
-  it("renders child span labels with indentation and guide line", () => {
-    const { container, getByText } = render(
+  it("renders child span with guide line", () => {
+    const { container } = render(
       <svg>
         <TreeTick x={0} y={0} payload={{ value: "s2" }} fullData={fullData} />
       </svg>,
     );
 
-    expect(getByText("op2")).toBeInTheDocument();
-    expect(getByText("svc2")).toBeInTheDocument();
+    const texts = container.querySelectorAll("text");
 
-    // child depth = 1 → x = -180 + 16
-    const text = container.querySelector("text");
-    expect(text!.getAttribute("x")).toBe(`${-180 + 16}`);
+    expect(texts[0].textContent).toContain("op2");
+    expect(texts[1].textContent).toContain("svc2");
 
-    // should also render a <path> for the guide line
-    expect(container.querySelector("path")).not.toBeNull();
+    // x does NOT change with depth anymore
+    expect(texts[0].getAttribute("x")).toBe("-20");
+
+    // depth > 0 → guide line exists
+    expect(container.querySelector("path")).toBeTruthy();
   });
 });

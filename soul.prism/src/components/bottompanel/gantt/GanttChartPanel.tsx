@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import {
   ComposedChart,
@@ -10,9 +10,11 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { Span, GanttData } from "./types";
+import { GanttData } from "./types";
+import { Span } from "@/@types/spanItem";
 import { useState } from "react";
 import SpanDetailPanel from "./SpanDetailPanel";
+import { pointer } from "@testing-library/user-event/dist/cjs/pointer/index.js";
 
 const NORD = {
   bgPrimary: "#2E3440",
@@ -61,45 +63,52 @@ export const TreeTick = (props: any) => {
   // Recharts may invoke tick renderers during layout passes
   if (!dataItem) return null;
 
-  // Indentation depth (in pixels) per hierarchy level
+  // Helper to keep labels under control
+  const truncate = (str: string, n: number) => {
+    return str.length > n ? str.slice(0, n - 1) + "…" : str;
+  };
+
+  // Indentation logic: We subtract indent from a right-aligned base
   const indent = dataItem.depth * 16;
+  const baseLabelX = -20; // Distance from the start of the bar area
 
   return (
     <g transform={`translate(${x},${y})`}>
       {/* Hierarchy guide line connecting this span to its parent */}
       {dataItem.depth > 0 && (
         <path
-          d={`M ${-190 + (dataItem.depth - 1) * 16} ${-20} V 0 H ${
-            -185 + indent
+          d={`M ${-250 + (dataItem.depth - 1) * 16} ${-20} V 0 H ${
+            -245 + indent
           }`}
           fill="none"
           stroke="var(--border-color)"
           strokeWidth="1"
         />
       )}
-
       {/* Primary label: span operation */}
       <text
-        x={-180 + indent}
+        x={baseLabelX}
         y={-2}
         fill="var(--text-primary)"
         fontSize={11}
         fontFamily="ui-monospace, monospace"
-        textAnchor="start"
+        textAnchor="end"
       >
-        {dataItem.operation}
+        <title>{dataItem.operation}</title>
+        {truncate(dataItem.operation, 25)}
       </text>
 
       {/* Secondary label: service name */}
       <text
-        x={-180 + indent}
+        x={baseLabelX}
         y={10}
         fill="var(--accent)"
         fontSize={9}
-        textAnchor="start"
+        textAnchor="end"
         style={{ opacity: 0.8 }}
       >
-        {dataItem.service_name}
+        <title>{dataItem.service_name}</title>
+        {truncate(dataItem.service_name, 30)}
       </text>
     </g>
   );
@@ -119,8 +128,11 @@ export const TreeTick = (props: any) => {
  */
 export const CustomBarShape = (props: any) => {
   const { x, y, width, height, payload, dataKey, onClick } = props;
+
   if (dataKey === "offset" || !payload) return null;
+
   const fill = payload.status === "error" ? NORD.error : NORD.success;
+
   return (
     <rect
       x={x}
@@ -129,7 +141,6 @@ export const CustomBarShape = (props: any) => {
       height={height}
       fill={fill}
       rx={2}
-      style={{ cursor: "pointer" }}
       onClick={() => onClick?.(payload)}
     />
   );
@@ -156,6 +167,8 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
   spans,
 }) => {
   const [selectedSpan, setSelectedSpan] = useState<Span | null>(null);
+  const pannedRef = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
 
   /**
    * Normalize and enrich raw span data for chart rendering.
@@ -178,27 +191,36 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
       return parent ? 1 + getDepth(parent.parent_span_id) : 0;
     };
 
-    return spans
+    const newSpans = spans
       .sort((a, b) => a.start_time - b.start_time)
       .map((span, index) => ({
         ...span,
-        offset: span.start_time - minStart,
+        offset: (span.start_time - minStart) / 1000,
+        durationMs: span.duration / 1000,
         yIndex: index,
         depth: getDepth(span.parent_span_id),
       }));
+
+    return newSpans;
   }, [spans]);
 
   /**
    * Chart dimensions are derived from data density to preserve readability.
    */
-  const totalDuration = Math.max(...data.map((d) => d.offset + d.duration));
+  const totalDuration = Math.max(...data.map((d) => d.offset + d.durationMs));
 
-  const chartWidth = Math.max(1200, totalDuration * 1.5);
+  const MICROSECONDS_PER_PIXEL = 1000; // 1 pixel = 1ms
+  const chartWidth = Math.max(1200, totalDuration / MICROSECONDS_PER_PIXEL);
   const chartHeight = data.length * 60 + 100;
+
+  const handleSpanClick = (span: Span) => {
+    if (pannedRef.current) return; // Block if we moved more than 5px
+    setSelectedSpan(span);
+  };
 
   return (
     <div
-      className="w-full h-[600px] border overflow-hidden relative"
+      className="w-full h-full border overflow-hidden relative"
       style={{
         backgroundColor: "var(--bg-primary)",
         borderColor: "var(--border-color)",
@@ -209,6 +231,28 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
         minScale={0.1}
         maxScale={8}
         limitToBounds={false}
+        centerOnInit={true}
+        onPanningStart={(ref, event) => {
+          pannedRef.current = false; // Reset on every new press
+          const e =
+            "touches" in event ? event.touches[0] : (event as MouseEvent);
+          dragStart.current = { x: e.clientX, y: e.clientY };
+        }}
+        onPanning={(ref, event) => {
+          if (pannedRef.current) return; // If already flagged as panned, do nothing
+
+          // Only consider it a "drag" if they moved more than 5 pixels
+          const e =
+            "touches" in event ? event.touches[0] : (event as MouseEvent);
+          const distance = Math.sqrt(
+            Math.pow(e.clientX - dragStart.current.x, 2) +
+              Math.pow(e.clientY - dragStart.current.y, 2),
+          );
+
+          if (distance > 5) {
+            pannedRef.current = true;
+          }
+        }}
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
@@ -257,6 +301,10 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                 height: "100%",
                 cursor: "grab",
               }}
+              contentStyle={{
+                width: chartWidth,
+                height: chartHeight,
+              }}
             >
               <div
                 style={{
@@ -264,14 +312,17 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                   height: chartHeight,
                   padding: "80px 40px",
                   backgroundColor: "var(--bg-primary)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <ComposedChart
-                  width={chartWidth - 80}
-                  height={chartHeight - 160}
+                  width={chartWidth - 40}
+                  height={chartHeight - 40}
                   layout="vertical"
                   data={data}
-                  margin={{ left: 200 }}
+                  margin={{ left: 200, right: 200, bottom: 100 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -293,7 +344,7 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                   <YAxis
                     type="category"
                     dataKey="span_id"
-                    width={1}
+                    width={100}
                     tick={(props) => <TreeTick {...props} fullData={data} />}
                     axisLine={{ stroke: "var(--border-color)" }}
                   />
@@ -330,7 +381,7 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                                 marginTop: "4px",
                               }}
                             >
-                              Duration: {d.duration}ms
+                              Duration: {formatDuration(d.duration)}
                             </div>
                           </div>
                         );
@@ -343,14 +394,14 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                     dataKey="offset"
                     stackId="a"
                     isAnimationActive={false}
-                    shape={<CustomBarShape onClick={setSelectedSpan} />}
+                    fill="transparent"
                   />
                   <Bar
-                    dataKey="duration"
+                    dataKey="durationMs"
                     stackId="a"
                     barSize={22}
                     isAnimationActive={false}
-                    shape={<CustomBarShape onClick={setSelectedSpan} />}
+                    shape={<CustomBarShape onClick={handleSpanClick} />}
                   />
                 </ComposedChart>
               </div>
@@ -370,3 +421,19 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
 };
 
 export default TraceGanttClient;
+
+/*
+ * Helper function to format duration string in tooltips to show duration in reasonable time scales
+ *
+ * @param The duration in microseconds
+ * @return The duration in the apt time scale up to 2 decimals as a string (with units appended)
+ */
+export function formatDuration(microseconds: number): string {
+  if (microseconds < 1000) {
+    return `${microseconds}µs`;
+  } else if (microseconds < 1_000_000) {
+    return `${(microseconds / 1000).toFixed(2)} ms`;
+  } else {
+    return `${(microseconds / 1_000_000).toFixed(2)} s`;
+  }
+}

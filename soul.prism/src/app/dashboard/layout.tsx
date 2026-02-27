@@ -11,6 +11,7 @@ import { listCollectionsByWorkspaceAction } from "@/backend/collection/collectio
 import { collectionToCollectionItem } from "../../@types/collectionItem";
 import { WorkspaceCollectionSync } from "../providers/WorkspaceCollectionSync";
 import { RequestDetailsSync } from "../providers/RequestDetailsSync";
+import SpanDetailsSync from "../providers/SpanDetailsSync";
 
 export const dynamic = "force-dynamic"; // <--- Add this
 const userId = "user_1";
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
       <EnvironmentProvider>
         <WorkspaceCollectionSync />
         <RequestDetailsSync />
+        <SpanDetailsSync />
 
         <div className="flex flex-col h-full">
           <div className="flex-shrink-0 h-14">
