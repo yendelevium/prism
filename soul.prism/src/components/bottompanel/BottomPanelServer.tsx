@@ -1,8 +1,8 @@
 import BottomPanelClient from "./BottomPanel";
-import GanttChartServer from "./gantt/GanttChartServer";
+import GanttChartClient from "./gantt/GanttChartPanel";
 import LogsServer from "./logs/LogServer";
 import { BottomView } from "./types";
-import ServiceMapServer from "./servicemap/ServiceMapServer";
+import ServiceMapPanel from "./servicemap/ServicemapPanel";
 export default function BottomPanelServer({
   activeView = "logs",
 }: {
@@ -11,8 +11,8 @@ export default function BottomPanelServer({
   return (
     <BottomPanelClient
       logsView={<LogsServer />}
-      ganttView={<GanttChartServer />}
-      servicemapView={<ServiceMapServer />}
+      ganttView={<GanttChartClient />}
+      servicemapView={<ServiceMapPanel />}
     />
   );
 }

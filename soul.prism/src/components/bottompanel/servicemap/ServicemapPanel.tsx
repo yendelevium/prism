@@ -10,10 +10,11 @@ import ReactFlow, {
   NodeMouseHandler,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import type { Span } from "../gantt/types";
+import type { Span } from "@/@types/spanItem";
 import { buildServiceGraph } from "./utils";
 
 import ServiceNode from "./ServiceNode";
+import { useSpanStore } from "@/stores/useSpanStore";
 
 const NORD = {
   bgPrimary: "#2E3440",
@@ -35,7 +36,8 @@ interface ServiceMapPanelProps {
   spans: Span[];
 }
 
-const ServiceMapPanel: React.FC<ServiceMapPanelProps> = ({ spans }) => {
+const ServiceMapPanel = () => {
+  const spans = useSpanStore((s) => s.spans);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const { nodes, edges } = useMemo(
     () => buildServiceGraph(spans, true),

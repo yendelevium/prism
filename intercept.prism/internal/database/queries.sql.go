@@ -11,6 +11,58 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getSpansByTraceID = `-- name: GetSpansByTraceID :many
+SELECT "id", "traceId", "spanId", "parentSpanId", "operation", "serviceName",
+       "startTime", "duration", "status", "tags"
+FROM "Span"
+WHERE "traceId" = $1
+ORDER BY "startTime"
+`
+
+type GetSpansByTraceIDRow struct {
+	ID           string
+	TraceId      string
+	SpanId       string
+	ParentSpanId pgtype.Text
+	Operation    string
+	ServiceName  string
+	StartTime    int64
+	Duration     int64
+	Status       pgtype.Text
+	Tags         []byte
+}
+
+func (q *Queries) GetSpansByTraceID(ctx context.Context, traceid string) ([]GetSpansByTraceIDRow, error) {
+	rows, err := q.db.Query(ctx, getSpansByTraceID, traceid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSpansByTraceIDRow
+	for rows.Next() {
+		var i GetSpansByTraceIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TraceId,
+			&i.SpanId,
+			&i.ParentSpanId,
+			&i.Operation,
+			&i.ServiceName,
+			&i.StartTime,
+			&i.Duration,
+			&i.Status,
+			&i.Tags,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertExecution = `-- name: InsertExecution :one
 INSERT INTO "Execution" ("id", "requestId", "traceId", "statusCode", "latencyMs")
 VALUES ($1, $2, $3, $4, $5)

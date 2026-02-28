@@ -1,13 +1,16 @@
-// __tests__/GanttChartPanel.test.tsx
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import TraceGanttClient from "../GanttChartPanel";
-import { Span } from "../types";
+import { Span } from "@/@types/spanItem";
+import * as spanStore from "@/stores/useSpanStore";
 
-// Sample span data
-const spans: Span[] = [
+jest.mock("@/stores/useSpanStore", () => ({
+  useSpanStore: jest.fn(),
+}));
+
+const mockSpans: Span[] = [
   {
-    id: 1,
+    id: "1",
     trace_id: "t1",
     span_id: "s1",
     parent_span_id: null,
@@ -18,7 +21,7 @@ const spans: Span[] = [
     status: "ok",
   },
   {
-    id: 2,
+    id: "2",
     trace_id: "t1",
     span_id: "s2",
     parent_span_id: "s1",
@@ -30,68 +33,79 @@ const spans: Span[] = [
   },
 ];
 
+const mockUseSpanStore = spanStore.useSpanStore as jest.MockedFunction<
+  typeof spanStore.useSpanStore
+>;
+
 describe("TraceGanttClient", () => {
+  beforeEach(() => {
+    mockUseSpanStore.mockImplementation((selector: any) => {
+      const state = { spans: mockSpans };
+      return typeof selector === "function" ? selector(state) : state;
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("renders without crashing", () => {
-    render(<TraceGanttClient spans={spans} />);
-    // Check zoom buttons exist
+    render(<TraceGanttClient />);
+
     expect(screen.getByText("+")).toBeInTheDocument();
     expect(screen.getByText("−")).toBeInTheDocument();
     expect(screen.getByText("Reset")).toBeInTheDocument();
   });
 
-  it("renders span labels correctly with hierarchy", () => {
-    render(<TraceGanttClient spans={spans} />);
-    // Primary operation labels
-    expect(screen.getByText("GET /api/user")).toBeInTheDocument();
-    expect(screen.getByText("auth_user")).toBeInTheDocument();
+  it("renders span labels", () => {
+    render(<TraceGanttClient />);
 
-    // Secondary service labels
-    expect(screen.getByText("gateway")).toBeInTheDocument();
-    expect(screen.getByText("auth-svc")).toBeInTheDocument();
+    // getAllByText because SVG <title> duplicates text nodes
+    expect(screen.getAllByText("GET /api/user")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("auth_user")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("gateway")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("auth-svc")[0]).toBeInTheDocument();
   });
 
-  it("renders bars with correct colors based on status", () => {
-    const { container } = render(<TraceGanttClient spans={spans} />);
-    const rects = container.querySelectorAll("rect");
+  it("renders bars with correct colors", () => {
+    const { container } = render(<TraceGanttClient />);
 
-    // Skip offset bars (first bar) and check the visible duration bar
-    const durationBars = Array.from(rects).filter(
-      (r) => r.getAttribute("fill") !== null,
+    const rects = Array.from(container.querySelectorAll("rect")).filter(
+      (r) =>
+        r.getAttribute("fill") === "#A3BE8C" ||
+        r.getAttribute("fill") === "#BF616A",
     );
 
-    // First span is ok → success color
-    expect(durationBars[0].getAttribute("fill")).toBe("#A3BE8C");
-
-    // Second span is error → error color
-    expect(durationBars[1].getAttribute("fill")).toBe("#BF616A");
+    expect(rects.length).toBe(2);
+    expect(rects[0].getAttribute("fill")).toBe("#A3BE8C");
+    expect(rects[1].getAttribute("fill")).toBe("#BF616A");
   });
 
-  it("computes offset and depth correctly", () => {
-    const { container } = render(<TraceGanttClient spans={spans} />);
-    const texts = screen.getAllByText(/GET|auth_user/i);
+  it("does not shift label x position by depth", () => {
+    const { container } = render(<TraceGanttClient />);
 
-    // Get x values as numbers
-    const xValues = texts.map((t) => Number(t.getAttribute("x")));
+    const textNodes = Array.from(container.querySelectorAll("text"));
 
-    // The first root span
-    expect(xValues[0]).toBe(-180); // Or just check relative
-    // Each child should be indented by 16 pixels per depth
-    expect(xValues[1] - xValues[0]).toBe(16); // depth 1
+    const rootLabel = textNodes.find((t) =>
+      t.textContent?.includes("GET /api/user"),
+    ) as SVGTextElement;
+
+    const childLabel = textNodes.find((t) =>
+      t.textContent?.includes("auth_user"),
+    ) as SVGTextElement;
+
+    expect(rootLabel.getAttribute("x")).toBe("-20");
+    expect(childLabel.getAttribute("x")).toBe("-20");
   });
 
   it("handles zoom and reset button clicks", () => {
-    render(<TraceGanttClient spans={spans} />);
+    render(<TraceGanttClient />);
 
-    const zoomInButton = screen.getByText("+");
-    const zoomOutButton = screen.getByText("−");
-    const resetButton = screen.getByText("Reset");
+    fireEvent.click(screen.getByText("+"));
+    fireEvent.click(screen.getByText("−"));
+    fireEvent.click(screen.getByText("Reset"));
 
-    // Fire events and ensure buttons are clickable
-    fireEvent.click(zoomInButton);
-    fireEvent.click(zoomOutButton);
-    fireEvent.click(resetButton);
-
-    // No errors thrown, basic smoke test passes
+    // smoke test
     expect(true).toBe(true);
   });
 });

@@ -166,7 +166,7 @@ func parseProtobuf(body []byte) (int, error) {
 					}
 				}
 
-				store.AddSpan(store.SpanRecord{
+				spanRecord := store.SpanRecord{
 					ID:           uuid.New().String(),
 					TraceID:      hex.EncodeToString(span.TraceId),
 					SpanID:       hex.EncodeToString(span.SpanId),
@@ -177,7 +177,9 @@ func parseProtobuf(body []byte) (int, error) {
 					Duration:     int64(span.EndTimeUnixNano-span.StartTimeUnixNano) / 1000,
 					Status:       status,
 					Tags:         tags,
-				})
+				}
+				store.AddSpan(spanRecord)
+				Hub.Publish(spanRecord)
 				spanCount++
 			}
 		}
@@ -220,7 +222,7 @@ func parseJSON(body []byte) (int, error) {
 					}
 				}
 
-				store.AddSpan(store.SpanRecord{
+				spanRecord := store.SpanRecord{
 					ID:           uuid.New().String(),
 					TraceID:      span.TraceID,
 					SpanID:       span.SpanID,
@@ -231,7 +233,9 @@ func parseJSON(body []byte) (int, error) {
 					Duration:     (span.GetEndTimeNano() - span.GetStartTimeNano()) / 1000,
 					Status:       status,
 					Tags:         tags,
-				})
+				}
+				store.AddSpan(spanRecord)
+				Hub.Publish(spanRecord)
 				spanCount++
 			}
 		}

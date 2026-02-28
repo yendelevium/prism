@@ -9,6 +9,7 @@ export interface InterceptRequest {
 }
 
 export interface InterceptorSpan {
+  id: string;
   duration: number;
   operation: string;
   parent_span_id: string;

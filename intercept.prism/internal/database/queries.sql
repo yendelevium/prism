@@ -7,3 +7,10 @@ ON CONFLICT ("traceId", "spanId") DO NOTHING;
 INSERT INTO "Execution" ("id", "requestId", "traceId", "statusCode", "latencyMs")
 VALUES ($1, $2, $3, $4, $5)
 RETURNING "id";
+
+-- name: GetSpansByTraceID :many
+SELECT "id", "traceId", "spanId", "parentSpanId", "operation", "serviceName",
+       "startTime", "duration", "status", "tags"
+FROM "Span"
+WHERE "traceId" = $1
+ORDER BY "startTime";
