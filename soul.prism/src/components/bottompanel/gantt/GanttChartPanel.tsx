@@ -15,6 +15,7 @@ import { Span } from "@/@types/spanItem";
 import { useState } from "react";
 import SpanDetailPanel from "./SpanDetailPanel";
 import { pointer } from "@testing-library/user-event/dist/cjs/pointer/index.js";
+import { useSpanStore } from "@/stores/useSpanStore";
 
 const NORD = {
   bgPrimary: "#2E3440",
@@ -27,20 +28,6 @@ const NORD = {
   success: "#A3BE8C",
   error: "#BF616A",
 };
-
-/**
- * Props for {@link TraceGanttClient}.
- */
-export interface TraceGanttClientProps {
-  /**
-   * Flat list of spans belonging to a single distributed trace.
-   *
-   * Each span is expected to include timing information (`start_time`,
-   * `duration`) as well as hierarchical relationships via
-   * `parent_span_id`.
-   */
-  spans: Span[];
-}
 
 /**
  * @internal
@@ -156,18 +143,15 @@ export const CustomBarShape = (props: any) => {
  * - Dynamically size the chart based on trace duration and span count
  * - Provide interactive zoom and pan controls
  *
- * This component performs no data fetching and assumes all span data
- * is provided synchronously by the caller.
  *
  * The component is intentionally client-only due to its reliance on
  * DOM-based charting libraries and interactive gesture handling.
  *
  */
-export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
-  spans,
-}) => {
+export const TraceGanttClient = () => {
+  const spans = useSpanStore((s) => s.spans);
   const [selectedSpan, setSelectedSpan] = useState<Span | null>(null);
-  const pannedRef = useRef(false);
+  const pannedRef = useRef(false); // For keeping track of if the current mouse click is a pan or a click
   const dragStart = useRef({ x: 0, y: 0 });
 
   /**
@@ -211,7 +195,7 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
 
   const MICROSECONDS_PER_PIXEL = 1000; // 1 pixel = 1ms
   const chartWidth = Math.max(1200, totalDuration / MICROSECONDS_PER_PIXEL);
-  const chartHeight = data.length * 60 + 100;
+  const chartHeight = Math.max(250, data.length * 60 + 100);
 
   const handleSpanClick = (span: Span) => {
     if (pannedRef.current) return; // Block if we moved more than 5px
@@ -318,11 +302,11 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                 }}
               >
                 <ComposedChart
-                  width={chartWidth - 40}
-                  height={chartHeight - 40}
+                  width={chartWidth - 80}
+                  height={chartHeight - 160}
                   layout="vertical"
                   data={data}
-                  margin={{ left: 200, right: 200, bottom: 100 }}
+                  margin={{ left: 200 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -345,6 +329,7 @@ export const TraceGanttClient: React.FC<TraceGanttClientProps> = ({
                     type="category"
                     dataKey="span_id"
                     width={100}
+                    interval={0}
                     tick={(props) => <TreeTick {...props} fullData={data} />}
                     axisLine={{ stroke: "var(--border-color)" }}
                   />

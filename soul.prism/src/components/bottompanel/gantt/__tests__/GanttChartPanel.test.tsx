@@ -2,8 +2,13 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import TraceGanttClient from "../GanttChartPanel";
 import { Span } from "@/@types/spanItem";
+import * as spanStore from "@/stores/useSpanStore";
 
-const spans: Span[] = [
+jest.mock("@/stores/useSpanStore", () => ({
+  useSpanStore: jest.fn(),
+}));
+
+const mockSpans: Span[] = [
   {
     id: "1",
     trace_id: "t1",
@@ -28,9 +33,24 @@ const spans: Span[] = [
   },
 ];
 
+const mockUseSpanStore = spanStore.useSpanStore as jest.MockedFunction<
+  typeof spanStore.useSpanStore
+>;
+
 describe("TraceGanttClient", () => {
+  beforeEach(() => {
+    mockUseSpanStore.mockImplementation((selector: any) => {
+      const state = { spans: mockSpans };
+      return typeof selector === "function" ? selector(state) : state;
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("renders without crashing", () => {
-    render(<TraceGanttClient spans={spans} />);
+    render(<TraceGanttClient />);
 
     expect(screen.getByText("+")).toBeInTheDocument();
     expect(screen.getByText("−")).toBeInTheDocument();
@@ -38,7 +58,7 @@ describe("TraceGanttClient", () => {
   });
 
   it("renders span labels", () => {
-    render(<TraceGanttClient spans={spans} />);
+    render(<TraceGanttClient />);
 
     // getAllByText because SVG <title> duplicates text nodes
     expect(screen.getAllByText("GET /api/user")[0]).toBeInTheDocument();
@@ -48,7 +68,7 @@ describe("TraceGanttClient", () => {
   });
 
   it("renders bars with correct colors", () => {
-    const { container } = render(<TraceGanttClient spans={spans} />);
+    const { container } = render(<TraceGanttClient />);
 
     const rects = Array.from(container.querySelectorAll("rect")).filter(
       (r) =>
@@ -62,7 +82,7 @@ describe("TraceGanttClient", () => {
   });
 
   it("does not shift label x position by depth", () => {
-    const { container } = render(<TraceGanttClient spans={spans} />);
+    const { container } = render(<TraceGanttClient />);
 
     const textNodes = Array.from(container.querySelectorAll("text"));
 
@@ -79,7 +99,7 @@ describe("TraceGanttClient", () => {
   });
 
   it("handles zoom and reset button clicks", () => {
-    render(<TraceGanttClient spans={spans} />);
+    render(<TraceGanttClient />);
 
     fireEvent.click(screen.getByText("+"));
     fireEvent.click(screen.getByText("−"));
