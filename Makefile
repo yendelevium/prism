@@ -1,4 +1,4 @@
-ENV_FILE ?= soul.prism/.env
+ENV_FILE ?= .env
 # Only pass --env-file if the file exists (CI relies on shell env vars instead)
 COMPOSE_ENV_FILE := $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE),)
 
