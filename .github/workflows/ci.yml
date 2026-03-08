@@ -96,7 +96,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/intercept-prism:latest
 
-      - name: Build and push soul.prism
+      - name: Build and push soul.prism   
         uses: docker/build-push-action@v5
         with:
           context: ./soul.prism
@@ -104,4 +104,4 @@ jobs:
           target: runner
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/soul-prism:latest
           build-args: |
-            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
