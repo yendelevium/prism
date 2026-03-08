@@ -8,17 +8,11 @@ name: Prism CD
 on:
   pull_request:
     branches: [ "main" ] # Runs whenever a PR targeting main is opened or updated
-    
+
 jobs:
   deploy:
     name: Deploy to DigitalOcean
     runs-on: ubuntu-latest
-
-    if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      (github.event.workflow_run.event == 'push' ||
-       github.event.workflow_run.event == 'pull_request') &&
-      github.event.workflow_run.head_branch == 'main'
 
     steps:
       - name: Deploy via SSH
