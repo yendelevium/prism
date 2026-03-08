@@ -1,5 +1,130 @@
 basePath: /
 definitions:
+  model.GRPCRequest:
+    properties:
+      body:
+        type: string
+      collection_id:
+        type: string
+      created_by_id:
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      proto_file:
+        type: string
+      request_id:
+        type: string
+      server_address:
+        type: string
+      service:
+        type: string
+      use_tls:
+        type: boolean
+    type: object
+  model.GRPCResponse:
+    properties:
+      body:
+        type: string
+      error_msg:
+        type: string
+      execution_id:
+        type: string
+      request_duration:
+        type: string
+      request_id:
+        description: Database record IDs
+        type: string
+      request_size:
+        description: in bytes
+        type: integer
+      response_headers:
+        additionalProperties:
+          type: string
+        type: object
+      response_size:
+        description: in bytes
+        type: integer
+      response_trailers:
+        additionalProperties:
+          type: string
+        type: object
+      span_id:
+        type: string
+      spans:
+        description: Local spans captured for this request
+        items:
+          $ref: '#/definitions/model.SpanInfo'
+        type: array
+      status_code:
+        type: integer
+      status_name:
+        type: string
+      trace_id:
+        description: Distributed tracing
+        type: string
+    type: object
+  model.GraphQLRequest:
+    properties:
+      collection_id:
+        type: string
+      created_by_id:
+        type: string
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      operation_name:
+        type: string
+      query:
+        type: string
+      request_id:
+        type: string
+      url:
+        type: string
+      variables:
+        additionalProperties: true
+        type: object
+    type: object
+  model.GraphQLResponse:
+    properties:
+      body:
+        type: string
+      error_msg:
+        type: string
+      execution_id:
+        type: string
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      request_duration:
+        type: string
+      request_id:
+        description: Database record IDs
+        type: string
+      request_size:
+        description: in bytes
+        type: integer
+      response_size:
+        description: in bytes
+        type: integer
+      span_id:
+        type: string
+      spans:
+        description: Local spans captured for this request
+        items:
+          $ref: '#/definitions/model.SpanInfo'
+        type: array
+      status:
+        type: integer
+      trace_id:
+        description: Distributed tracing
+        type: string
+    type: object
   model.RestRequest:
     properties:
       body:
@@ -13,6 +138,8 @@ definitions:
           type: string
         type: object
       method:
+        type: string
+      request_id:
         type: string
       url:
         type: string
@@ -85,6 +212,67 @@ info:
   title: Intercept Prism API
   version: "1.0"
 paths:
+  /graphql/:
+    post:
+      consumes:
+      - application/json
+      description: Proxies a GraphQL request to a target endpoint with tracing enabled
+      parameters:
+      - description: GraphQL request configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.GraphQLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response with tracing info
+          schema:
+            $ref: '#/definitions/model.GraphQLResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.GraphQLResponse'
+        "500":
+          description: Request execution failed
+          schema:
+            $ref: '#/definitions/model.GraphQLResponse'
+      summary: Execute a GraphQL request
+      tags:
+      - GraphQL
+  /grpc/:
+    post:
+      consumes:
+      - application/json
+      description: Proxies a unary gRPC request to a target server using an uploaded
+        .proto file definition
+      parameters:
+      - description: gRPC request configuration with .proto file content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.GRPCRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response with tracing info
+          schema:
+            $ref: '#/definitions/model.GRPCResponse'
+        "400":
+          description: Invalid request body or proto file
+          schema:
+            $ref: '#/definitions/model.GRPCResponse'
+        "500":
+          description: Request execution failed
+          schema:
+            $ref: '#/definitions/model.GRPCResponse'
+      summary: Execute a gRPC request
+      tags:
+      - gRPC
   /rest/:
     post:
       consumes:

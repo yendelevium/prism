@@ -9,6 +9,98 @@
     "host": "localhost:7000",
     "basePath": "/",
     "paths": {
+        "/graphql/": {
+            "post": {
+                "description": "Proxies a GraphQL request to a target endpoint with tracing enabled",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GraphQL"
+                ],
+                "summary": "Execute a GraphQL request",
+                "parameters": [
+                    {
+                        "description": "GraphQL request configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.GraphQLRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response with tracing info",
+                        "schema": {
+                            "$ref": "#/definitions/model.GraphQLResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/model.GraphQLResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Request execution failed",
+                        "schema": {
+                            "$ref": "#/definitions/model.GraphQLResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/grpc/": {
+            "post": {
+                "description": "Proxies a unary gRPC request to a target server using an uploaded .proto file definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gRPC"
+                ],
+                "summary": "Execute a gRPC request",
+                "parameters": [
+                    {
+                        "description": "gRPC request configuration with .proto file content",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.GRPCRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response with tracing info",
+                        "schema": {
+                            "$ref": "#/definitions/model.GRPCResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or proto file",
+                        "schema": {
+                            "$ref": "#/definitions/model.GRPCResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Request execution failed",
+                        "schema": {
+                            "$ref": "#/definitions/model.GRPCResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/rest/": {
             "post": {
                 "description": "Proxies an HTTP request to a target URL with tracing enabled",
@@ -89,6 +181,190 @@
         }
     },
     "definitions": {
+        "model.GRPCRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "collection_id": {
+                    "type": "string"
+                },
+                "created_by_id": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "method": {
+                    "type": "string"
+                },
+                "proto_file": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "server_address": {
+                    "type": "string"
+                },
+                "service": {
+                    "type": "string"
+                },
+                "use_tls": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.GRPCResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "error_msg": {
+                    "type": "string"
+                },
+                "execution_id": {
+                    "type": "string"
+                },
+                "request_duration": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "description": "Database record IDs",
+                    "type": "string"
+                },
+                "request_size": {
+                    "description": "in bytes",
+                    "type": "integer"
+                },
+                "response_headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "response_size": {
+                    "description": "in bytes",
+                    "type": "integer"
+                },
+                "response_trailers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "span_id": {
+                    "type": "string"
+                },
+                "spans": {
+                    "description": "Local spans captured for this request",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SpanInfo"
+                    }
+                },
+                "status_code": {
+                    "type": "integer"
+                },
+                "status_name": {
+                    "type": "string"
+                },
+                "trace_id": {
+                    "description": "Distributed tracing",
+                    "type": "string"
+                }
+            }
+        },
+        "model.GraphQLRequest": {
+            "type": "object",
+            "properties": {
+                "collection_id": {
+                    "type": "string"
+                },
+                "created_by_id": {
+                    "type": "string"
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "operation_name": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "model.GraphQLResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "error_msg": {
+                    "type": "string"
+                },
+                "execution_id": {
+                    "type": "string"
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "request_duration": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "description": "Database record IDs",
+                    "type": "string"
+                },
+                "request_size": {
+                    "description": "in bytes",
+                    "type": "integer"
+                },
+                "response_size": {
+                    "description": "in bytes",
+                    "type": "integer"
+                },
+                "span_id": {
+                    "type": "string"
+                },
+                "spans": {
+                    "description": "Local spans captured for this request",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SpanInfo"
+                    }
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "trace_id": {
+                    "description": "Distributed tracing",
+                    "type": "string"
+                }
+            }
+        },
         "model.RestRequest": {
             "type": "object",
             "properties": {
@@ -108,6 +384,9 @@
                     }
                 },
                 "method": {
+                    "type": "string"
+                },
+                "request_id": {
                     "type": "string"
                 },
                 "url": {

@@ -8,3 +8,7 @@ pre-commit:
     proxy-test:
       root: "intercept.prism/"
       run: make test
+
+    gen-docs:
+      root: "intercept.prism/"
+      run: make docs
