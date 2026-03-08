@@ -14,7 +14,9 @@ jobs:
     # Only deploy if the CI workflow succeeded AND it was a push (not a PR)
     if: >
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push'
+      (github.event.workflow_run.event == 'push' ||
+       github.event.workflow_run.event == 'pull_request')
+
 
     steps:
       - name: Deploy via SSH
@@ -23,6 +25,7 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
           script: |
             cd ~/prism
             git checkout main
