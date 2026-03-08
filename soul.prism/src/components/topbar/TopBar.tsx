@@ -6,15 +6,18 @@ import { UserCircleIcon } from "@heroicons/react/24/solid";
 import IconButton from "../common/IconButton";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useSelectionStore } from "@/stores/useSelectionStore";
-
-type Protocol = "REST" | "GraphQL" | "gRPC";
+import { useRequestStore } from "@/stores/useRequestStore";
+import { Protocol } from "@/@types/collectionItem";
 
 export default function Topbar() {
-  const [protocol, setProtocol] = useState<Protocol>("REST");
+  const protocol = useRequestStore((s) => s.protocol);
+  const setProtocol = useRequestStore((s) => s.setProtocol);
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const currentWorkspace = useSelectionStore((s) => s.workspace);
   const setCurrentWorkspace = useSelectionStore((s) => s.setWorkspace);
   const [env, setEnv] = useState("Development");
+
+  const protocolOptions: Protocol[] = ["REST", "GRAPHQL", "GRPC"];
 
   return (
     <header className="flex items-center justify-between h-14 px-4 border-[var(--border-color)] bg-[var(--bg-primary)]">
@@ -23,7 +26,7 @@ export default function Topbar() {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full overflow-clip">
-            <img src={"/prism_logo_1.jpg"} />
+            <img src={"/prism_logo_1.jpg"} alt="Prism Logo" />
           </div>
         </div>
       </div>
@@ -33,11 +36,11 @@ export default function Topbar() {
         <Dropdown
           label="Protocol"
           value={protocol}
-          options={["REST", "GraphQL", "gRPC"].map((protocol) => ({
-            value: protocol as Protocol,
-            label: protocol,
+          options={protocolOptions.map((p) => ({
+            value: p,
+            label: p,
           }))}
-          onChange={(v) => setProtocol(v)}
+          onChange={(v) => setProtocol(v as Protocol)}
         />
 
         {/* Current Workspace */}
