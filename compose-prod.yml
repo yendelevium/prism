@@ -25,8 +25,8 @@ services:
   intercept.prism:
     image: yendelevium/intercept-prism:latest
     restart: always
-    ports:
-      - 7000:7000
+    depends_on:
+      - db
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
     env_file:
@@ -35,19 +35,18 @@ services:
   soul.prism:
     image: yendelevium/soul-prism:latest
     restart: always
-    ports:
-      - 3000:3000
+    depends_on:
+      - db
     environment:
       INTERCEPT_URL: http://intercept.prism:7000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     env_file:
       - .env
 
 volumes:
   pgdata:
     name: pg_duckdb_data
-    # So we can reuse volumes b/w different environments (soul, intercept and prism)
-    external: true
   caddy_data:
   caddy_config:
