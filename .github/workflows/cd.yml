@@ -11,7 +11,7 @@ jobs:
     name: Deploy to DigitalOcean
     runs-on: ubuntu-latest
 
-    # Only deploy if the CI workflow succeeded AND it was a push (not a PR)
+    # Only deploy if the CI workflow succeeded AND it was a push to main
     if: >
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push'
@@ -22,6 +22,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
+          passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
             cd ~/prism
