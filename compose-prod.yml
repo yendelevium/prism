@@ -23,12 +23,18 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   intercept.prism:
     image: yendelevium/intercept-prism:latest
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
     env_file:
@@ -38,7 +44,8 @@ services:
     image: yendelevium/soul-prism:latest
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       INTERCEPT_URL: http://intercept.prism:7000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
