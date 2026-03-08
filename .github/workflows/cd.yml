@@ -25,6 +25,8 @@ jobs:
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
             cd ~/prism
+            git checkout main
+            git pull origin main
             docker compose -f compose-prod.yml pull
 
             # Start DB first and wait for it to be healthy
