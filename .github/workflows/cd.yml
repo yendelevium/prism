@@ -5,7 +5,10 @@ name: Prism CD
 #     workflows: ["Prism CI"]
 #     types: [completed]
     # branches: [main]
-
+on:
+  pull_request:
+    branches: [ "main" ] # Runs whenever a PR targeting main is opened or updated
+    
 jobs:
   deploy:
     name: Deploy to DigitalOcean
