@@ -1,19 +1,53 @@
 name: prism
-include:
-  - path: compose.db.yml
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      
+  db:
+    image: pgduckdb/pgduckdb:17-main
+    container_name: pg_duckdb
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   intercept.prism:
     image: yendelevium/intercept-prism:latest
+    restart: always
     ports:
       - 7000:7000
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
+    env_file:
+      - .env
 
   soul.prism:
     image: yendelevium/soul-prism:latest
+    restart: always
     ports:
       - 3000:3000
     environment:
       INTERCEPT_URL: http://intercept.prism:7000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+    env_file:
+      - .env
+
+volumes:
+  pgdata:
+    name: pg_duckdb_data
+    # So we can reuse volumes b/w different environments (soul, intercept and prism)
+    external: true
+  caddy_data:
+  caddy_config:
