@@ -8,3 +8,8 @@ pre-commit:
     nextjs-test:
       root: "soul.prism/"
       run: make test
+
+    gen-docs:
+      root: "soul.prism/"
+      run: make docs
+      stage_fixed: true

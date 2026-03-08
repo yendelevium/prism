@@ -12,3 +12,4 @@ pre-commit:
     gen-docs:
       root: "intercept.prism/"
       run: make docs
+      stage_fixed: true
