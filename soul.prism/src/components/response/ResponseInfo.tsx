@@ -27,16 +27,18 @@ function getStatusMeta(status: number | null) {
 export default function ResponseInfo({
   statusCode,
   responseTime,
+  statusDisplay,
 }: {
   statusCode: number | null;
   responseTime: number | null;
+  statusDisplay?: string | null;
 }) {
   const { label, statusClass } = getStatusMeta(statusCode);
 
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className={clsx(statusClass)}>
-        {statusCode ?? "—"} {label}
+        {statusDisplay ?? statusCode ?? "—"} {statusDisplay ? "" : label}
       </span>
 
       {responseTime !== null && (
