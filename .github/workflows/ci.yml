@@ -72,7 +72,7 @@ jobs:
     needs: docker-build-test
 
     # ONLY on push to main
-    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -96,7 +96,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/intercept-prism:latest
 
-      - name: Build and push soul.prism   
+      - name: Build and push soul.prism
         uses: docker/build-push-action@v5
         with:
           context: ./soul.prism
