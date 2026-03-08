@@ -1,9 +1,9 @@
 name: Prism CD
 
-on:
-  workflow_run:
-    workflows: ["Prism CI"]
-    types: [completed]
+# on:
+#   workflow_run:
+#     workflows: ["Prism CI"]
+#     types: [completed]
     # branches: [main]
 
 jobs:
