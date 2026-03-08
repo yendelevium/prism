@@ -15,6 +15,8 @@ services:
     image: pgduckdb/pgduckdb:17-main
     container_name: pg_duckdb
     restart: always
+    ports:
+      - "127.0.0.1:5432:5432" # Safely exposes port 5432 ONLY to the Droplet host
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
