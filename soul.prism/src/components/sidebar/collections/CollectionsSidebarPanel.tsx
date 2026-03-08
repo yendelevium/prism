@@ -14,7 +14,12 @@ import {
   collectionToCollectionItem,
   HttpMethod,
   RequestItem,
+  GraphQLRequestItem,
+  GRPCRequestItem,
+  AnyRequestItem,
   requestToRequestItem,
+  graphqlRequestToGraphQLRequestItem,
+  grpcRequestToGRPCRequestItem,
 } from "../../../@types/collectionItem";
 import { useCollectionStore } from "@/stores/useCollectionStore";
 import {
@@ -30,20 +35,17 @@ import {
   createRequestAction,
   deleteRequestAction,
 } from "@/backend/request/request.actions";
+import {
+  createGraphQLRequestAction,
+  deleteGraphQLRequestAction,
+} from "@/backend/graphql-request/graphql-request.actions";
+import {
+  createGRPCRequestAction,
+  deleteGRPCRequestAction,
+} from "@/backend/grpc-request/grpc-request.actions";
 import { useRequestStore } from "@/stores/useRequestStore";
 import { UpdateCollectionInput } from "@/backend/collection/collection.types";
 
-/**
- * Maps HTTP methods to CSS color variables.
- *
- * @remarks
- * This mapping centralizes the visual semantics of HTTP methods
- * (e.g. success, warning, error) and ensures consistent coloring
- * across the application.
- *
- * Consumers may reuse this mapping when rendering method badges,
- * labels, or request metadata elsewhere.
- */
 export const methodColorMap: Record<string, string> = {
   GET: "var(--success)",
   POST: "var(--warning)",
@@ -52,19 +54,12 @@ export const methodColorMap: Record<string, string> = {
   DELETE: "var(--error)",
 };
 
-/**
- * Sidebar navigation panel for browsing request collections.
- *
- * @remarks
- * Responsibilities:
- * - Render collections as expandable/collapsible folders
- * - Display requests as selectable leaf nodes
- * - Visually indicate the active request
- * - Provide affordances for future actions (add, context menu)
- *
- * This component is intentionally stateful but **UI-only**:
- * it does not perform routing, persistence, or data fetching.
- */
+export const protocolColorMap: Record<string, string> = {
+  REST: "var(--success)",
+  GRAPHQL: "#A855F7",
+  GRPC: "var(--accent)",
+};
+
 export const CollectionsSidebarPanel: React.FC = () => {
   const collections = useCollectionStore((s) => s.collections);
   const isLoading = useCollectionStore((s) => s.isLoading);
@@ -74,35 +69,28 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const currentRequest = useSelectionStore((s) => s.request);
   const setRequest = useSelectionStore((s) => s.setRequest);
   const setRequestName = useRequestStore((s) => s.setName);
+  const setProtocol = useRequestStore((s) => s.setProtocol);
 
-  // Only for if the current request in being deleted
   const setRequestStore = useRequestStore((s) => s.setRequest);
+  const setGraphQLRequestStore = useRequestStore((s) => s.setGraphQLRequest);
+  const setGRPCRequestStore = useRequestStore((s) => s.setGRPCRequest);
 
-  // For renaming collections
   const [editingCollectionId, setEditingCollectionId] = useState<string | null>(
     null,
   );
   const [editingCollectionName, setEditingCollectionName] = useState("");
 
-  // For renaming requests
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [editingRequestName, setEditingRequestName] = useState("");
 
-  // For spinners when you create requests or collections
   const [isLoadingRequest, setLoadingRequest] = useState<boolean>(false);
 
-  /**
-   * Tracks which collection folders are expanded.
-   *
-   * The record key corresponds to a collection id.
-   */
   const [expandedFolders, setExpandedFolders] = useState<
     Record<string, boolean>
   >({ "col-1": true });
 
-  /**
-   * Toggle the expanded state of a collection folder.
-   */
+  const [showProtocolMenu, setShowProtocolMenu] = useState<string | null>(null);
+
   const toggleFolder = (id: string) => {
     setExpandedFolders((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -126,7 +114,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
   const createRequest = async (collectionId: string) => {
     setLoadingRequest(true);
     try {
-      // Create a blank request
       const newRequestInput = {
         body: "",
         collectionId: collectionId,
@@ -143,7 +130,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
       setCollections(
         collections.map((c) =>
           c.id === collectionId
-            ? { ...c, requests: [...c.requests, newRequestItem] } // Update the requests for this particular collection
+            ? { ...c, requests: [...c.requests, newRequestItem] }
             : c,
         ),
       );
@@ -153,11 +140,96 @@ export const CollectionsSidebarPanel: React.FC = () => {
         [collectionId]: true,
       }));
 
+      setProtocol("REST");
       setRequest(newRequestItem);
     } catch (err: any) {
       toast.error(err.message);
     }
     setLoadingRequest(false);
+    setShowProtocolMenu(null);
+  };
+
+  const createGraphQLRequest = async (collectionId: string) => {
+    setLoadingRequest(true);
+    try {
+      const newRequestInput = {
+        name: "Untitled",
+        url: "https://api.example.com/graphql",
+        query: "{\n\t\n}",
+        variables: null,
+        operationName: null,
+        headers: {},
+        collectionId: collectionId,
+        createdById: "", // Actually set in the backend
+      };
+
+      const newRequest = unwrap(
+        await createGraphQLRequestAction(newRequestInput),
+      );
+      toast.success("Successfully created GraphQL request");
+
+      const newRequestItem = graphqlRequestToGraphQLRequestItem(newRequest);
+      setCollections(
+        collections.map((c) =>
+          c.id === collectionId
+            ? { ...c, graphqlRequests: [...c.graphqlRequests, newRequestItem] }
+            : c,
+        ),
+      );
+
+      setExpandedFolders((prev) => ({
+        ...prev,
+        [collectionId]: true,
+      }));
+
+      setProtocol("GRAPHQL");
+      setRequest(newRequestItem);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+    setLoadingRequest(false);
+    setShowProtocolMenu(null);
+  };
+
+  const createGRPCRequest = async (collectionId: string) => {
+    setLoadingRequest(true);
+    try {
+      const newRequestInput = {
+        name: "Untitled",
+        serverAddress: "localhost:50051",
+        service: "",
+        method: "",
+        protoFile: "",
+        metadata: {},
+        useTls: false,
+        body: null,
+        collectionId: collectionId,
+      };
+
+      const newRequest = unwrap(await createGRPCRequestAction(newRequestInput));
+      toast.success("Successfully created gRPC request");
+
+      const newRequestItem = grpcRequestToGRPCRequestItem(newRequest);
+      setCollections(
+        collections.map((c) =>
+          c.id === collectionId
+            ? { ...c, grpcRequests: [...c.grpcRequests, newRequestItem] }
+            : c,
+        ),
+      );
+
+      setExpandedFolders((prev) => ({
+        ...prev,
+        [collectionId]: true,
+      }));
+
+      setProtocol("GRPC");
+      setRequest(newRequestItem);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+    setLoadingRequest(false);
+    setShowProtocolMenu(null);
   };
 
   const commitRenameCollection = async (collectionId: string) => {
@@ -167,7 +239,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
     if (!newName) return;
 
-    // Optimistic UI update
     setCollections(
       collections.map((c) =>
         c.id === collectionId ? { ...c, name: newName } : c,
@@ -196,11 +267,16 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
     if (!newName) return;
 
-    // Optimistic UI update (collection sidebar)
     setCollections(
       collections.map((col) => ({
         ...col,
         requests: col.requests.map((r) =>
+          r.id === requestId ? { ...r, name: newName } : r,
+        ),
+        graphqlRequests: col.graphqlRequests.map((r) =>
+          r.id === requestId ? { ...r, name: newName } : r,
+        ),
+        grpcRequests: col.grpcRequests.map((r) =>
           r.id === requestId ? { ...r, name: newName } : r,
         ),
       })),
@@ -220,22 +296,65 @@ export const CollectionsSidebarPanel: React.FC = () => {
   };
 
   const deleteRequest = async (requestId: string) => {
-    // Optimistic update
-    setCollections(
-      collections.map((col) => ({
-        ...col,
-        requests: col.requests.filter((r) => r.id !== requestId),
-      })),
-    );
+    // Find which collection and type contains this request
+    let requestType: "REST" | "GRAPHQL" | "GRPC" = "REST";
 
-    // Clear selection if needed
+    for (const col of collections) {
+      if (col.requests.find((r) => r.id === requestId)) {
+        requestType = "REST";
+        break;
+      }
+      if (col.graphqlRequests.find((r) => r.id === requestId)) {
+        requestType = "GRAPHQL";
+        break;
+      }
+      if (col.grpcRequests.find((r) => r.id === requestId)) {
+        requestType = "GRPC";
+        break;
+      }
+    }
+
+    // Optimistic update
+    if (requestType === "REST") {
+      setCollections(
+        collections.map((col) => ({
+          ...col,
+          requests: col.requests.filter((r) => r.id !== requestId),
+        })),
+      );
+    } else if (requestType === "GRAPHQL") {
+      setCollections(
+        collections.map((col) => ({
+          ...col,
+          graphqlRequests: col.graphqlRequests.filter(
+            (r) => r.id !== requestId,
+          ),
+        })),
+      );
+    } else {
+      setCollections(
+        collections.map((col) => ({
+          ...col,
+          grpcRequests: col.grpcRequests.filter((r) => r.id !== requestId),
+        })),
+      );
+    }
+
     if (currentRequest?.id === requestId) {
       setRequest(null);
       setRequestStore({ url: "" } as RequestItem);
+      setGraphQLRequestStore({} as GraphQLRequestItem);
+      setGRPCRequestStore({} as GRPCRequestItem);
     }
 
     try {
-      await deleteRequestAction(requestId);
+      if (requestType === "REST") {
+        await deleteRequestAction(requestId);
+      } else if (requestType === "GRAPHQL") {
+        await deleteGraphQLRequestAction(requestId);
+      } else {
+        await deleteGRPCRequestAction(requestId);
+      }
       toast.success("Request deleted");
     } catch (err: any) {
       toast.error(err.message);
@@ -243,13 +362,10 @@ export const CollectionsSidebarPanel: React.FC = () => {
   };
 
   const deleteCollection = async (collectionId: string) => {
-    // Find the collection being deleted
     const collectionToDelete = collections.find((c) => c.id === collectionId);
 
-    // Optimistic update: remove collection
     setCollections(collections.filter((c) => c.id !== collectionId));
 
-    // Clear request selection if it belonged to this collection
     if (
       currentRequest &&
       collectionToDelete?.requests.some((r) => r.id === currentRequest.id)
@@ -258,7 +374,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
       setRequestStore({ url: "" } as RequestItem);
     }
 
-    // Clean up expanded state
     setExpandedFolders((prev) => {
       const next = { ...prev };
       delete next[collectionId];
@@ -273,6 +388,65 @@ export const CollectionsSidebarPanel: React.FC = () => {
     }
   };
 
+  const handleRequestClick = (req: AnyRequestItem) => {
+    if (editingRequestId) return;
+
+    // Determine protocol and call appropriate store method
+    if ("method" in req && "url" in req && !("serverAddress" in req)) {
+      // REST request
+      setProtocol("REST");
+      setRequestStore(req as RequestItem);
+    } else if ("serverAddress" in req) {
+      // gRPC request
+      setProtocol("GRPC");
+      setGRPCRequestStore(req as GRPCRequestItem);
+    } else {
+      // GraphQL request
+      setProtocol("GRAPHQL");
+      setGraphQLRequestStore(req as GraphQLRequestItem);
+    }
+    setRequest(req);
+  };
+
+  const renderRequestBadge = (req: AnyRequestItem) => {
+    if ("serverAddress" in req) {
+      // gRPC
+      return (
+        <span
+          className="text-[9px] font-bold w-10 shrink-0"
+          style={{ color: protocolColorMap.GRPC }}
+        >
+          gRPC
+        </span>
+      );
+    } else if ("query" in req && "url" in req) {
+      // GraphQL
+      return (
+        <span
+          className="text-[9px] font-bold w-10 shrink-0"
+          style={{ color: protocolColorMap.GRAPHQL }}
+        >
+          GQL
+        </span>
+      );
+    } else {
+      // REST
+      const restReq = req as RequestItem;
+      return (
+        <span
+          className="text-[9px] font-bold w-10 shrink-0"
+          style={{
+            color:
+              methodColorMap[restReq.method.toUpperCase()] ||
+              "var(--text-secondary)",
+          }}
+        >
+          {restReq.method.toUpperCase()}
+        </span>
+      );
+    }
+  };
+
   return (
     <aside
       className="w-full h-full flex flex-col border-r select-none transition-colors duration-300"
@@ -281,7 +455,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
         borderColor: "var(--border-color)",
       }}
     >
-      {/* Header */}
       <div
         className="p-4 flex items-center justify-between border-b shrink-0"
         style={{ borderColor: "var(--border-color)" }}
@@ -294,8 +467,8 @@ export const CollectionsSidebarPanel: React.FC = () => {
           Collections
         </h2>
 
-        {/* Add collection */}
         <button
+          type="button"
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: "var(--accent)" }}
           onClick={createCollection}
@@ -304,7 +477,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* Search Input */}
       <div className="p-3">
         <div
           className="flex items-center px-2 py-1.5 rounded border transition-all"
@@ -327,7 +499,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation Tree */}
       <nav className="flex-1 overflow-y-auto pt-2 scrollbar-hide">
         {isLoading && (
           <div className="px-4 py-6 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
@@ -338,7 +509,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
         {!isLoading &&
           collections.map((col) => (
             <div key={col.id} className="mb-1">
-              {/* Collection Header */}
               <div
                 onClick={() => {
                   if (editingCollectionId) return;
@@ -353,6 +523,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
               >
                 <span className="mr-1" style={{ color: "var(--border-color)" }}>
                   <button
+                    type="button"
                     className="mr-1 p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                     aria-label="Toggle collection"
                   >
@@ -401,13 +572,14 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   </span>
                 )}
 
-                {/* Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {/* Create request */}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity relative">
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      createRequest(col.id);
+                      setShowProtocolMenu(
+                        showProtocolMenu === col.id ? null : col.id,
+                      );
                     }}
                     className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                     style={{ color: "var(--accent)" }}
@@ -419,8 +591,40 @@ export const CollectionsSidebarPanel: React.FC = () => {
                     {!isLoadingRequest && <Plus size={12} />}
                   </button>
 
-                  {/* Delete collection */}
+                  {showProtocolMenu === col.id && (
+                    <div
+                      className="absolute top-full left-0 mt-1 w-40 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded shadow-lg z-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-primary)] transition-colors"
+                        style={{ color: methodColorMap.GET }}
+                        onClick={() => createRequest(col.id)}
+                      >
+                        REST Request
+                      </button>
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-primary)] transition-colors"
+                        style={{ color: "#A855F7" }}
+                        onClick={() => createGraphQLRequest(col.id)}
+                      >
+                        GraphQL Request
+                      </button>
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-primary)] transition-colors"
+                        style={{ color: "var(--accent)" }}
+                        onClick={() => createGRPCRequest(col.id)}
+                      >
+                        gRPC Request
+                      </button>
+                    </div>
+                  )}
+
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteCollection(col.id);
@@ -434,18 +638,18 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 </div>
               </div>
 
-              {/* Requests */}
               {expandedFolders[col.id] && (
                 <div
                   className="ml-6 border-l"
                   style={{ borderColor: "var(--border-color)" }}
                 >
+                  {/* REST Requests */}
                   {col.requests.map((req) => (
                     <div
                       key={req.id}
                       onClick={() => {
                         if (editingRequestId) return;
-                        setRequest(req); // Selection Store
+                        handleRequestClick(req);
                       }}
                       onDoubleClick={(e) => {
                         e.stopPropagation();
@@ -462,19 +666,8 @@ export const CollectionsSidebarPanel: React.FC = () => {
                       }
                     `}
                     >
-                      {/* HTTP method */}
-                      <span
-                        className="text-[9px] font-bold w-10 shrink-0"
-                        style={{
-                          color:
-                            methodColorMap[req.method.toUpperCase()] ||
-                            "var(--text-secondary)",
-                        }}
-                      >
-                        {req.method.toUpperCase()}
-                      </span>
+                      {renderRequestBadge(req)}
 
-                      {/* Request name */}
                       {editingRequestId === req.id ? (
                         <input
                           autoFocus
@@ -509,9 +702,161 @@ export const CollectionsSidebarPanel: React.FC = () => {
                         </span>
                       )}
 
-                      {/* Request actions */}
                       <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteRequest(req.id);
+                          }}
+                          className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
+                          style={{ color: "var(--error)" }}
+                          title="Delete request"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* GraphQL Requests */}
+                  {col.graphqlRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      onClick={() => {
+                        if (editingRequestId) return;
+                        handleRequestClick(req);
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setEditingRequestId(req.id);
+                        setEditingRequestName(req.name);
+                      }}
+                      className={`
+                      group
+                      flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2
+                      ${
+                        currentRequest?.id === req.id
+                          ? "bg-[var(--bg-panel)] border-[var(--accent)]"
+                          : "border-transparent hover:bg-[var(--bg-secondary)]"
+                      }
+                    `}
+                    >
+                      {renderRequestBadge(req)}
+
+                      {editingRequestId === req.id ? (
+                        <input
+                          autoFocus
+                          value={editingRequestName}
+                          onChange={(e) =>
+                            setEditingRequestName(e.target.value)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              commitRenameRequest(req.id);
+                            }
+                            if (e.key === "Escape") {
+                              cancelRenameRequest();
+                            }
+                          }}
+                          onBlur={() => commitRenameRequest(req.id)}
+                          className="text-xs bg-transparent outline-none border-none flex-1"
+                          style={{ color: "var(--text-primary)" }}
+                        />
+                      ) : (
+                        <span
+                          className="text-xs truncate"
+                          style={{
+                            color:
+                              currentRequest?.id === req.id
+                                ? "var(--text-primary)"
+                                : "var(--text-secondary)",
+                          }}
+                        >
+                          {req.name}
+                        </span>
+                      )}
+
+                      <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteRequest(req.id);
+                          }}
+                          className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
+                          style={{ color: "var(--error)" }}
+                          title="Delete request"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* gRPC Requests */}
+                  {col.grpcRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      onClick={() => {
+                        if (editingRequestId) return;
+                        handleRequestClick(req);
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setEditingRequestId(req.id);
+                        setEditingRequestName(req.name);
+                      }}
+                      className={`
+                      group
+                      flex items-center py-1.5 pl-4 pr-3 cursor-pointer transition-all border-l-2
+                      ${
+                        currentRequest?.id === req.id
+                          ? "bg-[var(--bg-panel)] border-[var(--accent)]"
+                          : "border-transparent hover:bg-[var(--bg-secondary)]"
+                      }
+                    `}
+                    >
+                      {renderRequestBadge(req)}
+
+                      {editingRequestId === req.id ? (
+                        <input
+                          autoFocus
+                          value={editingRequestName}
+                          onChange={(e) =>
+                            setEditingRequestName(e.target.value)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              commitRenameRequest(req.id);
+                            }
+                            if (e.key === "Escape") {
+                              cancelRenameRequest();
+                            }
+                          }}
+                          onBlur={() => commitRenameRequest(req.id)}
+                          className="text-xs bg-transparent outline-none border-none flex-1"
+                          style={{ color: "var(--text-primary)" }}
+                        />
+                      ) : (
+                        <span
+                          className="text-xs truncate"
+                          style={{
+                            color:
+                              currentRequest?.id === req.id
+                                ? "var(--text-primary)"
+                                : "var(--text-secondary)",
+                          }}
+                        >
+                          {req.name}
+                        </span>
+                      )}
+
+                      <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteRequest(req.id);
