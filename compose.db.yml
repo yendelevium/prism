@@ -5,7 +5,7 @@ services:
     container_name: pg_duckdb
     restart: always
     ports:
-      - 5433:5432
+      - 5432:5432
 
     environment:
       POSTGRES_USER: ${POSTGRES_USER}

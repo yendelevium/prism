@@ -72,7 +72,7 @@ jobs:
     needs: docker-build-test
 
     # ONLY on push to main
-    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -101,6 +101,7 @@ jobs:
         with:
           context: ./soul.prism
           push: true
+          target: runner
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/soul-prism:latest
           build-args: |
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
