@@ -1,0 +1,61 @@
+name: prism
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      
+  db:
+    image: pgduckdb/pgduckdb:17-main
+    container_name: pg_duckdb
+    restart: always
+    ports:
+      - "127.0.0.1:5432:5432" # Safely exposes port 5432 ONLY to the Droplet host
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  intercept.prism:
+    image: yendelevium/intercept-prism:latest
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
+    env_file:
+      - .env
+
+  soul.prism:
+    image: yendelevium/soul-prism:latest
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      INTERCEPT_URL: http://intercept.prism:7000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?search_path=public
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    env_file:
+      - .env
+
+volumes:
+  pgdata:
+    name: pg_duckdb_data
+  caddy_data:
+  caddy_config:

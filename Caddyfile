@@ -1,0 +1,6 @@
+prismming.ddns.net {
+    # Route everything to the Next.js frontend
+    handle {
+        reverse_proxy soul.prism:3000
+    }
+}
