@@ -8,6 +8,7 @@ import {
   Search,
   Plus,
   Trash2,
+  ChevronUp,
 } from "lucide-react";
 import {
   CollectionItem,
@@ -89,7 +90,11 @@ export const CollectionsSidebarPanel: React.FC = () => {
     Record<string, boolean>
   >({ "col-1": true });
 
-  const [showProtocolMenu, setShowProtocolMenu] = useState<string | null>(null);
+  const [createRequestModal, setCreateRequestModal] = useState<{
+    collectionId: string;
+    name: string;
+    type: "REST" | "GRAPHQL" | "GRPC";
+  } | null>(null);
 
   const toggleFolder = (id: string) => {
     setExpandedFolders((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -111,7 +116,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
     return;
   };
 
-  const createRequest = async (collectionId: string) => {
+  const createRequest = async (collectionId: string, name: string) => {
     setLoadingRequest(true);
     try {
       const newRequestInput = {
@@ -119,7 +124,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
         collectionId: collectionId,
         headers: {},
         method: "GET" as HttpMethod,
-        name: "Untitled",
+        name: name || "Untitled",
         url: "https://prism-amrita-app.com/exampleURL",
       } as CreateRequestInput;
 
@@ -146,14 +151,14 @@ export const CollectionsSidebarPanel: React.FC = () => {
       toast.error(err.message);
     }
     setLoadingRequest(false);
-    setShowProtocolMenu(null);
+    setCreateRequestModal(null);
   };
 
-  const createGraphQLRequest = async (collectionId: string) => {
+  const createGraphQLRequest = async (collectionId: string, name: string) => {
     setLoadingRequest(true);
     try {
       const newRequestInput = {
-        name: "Untitled",
+        name: name || "Untitled",
         url: "https://api.example.com/graphql",
         query: "{\n\t\n}",
         variables: null,
@@ -188,14 +193,14 @@ export const CollectionsSidebarPanel: React.FC = () => {
       toast.error(err.message);
     }
     setLoadingRequest(false);
-    setShowProtocolMenu(null);
+    setCreateRequestModal(null);
   };
 
-  const createGRPCRequest = async (collectionId: string) => {
+  const createGRPCRequest = async (collectionId: string, name: string) => {
     setLoadingRequest(true);
     try {
       const newRequestInput = {
-        name: "Untitled",
+        name: name || "Untitled",
         serverAddress: "localhost:50051",
         service: "Protobuf",
         method: "SampleMethod",
@@ -230,7 +235,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
       toast.error(err.message);
     }
     setLoadingRequest(false);
-    setShowProtocolMenu(null);
+    setCreateRequestModal(null);
   };
 
   const commitRenameCollection = async (collectionId: string) => {
@@ -573,14 +578,16 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   </span>
                 )}
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity relative">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowProtocolMenu(
-                        showProtocolMenu === col.id ? null : col.id,
-                      );
+                      setCreateRequestModal({
+                        collectionId: col.id,
+                        name: "Untitled",
+                        type: "REST",
+                      });
                     }}
                     className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
                     style={{ color: "var(--accent)" }}
@@ -591,38 +598,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
                     )}
                     {!isLoadingRequest && <Plus size={12} />}
                   </button>
-
-                  {showProtocolMenu === col.id && (
-                    <div
-                      className="absolute top-full left-0 mt-1 w-40 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded shadow-lg z-50"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-primary)] transition-colors"
-                        style={{ color: methodColorMap.GET }}
-                        onClick={() => createRequest(col.id)}
-                      >
-                        REST Request
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-primary)] transition-colors"
-                        style={{ color: "#A855F7" }}
-                        onClick={() => createGraphQLRequest(col.id)}
-                      >
-                        GraphQL Request
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-xs hover:bg-[var(--bg-primary)] transition-colors"
-                        style={{ color: "var(--accent)" }}
-                        onClick={() => createGRPCRequest(col.id)}
-                      >
-                        gRPC Request
-                      </button>
-                    </div>
-                  )}
 
                   <button
                     type="button"
@@ -876,6 +851,119 @@ export const CollectionsSidebarPanel: React.FC = () => {
             </div>
           ))}
       </nav>
+
+      {createRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2E3440]/80 backdrop-blur-sm p-4">
+          <div
+            className="w-full max-w-md rounded-lg border shadow-2xl overflow-hidden"
+            style={{
+              backgroundColor: "var(--bg-primary)",
+              borderColor: "var(--border-color)",
+            }}
+          >
+            <div
+              className="flex items-center justify-between p-3 border-b"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                borderColor: "var(--border-color)",
+              }}
+            >
+              <input
+                autoFocus
+                className="bg-transparent text-sm font-mono font-bold text-[var(--accent)] outline-none border-b border-transparent focus:border-[var(--accent)] px-1"
+                value={createRequestModal.name}
+                onChange={(e) =>
+                  setCreateRequestModal({
+                    ...createRequestModal,
+                    name: e.target.value,
+                  })
+                }
+                placeholder="Request name"
+              />
+              <span
+                className="text-[10px] uppercase font-bold tracking-tighter opacity-50"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                New Request
+              </span>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="flex flex-col gap-2">
+                <label
+                  className="text-[9px] uppercase font-bold opacity-40"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Request Type
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded px-3 py-2 text-xs font-mono outline-none focus:border-[var(--accent)] appearance-none cursor-pointer"
+                    value={createRequestModal.type}
+                    onChange={(e) =>
+                      setCreateRequestModal({
+                        ...createRequestModal,
+                        type: e.target.value as "REST" | "GRAPHQL" | "GRPC",
+                      })
+                    }
+                  >
+                    <option value="REST">REST</option>
+                    <option value="GRAPHQL">GraphQL</option>
+                    <option value="GRPC">gRPC</option>
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{ color: "var(--text-secondary)" }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="p-3 border-t flex justify-end gap-2"
+              style={{ borderColor: "var(--border-color)" }}
+            >
+              <button
+                onClick={() => setCreateRequestModal(null)}
+                className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (createRequestModal.type === "REST") {
+                    createRequest(
+                      createRequestModal.collectionId,
+                      createRequestModal.name,
+                    );
+                  } else if (createRequestModal.type === "GRAPHQL") {
+                    createGraphQLRequest(
+                      createRequestModal.collectionId,
+                      createRequestModal.name,
+                    );
+                  } else {
+                    createGRPCRequest(
+                      createRequestModal.collectionId,
+                      createRequestModal.name,
+                    );
+                  }
+                }}
+                className="relative flex items-center justify-center px-3 py-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[10px] font-bold uppercase rounded transition-all"
+              >
+                <span
+                  className={isLoadingRequest ? "opacity-0" : "opacity-100"}
+                >
+                  Create
+                </span>
+                {isLoadingRequest && (
+                  <div className="absolute h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
