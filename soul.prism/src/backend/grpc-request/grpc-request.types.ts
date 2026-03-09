@@ -12,6 +12,7 @@ export interface CreateGRPCRequestInput {
   useTls?: boolean;
   body?: string | null;
   collectionId: string;
+  createdById: string;
 }
 
 export interface UpdateGRPCRequestInput {

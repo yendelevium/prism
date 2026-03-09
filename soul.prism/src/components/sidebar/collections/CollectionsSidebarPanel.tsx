@@ -197,13 +197,14 @@ export const CollectionsSidebarPanel: React.FC = () => {
       const newRequestInput = {
         name: "Untitled",
         serverAddress: "localhost:50051",
-        service: "",
-        method: "",
-        protoFile: "",
+        service: "Protobuf",
+        method: "SampleMethod",
+        protoFile: "Enter your .proto file contents here...",
         metadata: {},
         useTls: false,
         body: null,
         collectionId: collectionId,
+        createdById: "", // Actually set by backend
       };
 
       const newRequest = unwrap(await createGRPCRequestAction(newRequestInput));
