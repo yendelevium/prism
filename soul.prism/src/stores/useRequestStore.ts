@@ -234,8 +234,8 @@ export const useRequestStore = create<RequestState>((set, get) => {
         id: r.id,
         name: r.name,
         graphql: {
-          url: r.url,
-          query: r.query,
+          url: r.url ?? "",
+          query: r.query ?? "",
           variables: r.variables ?? "{}",
           operationName: r.operationName ?? "",
           headers: r.headers ?? [],
@@ -248,12 +248,12 @@ export const useRequestStore = create<RequestState>((set, get) => {
         id: r.id,
         name: r.name,
         grpc: {
-          serverAddress: r.serverAddress,
-          service: r.service,
-          method: r.method,
-          protoFile: r.protoFile,
+          serverAddress: r.serverAddress ?? "",
+          service: r.service ?? "",
+          method: r.method ?? "",
+          protoFile: r.protoFile ?? "",
           metadata: r.metadata ?? [],
-          useTls: r.useTls,
+          useTls: r.useTls ?? false,
           body: r.body ?? "",
         },
       });
