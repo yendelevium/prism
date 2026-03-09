@@ -13,9 +13,11 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
-  workspaces  UserWorkspace[]
-  collections Collection[]
-  requests    Request[]
+  workspaces        UserWorkspace[]
+  collections       Collection[]
+  requests          Request[]
+  graphqlRequests   GraphQLRequest[]
+  grpcRequests      GRPCRequest[]
 }
 
 
@@ -58,6 +60,8 @@ model Collection {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   createdBy User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
   requests  Request[]
+  graphqlRequests GraphQLRequest[]
+  grpcRequests    GRPCRequest[]
 }
 
 model Request {
@@ -75,6 +79,40 @@ model Request {
   createdBy  User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   executions Execution[]
+}
+
+model GraphQLRequest {
+  id            String   @id @default(uuid())
+  name          String
+  url           String
+  query         String
+  variables     String?  @db.Text
+  operationName String?
+  headers       Json?
+  collectionId  String
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdBy  User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model GRPCRequest {
+  id           String   @id @default(uuid())
+  name         String
+  serverAddress String
+  service      String
+  method       String
+  protoFile    String   @db.Text
+  metadata     Json?
+  useTls       Boolean  @default(false)
+  body         String?  @db.Text
+  collectionId String
+  createdById  String
+  createdAt    DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdBy  User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
 
 

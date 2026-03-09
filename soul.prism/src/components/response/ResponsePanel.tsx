@@ -14,7 +14,9 @@ import { Clipboard, Copy, Save } from "lucide-react";
 import { toast } from "sonner";
 import xmlFormatter from "xml-formatter";
 
-const tabs = ["Body", "Headers", "Cookies", "Tests"];
+const restTabs = ["Body", "Headers", "Cookies", "Tests"];
+const graphqlTabs = ["Body", "Headers"];
+const grpcTabs = ["Body", "Headers", "Trailers"];
 
 /**
  * Helper to detect MIME types
@@ -74,11 +76,30 @@ export function formatBody(language: string, body: string | null): string {
 }
 
 export default function ResponsePanel() {
-  const [activeTab, setActiveTab] = useState("Body");
-  const response = useRequestStore((s) => s.response);
+  const protocol = useRequestStore((s) => s.protocol);
+  const restResponse = useRequestStore((s) => s.restResponse);
+  const graphqlResponse = useRequestStore((s) => s.graphqlResponse);
+  const grpcResponse = useRequestStore((s) => s.grpcResponse);
   const isExecuting = useRequestStore((s) => s.isExecuting);
   const [highlight, setHighlight] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("Body");
+
+  const tabs =
+    protocol === "REST"
+      ? restTabs
+      : protocol === "GRAPHQL"
+        ? graphqlTabs
+        : grpcTabs;
+
+  const getCurrentResponse = () => {
+    if (protocol === "REST") return restResponse;
+    if (protocol === "GRAPHQL") return graphqlResponse;
+    return grpcResponse;
+  };
+
+  const response = getCurrentResponse();
 
   const language = detectLanguage(response.headers, response.body);
   const formattedBody = formatBody(language, response.body);
@@ -93,6 +114,10 @@ export default function ResponsePanel() {
 
       if (activeTab === "Headers") {
         textToCopy = JSON.stringify(response.headers, null, 2);
+      }
+
+      if (activeTab === "Trailers") {
+        textToCopy = JSON.stringify(grpcResponse.trailers, null, 2);
       }
 
       if (activeTab === "Cookies") {
@@ -120,12 +145,42 @@ export default function ResponsePanel() {
     }
   }, [isExecuting]);
 
-  if (response.status === null) {
+  useEffect(() => {
+    setActiveTab("Body");
+  }, [protocol]);
+
+  const getStatusCode = () => {
+    if (protocol === "GRPC") {
+      return grpcResponse.statusCode;
+    }
+    return response.status;
+  };
+
+  const getStatusDisplay = () => {
+    if (protocol === "GRPC" && grpcResponse.statusName) {
+      return `gRPC ${grpcResponse.statusName}`;
+    }
+    return response.status;
+  };
+
+  if (response.status === null && protocol !== "GRPC") {
     return (
       <div className="flex flex-1 items-center justify-center p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
         <div className="flex flex-1 p-2 items-center justify-center h-full bg-[var(--bg-primary)]">
           <span className="text-sm text-[var(--text-secondary)]">
-            Send a request to see the response
+            Send a {protocol} request to see the response
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (protocol === "GRPC" && grpcResponse.statusCode === null) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
+        <div className="flex flex-1 p-2 items-center justify-center h-full bg-[var(--bg-primary)]">
+          <span className="text-sm text-[var(--text-secondary)]">
+            Send a gRPC request to see the response
           </span>
         </div>
       </div>
@@ -145,6 +200,7 @@ export default function ResponsePanel() {
           {tabs.map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => {
                 setActiveTab(tab);
                 console.log("[UI]", "RESPONSE_TAB_CHANGED", { tab });
@@ -167,13 +223,15 @@ export default function ResponsePanel() {
             className={`text-xs px-2 py-1
                 ${isExecuting ? "opacity-50 cursor-not-allowed" : "hover:bg-[var(--bg-primary)]"}
             `}
+            type="button"
           >
             <Clipboard size={16} stroke="#88C0D0" />
           </button>
 
           <ResponseInfo
-            statusCode={response.status}
+            statusCode={getStatusCode()}
             responseTime={response.time}
+            statusDisplay={getStatusDisplay()}
           />
         </div>
       </div>
@@ -202,6 +260,25 @@ export default function ResponsePanel() {
               keyPlaceholder="Variable"
               valuePlaceholder="Value"
               emptyState="No response headers"
+              rowHeight="sm"
+              dense
+            />
+          </div>
+        )}
+
+        {activeTab === "Trailers" && (
+          <div className="flex-1 min-h-0">
+            <KeyValueEditor
+              rows={objectToRows(grpcResponse.trailers)}
+              onChange={() => {}}
+              title="Response Trailers"
+              mode="view"
+              allowAdd
+              allowDelete
+              allowToggle
+              keyPlaceholder="Variable"
+              valuePlaceholder="Value"
+              emptyState="No response trailers"
               rowHeight="sm"
               dense
             />

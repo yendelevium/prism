@@ -4,6 +4,7 @@ import { Layout } from "react-resizable-panels";
 import RequestTabs from "@/components/request/RequestTabs";
 import ResponsePanel from "@/components/response/ResponsePanel";
 import BottomPanelServer from "@/components/bottompanel/BottomPanelServer";
+import RequestBar from "@/components/requestbar/RequestBar";
 
 export const dynamic = "force-dynamic"; // <--- Add this
 /**
@@ -55,12 +56,15 @@ export default async function Page() {
     : undefined;
 
   return (
-    <Resizable
-      defaultLayoutHorizontal={defaultLayoutHorizontal}
-      defaultLayoutVertical={defaultLayoutVertical}
-      requestTabs={<RequestTabs />}
-      responsePanel={<ResponsePanel />}
-      bottomPanelServer={<BottomPanelServer />}
-    />
+    <>
+      <RequestBar />
+      <Resizable
+        defaultLayoutHorizontal={defaultLayoutHorizontal}
+        defaultLayoutVertical={defaultLayoutVertical}
+        requestTabs={<RequestTabs />}
+        responsePanel={<ResponsePanel />}
+        bottomPanelServer={<BottomPanelServer />}
+      />
+    </>
   );
 }

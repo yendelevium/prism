@@ -2,47 +2,30 @@
 
 import { useState } from "react";
 import CodeEditor from "@/components/editors/CodeEditor";
-import {
-  KeyValueEditor,
-  KeyValueRow,
-  objectToRows,
-  rowsToObject,
-} from "../editors/KeyValueEditor";
+import { KeyValueEditor, KeyValueRow } from "../editors/KeyValueEditor";
 import { useRequestStore } from "@/stores/useRequestStore";
 import { Check } from "lucide-react";
-import GraphQLRequestEditor from "./GraphQLRequestEditor";
-import GRPCRequestEditor from "./GRPCRequestEditor";
 
-const restTabs = ["Params", "Headers", "Body", "Auth", "Tests"];
+const tabs = ["Query", "Variables", "Headers"];
 
-export default function RequestTabs() {
-  const protocol = useRequestStore((s) => s.protocol);
-  const rest = useRequestStore((s) => s.rest);
+export default function GraphQLRequestEditor() {
+  const [activeTab, setActiveTab] = useState("Query");
+  const graphql = useRequestStore((s) => s.graphql);
   const isLoading = useRequestStore((s) => s.isLoading);
-  const setRestField = useRequestStore((s) => s.setRestField);
-
-  const [activeTab, setActiveTab] = useState("Params");
-
-  if (protocol === "GRAPHQL") {
-    return <GraphQLRequestEditor />;
-  }
-
-  if (protocol === "GRPC") {
-    return <GRPCRequestEditor />;
-  }
+  const setGraphQLField = useRequestStore((s) => s.setGraphQLField);
 
   return (
     <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
       {/* Tabs */}
       <div className="flex gap-4 justify-between text-sm border-b border-[var(--border-color)] mb-3">
         <div className="flex gap-4 text-sm">
-          {restTabs.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => {
                 setActiveTab(tab);
-                console.log("[UI]", "REQUEST_TAB_CHANGED", { tab });
+                console.log("[UI]", "GRAPHQL_TAB_CHANGED", { tab });
               }}
               className={`pb-2 ${
                 activeTab === tab
@@ -64,39 +47,31 @@ export default function RequestTabs() {
 
       {/* Content */}
       <div className="flex flex-1 flex-col min-h-0">
-        {activeTab === "Body" && (
+        {activeTab === "Query" && (
           <CodeEditor
-            language="json"
-            value={rest.body ?? ""}
-            onChange={(body) => {
-              setRestField({ body: body ?? "" });
+            language="graphql"
+            value={graphql.query}
+            onChange={(value) => {
+              setGraphQLField({ query: value ?? "" });
             }}
           />
         )}
 
-        {activeTab === "Params" && (
-          <div className="flex-1 min-h-0">
-            <KeyValueEditor
-              rows={rest.params}
-              onChange={(params) => setRestField({ params })}
-              title="Query Parameters"
-              allowAdd
-              allowDelete
-              allowToggle
-              keyPlaceholder="Variable"
-              valuePlaceholder="Value"
-              emptyState="No query parameters"
-              rowHeight="sm"
-              dense
-            />
-          </div>
+        {activeTab === "Variables" && (
+          <CodeEditor
+            language="json"
+            value={graphql.variables}
+            onChange={(value) => {
+              setGraphQLField({ variables: value ?? "{}" });
+            }}
+          />
         )}
 
         {activeTab === "Headers" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
-              rows={rest.headers}
-              onChange={(headers) => setRestField({ headers })}
+              rows={graphql.headers}
+              onChange={(headers) => setGraphQLField({ headers })}
               title="Request Headers"
               allowAdd
               allowDelete
@@ -107,12 +82,6 @@ export default function RequestTabs() {
               rowHeight="sm"
               dense
             />
-          </div>
-        )}
-
-        {(activeTab === "Auth" || activeTab === "Tests") && (
-          <div className="text-[var(--text-secondary)] p-2">
-            {activeTab} editor coming soon
           </div>
         )}
       </div>

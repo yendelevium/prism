@@ -1,7 +1,11 @@
 import { Collection } from "@/backend/collection/collection.types";
 import { unwrap } from "./actionResult";
 import { Request } from "@/backend/request/request.types";
+import { GraphQLRequest } from "@/backend/graphql-request/graphql-request.types";
+import { GRPCRequest } from "@/backend/grpc-request/grpc-request.types";
 import { getRequestsByCollectionAction } from "@/backend/request/request.actions";
+import { getGraphQLRequestsByCollectionAction } from "@/backend/graphql-request/graphql-request.actions";
+import { getGRPCRequestsByCollectionAction } from "@/backend/grpc-request/grpc-request.actions";
 import {
   KeyValueRow,
   objectToRows,
@@ -9,104 +13,54 @@ import {
 } from "@/components/editors/KeyValueEditor";
 import { JsonValue } from "@prisma/client/runtime/client";
 
-/**
- * Supported HTTP methods for request execution.
- *
- * @remarks
- * This union is intentionally restrictive to enforce method
- * normalization across the application. Values are always
- * uppercase and map directly to wire-level HTTP verbs.
- */
 export type HttpMethod = "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
 
-/**
- * Represents a single HTTP request definition.
- *
- * @remarks
- * A request is a reusable, named operation that belongs to a
- * {@link CollectionItem} and may be executed against an external API.
- */
+export type Protocol = "REST" | "GRAPHQL" | "GRPC";
+
+export type AnyRequestItem = RequestItem | GraphQLRequestItem | GRPCRequestItem;
+
 export interface RequestItem {
-  /**
-   * Unique identifier for the request.
-   */
   id: string;
-
-  /**
-   * Human-readable name of the request.
-   *
-   * Displayed in navigation trees and editors.
-   */
   name: string;
-
-  /**
-   * HTTP method used when executing the request.
-   */
   method: HttpMethod;
-
-  /**
-   * Fully qualified or relative request URL.
-   *
-   * Environment variable interpolation may be applied at runtime.
-   */
   url: string;
-
-  /**
-   * Search params associated with the request.
-   */
   params: KeyValueRow[];
-
-  /**
-   * HTTP headers associated with the request.
-   *
-   * Keys should be treated as case-insensitive, though they are
-   * stored as provided.
-   */
   headers: KeyValueRow[];
-
-  /**
-   * Raw request body payload.
-   *
-   * The interpretation of this field depends on the request
-   * content type (e.g. JSON, form-data, plain text).
-   */
   body: string;
-
-  /**
-   * Identifier of the collection this request belongs to.
-   *
-   * Used for grouping and navigation purposes.
-   */
   collection_id: string;
 }
 
-/**
- * Logical grouping of related HTTP requests.
- *
- * @remarks
- * Collections are rendered as folders in the UI and are scoped
- * to a specific workspace.
- */
-export interface CollectionItem {
-  /**
-   * Unique identifier for the collection.
-   */
+export interface GraphQLRequestItem {
   id: string;
-
-  /**
-   * Display name of the collection.
-   */
   name: string;
+  url: string;
+  query: string;
+  variables: string | null;
+  operationName: string | null;
+  headers: KeyValueRow[];
+  collection_id: string;
+}
 
-  /**
-   * Identifier of the workspace that owns this collection.
-   */
+export interface GRPCRequestItem {
+  id: string;
+  name: string;
+  serverAddress: string;
+  service: string;
+  method: string;
+  protoFile: string;
+  metadata: KeyValueRow[];
+  useTls: boolean;
+  body: string | null;
+  collection_id: string;
+}
+
+export interface CollectionItem {
+  id: string;
+  name: string;
   workspace_id: string;
-
-  /**
-   * Requests contained within this collection.
-   */
   requests: RequestItem[];
+  graphqlRequests: GraphQLRequestItem[];
+  grpcRequests: GRPCRequestItem[];
 }
 
 export const requestToRequestItem = (request: Request) => {
@@ -124,13 +78,57 @@ export const requestToRequestItem = (request: Request) => {
   } as RequestItem;
 };
 
+export const graphqlRequestToGraphQLRequestItem = (request: GraphQLRequest) => {
+  return {
+    id: request.id,
+    name: request.name,
+    url: request.url,
+    query: request.query,
+    variables: request.variables,
+    operationName: request.operationName,
+    headers: objectToRows(
+      request.headers ? (request.headers as Record<string, string>) : {},
+    ),
+    collection_id: request.collectionId,
+  } as GraphQLRequestItem;
+};
+
+export const grpcRequestToGRPCRequestItem = (request: GRPCRequest) => {
+  return {
+    id: request.id,
+    name: request.name,
+    serverAddress: request.serverAddress,
+    service: request.service,
+    method: request.method,
+    protoFile: request.protoFile,
+    metadata: objectToRows(
+      request.metadata ? (request.metadata as Record<string, string>) : {},
+    ),
+    useTls: request.useTls,
+    body: request.body,
+    collection_id: request.collectionId,
+  } as GRPCRequestItem;
+};
+
 export const collectionToCollectionItem = async (collection: Collection) => {
+  const restRequests = unwrap(
+    await getRequestsByCollectionAction(collection.id),
+  );
+  const graphqlRequests = unwrap(
+    await getGraphQLRequestsByCollectionAction(collection.id),
+  );
+  const grpcRequests = unwrap(
+    await getGRPCRequestsByCollectionAction(collection.id),
+  );
+
   return {
     id: collection.id,
     name: collection.name,
-    requests: unwrap(await getRequestsByCollectionAction(collection.id)).map(
-      (c) => requestToRequestItem(c),
+    requests: restRequests.map((r) => requestToRequestItem(r)),
+    graphqlRequests: graphqlRequests.map((r) =>
+      graphqlRequestToGraphQLRequestItem(r),
     ),
+    grpcRequests: grpcRequests.map((r) => grpcRequestToGRPCRequestItem(r)),
     workspace_id: collection.workspaceId,
   } as CollectionItem;
 };
