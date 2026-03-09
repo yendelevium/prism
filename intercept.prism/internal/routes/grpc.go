@@ -233,7 +233,7 @@ func executeGRPCRequest(c *gin.Context) {
 			LatencyMs:  int(totalDuration.Milliseconds()),
 		})
 
-		store.AddSpan(store.SpanRecord{
+		spanRecord := store.SpanRecord{
 			ID:          uuid.New().String(),
 			TraceID:     traceID,
 			SpanID:      spanID,
@@ -243,7 +243,10 @@ func executeGRPCRequest(c *gin.Context) {
 			Duration:    totalDuration.Microseconds(),
 			Status:      grpcStatus,
 			Tags:        tags,
-		})
+		}
+
+		store.AddSpan(spanRecord);
+		tracing.Hub.Publish(spanRecord);
 
 		rootSpan := model.SpanInfo{
 			SpanID:      spanID,
@@ -304,7 +307,7 @@ func executeGRPCRequest(c *gin.Context) {
 		LatencyMs:  int(totalDuration.Milliseconds()),
 	})
 
-	store.AddSpan(store.SpanRecord{
+	spanRecord := store.SpanRecord{
 		ID:          uuid.New().String(),
 		TraceID:     traceID,
 		SpanID:      spanID,
@@ -314,7 +317,10 @@ func executeGRPCRequest(c *gin.Context) {
 		Duration:    totalDuration.Microseconds(),
 		Status:      grpcStatus,
 		Tags:        tags,
-	})
+	}
+
+	store.AddSpan(spanRecord);
+	tracing.Hub.Publish(spanRecord);
 
 	log.Println("Queued Execution, and Span for async DB write (gRPC)")
 
