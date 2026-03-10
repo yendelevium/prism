@@ -225,7 +225,10 @@ export async function addWorkflowStepAction(
     return { success: false, error: workflowValidation };
   }
 
-  const workspaceValidation = validateRequiredString(workspaceId, "workspaceId");
+  const workspaceValidation = validateRequiredString(
+    workspaceId,
+    "workspaceId",
+  );
   if (workspaceValidation) {
     return { success: false, error: workspaceValidation };
   }

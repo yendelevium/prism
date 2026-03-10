@@ -10,7 +10,10 @@ import {
   GripVertical,
   Loader2,
 } from "lucide-react";
-import { createWorkflowAction, addWorkflowStepAction } from "@/backend/workflow/workflow.actions";
+import {
+  createWorkflowAction,
+  addWorkflowStepAction,
+} from "@/backend/workflow/workflow.actions";
 import { listCollectionsByWorkspaceAction } from "@/backend/collection/collection.actions";
 import { getRequestsByCollectionAction } from "@/backend/request/request.actions";
 import { getGraphQLRequestsByCollectionAction } from "@/backend/graphql-request/graphql-request.actions";
@@ -38,15 +41,20 @@ interface WorkflowEditorProps {
   onClose: () => void;
 }
 
-export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorProps) {
+export default function WorkflowEditor({
+  workspaceId,
+  onClose,
+}: WorkflowEditorProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   // Steps state
   const [steps, setSteps] = useState<PendingStep[]>([]);
-  const [availableRequests, setAvailableRequests] = useState<RequestOption[]>([]);
+  const [availableRequests, setAvailableRequests] = useState<RequestOption[]>(
+    [],
+  );
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [selectedRequestId, setSelectedRequestId] = useState("");
   const [retryCount, setRetryCount] = useState(0);
@@ -58,7 +66,8 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
   const loadAvailableRequests = async () => {
     setLoadingRequests(true);
     try {
-      const collectionsResult = await listCollectionsByWorkspaceAction(workspaceId);
+      const collectionsResult =
+        await listCollectionsByWorkspaceAction(workspaceId);
       if (!collectionsResult.success) {
         console.error("Failed to load collections:", collectionsResult.error);
         return;
@@ -82,7 +91,9 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
         }
 
         // Load GraphQL requests
-        const graphqlResult = await getGraphQLRequestsByCollectionAction(collection.id);
+        const graphqlResult = await getGraphQLRequestsByCollectionAction(
+          collection.id,
+        );
         if (graphqlResult.success) {
           for (const req of graphqlResult.data) {
             allRequests.push({
@@ -95,7 +106,9 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
         }
 
         // Load gRPC requests
-        const grpcResult = await getGRPCRequestsByCollectionAction(collection.id);
+        const grpcResult = await getGRPCRequestsByCollectionAction(
+          collection.id,
+        );
         if (grpcResult.success) {
           for (const req of grpcResult.data) {
             allRequests.push({
@@ -118,11 +131,11 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
 
   const handleAddStep = () => {
     if (!selectedRequestId) return;
-    
-    const request = availableRequests.find(r => r.id === selectedRequestId);
+
+    const request = availableRequests.find((r) => r.id === selectedRequestId);
     if (!request) return;
 
-    setSteps(prev => [
+    setSteps((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
@@ -130,7 +143,7 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
         requestName: request.name,
         protocol: request.protocol,
         retryCount,
-      }
+      },
     ]);
 
     setSelectedRequestId("");
@@ -138,36 +151,43 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
   };
 
   const handleRemoveStep = (stepId: string) => {
-    setSteps(prev => prev.filter(s => s.id !== stepId));
+    setSteps((prev) => prev.filter((s) => s.id !== stepId));
   };
 
   const moveStep = (index: number, direction: "up" | "down") => {
     const newSteps = [...steps];
     const newIndex = direction === "up" ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= steps.length) return;
-    
-    [newSteps[index], newSteps[newIndex]] = [newSteps[newIndex], newSteps[index]];
+
+    [newSteps[index], newSteps[newIndex]] = [
+      newSteps[newIndex],
+      newSteps[index],
+    ];
     setSteps(newSteps);
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!name.trim()) {
       newErrors.name = "Workflow name is required";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSave = async () => {
     if (!validateForm()) return;
-    
+
     setSaving(true);
     try {
       // 1. Create the workflow
-      const result = await createWorkflowAction(workspaceId, name, description || undefined);
+      const result = await createWorkflowAction(
+        workspaceId,
+        name,
+        description || undefined,
+      );
       if (!result.success) {
         setErrors({ save: result.error });
         return;
@@ -184,7 +204,7 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
           step.requestId,
           step.protocol,
           i + 1, // stepOrder (1-based)
-          step.retryCount
+          step.retryCount,
         );
         if (!stepResult.success) {
           console.error(`Failed to add step ${i + 1}:`, stepResult.error);
@@ -259,7 +279,9 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter workflow name"
                   className={`w-full px-3 py-2 rounded-md bg-[var(--bg-panel)] border text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] ${
-                    errors.name ? "border-[var(--error)]" : "border-[var(--border-color)]"
+                    errors.name
+                      ? "border-[var(--error)]"
+                      : "border-[var(--border-color)]"
                   }`}
                 />
                 {errors.name && (
@@ -321,7 +343,9 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
                       <option value="">Choose a request...</option>
                       {availableRequests.map((req) => (
                         <option key={req.id} value={req.id}>
-                          [{req.protocol}] {req.collectionName} / {req.method ? `${req.method} ` : ""}{req.name}
+                          [{req.protocol}] {req.collectionName} /{" "}
+                          {req.method ? `${req.method} ` : ""}
+                          {req.name}
                         </option>
                       ))}
                     </select>
@@ -336,7 +360,9 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
                     min={0}
                     max={10}
                     value={retryCount}
-                    onChange={(e) => setRetryCount(parseInt(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setRetryCount(parseInt(e.target.value) || 0)
+                    }
                     className="w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                   />
                 </div>
@@ -382,7 +408,9 @@ export default function WorkflowEditor({ workspaceId, onClose }: WorkflowEditorP
                     <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--bg-secondary)] text-xs font-medium text-[var(--text-secondary)]">
                       {index + 1}
                     </span>
-                    <span className={`px-2 py-0.5 text-xs rounded font-medium border ${getProtocolColor(step.protocol)}`}>
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded font-medium border ${getProtocolColor(step.protocol)}`}
+                    >
                       {step.protocol}
                     </span>
                     <span className="flex-1 text-sm text-[var(--text-primary)] truncate">

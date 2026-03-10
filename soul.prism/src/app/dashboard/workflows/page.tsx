@@ -1,11 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Play, GitBranch, Clock, Loader2, ArrowLeft, Eye } from "lucide-react";
+import {
+  Plus,
+  Play,
+  GitBranch,
+  Clock,
+  Loader2,
+  ArrowLeft,
+  Eye,
+} from "lucide-react";
 import { useSelectionStore } from "@/stores/useSelectionStore";
-import { listWorkflowsAction, runWorkflowAction, getWorkflowAction } from "@/backend/workflow/workflow.actions";
+import {
+  listWorkflowsAction,
+  runWorkflowAction,
+  getWorkflowAction,
+} from "@/backend/workflow/workflow.actions";
 import WorkflowEditor from "@/components/workflow/WorkflowEditor";
-import type { Workflow, WorkflowWithSteps, WorkflowStep, WorkflowExecutionResult } from "@/backend/workflow/workflow.types";
+import type {
+  Workflow,
+  WorkflowWithSteps,
+  WorkflowStep,
+  WorkflowExecutionResult,
+} from "@/backend/workflow/workflow.types";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 type ViewMode = "list" | "editor" | "view";
@@ -14,11 +31,16 @@ export default function WorkflowsPage() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowWithSteps | null>(null);
-  const [runningWorkflows, setRunningWorkflows] = useState<Set<string>>(new Set());
-  const [runResult, setRunResult] = useState<WorkflowExecutionResult | null>(null);
+  const [selectedWorkflow, setSelectedWorkflow] =
+    useState<WorkflowWithSteps | null>(null);
+  const [runningWorkflows, setRunningWorkflows] = useState<Set<string>>(
+    new Set(),
+  );
+  const [runResult, setRunResult] = useState<WorkflowExecutionResult | null>(
+    null,
+  );
   const [runError, setRunError] = useState<string | null>(null);
-  
+
   const workspace = useSelectionStore((state) => state.workspace);
   const selectedWorkspaceId = workspace?.id;
 
@@ -33,7 +55,7 @@ export default function WorkflowsPage() {
 
   const loadWorkflows = async () => {
     if (!selectedWorkspaceId) return;
-    
+
     setLoading(true);
     try {
       const result = await listWorkflowsAction(selectedWorkspaceId);
@@ -56,7 +78,7 @@ export default function WorkflowsPage() {
 
   const handleViewDetails = async (workflowId: string) => {
     if (!selectedWorkspaceId) return;
-    
+
     try {
       const result = await getWorkflowAction(workflowId, selectedWorkspaceId);
       if (result.success) {
@@ -76,7 +98,7 @@ export default function WorkflowsPage() {
 
   const handleViewAndRun = async (workflowId: string) => {
     if (!selectedWorkspaceId) return;
-    
+
     // First navigate to detail view
     try {
       const result = await getWorkflowAction(workflowId, selectedWorkspaceId);
@@ -93,11 +115,11 @@ export default function WorkflowsPage() {
 
   const handleRun = async (workflowId: string) => {
     if (!selectedWorkspaceId) return;
-    
+
     setRunningWorkflows((prev) => new Set(prev).add(workflowId));
     setRunResult(null);
     setRunError(null);
-    
+
     try {
       const result = await runWorkflowAction(workflowId, selectedWorkspaceId);
       if (result.success) {
@@ -130,7 +152,9 @@ export default function WorkflowsPage() {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <GitBranch className="w-12 h-12 mx-auto mb-4 text-[var(--text-secondary)]" />
-          <p className="text-[var(--text-secondary)]">Select a workspace to view workflows</p>
+          <p className="text-[var(--text-secondary)]">
+            Select a workspace to view workflows
+          </p>
         </div>
       </div>
     );
@@ -169,7 +193,9 @@ export default function WorkflowsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GitBranch className="w-6 h-6 text-[var(--accent)]" />
-            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Workflows</h1>
+            <h1 className="text-xl font-semibold text-[var(--text-primary)]">
+              Workflows
+            </h1>
             <span className="px-2 py-0.5 text-xs rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
               {workflows.length}
             </span>
@@ -193,7 +219,9 @@ export default function WorkflowsPage() {
         ) : workflows.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <GitBranch className="w-16 h-16 mb-4 text-[var(--text-secondary)] opacity-50" />
-            <h2 className="text-lg font-medium text-[var(--text-primary)] mb-2">No workflows yet</h2>
+            <h2 className="text-lg font-medium text-[var(--text-primary)] mb-2">
+              No workflows yet
+            </h2>
             <p className="text-[var(--text-secondary)] mb-4">
               Create your first workflow to automate API requests
             </p>
@@ -230,15 +258,20 @@ interface WorkflowCardProps {
   onRun: () => void;
 }
 
-function WorkflowCard({ workflow, isRunning, onView, onRun }: WorkflowCardProps) {
+function WorkflowCard({
+  workflow,
+  isRunning,
+  onView,
+  onRun,
+}: WorkflowCardProps) {
   return (
-    <div 
-      className="group relative p-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:border-[var(--accent)] transition-colors"
-    >
+    <div className="group relative p-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:border-[var(--accent)] transition-colors">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[var(--text-primary)] truncate">{workflow.name}</h3>
+          <h3 className="font-medium text-[var(--text-primary)] truncate">
+            {workflow.name}
+          </h3>
           {workflow.description && (
             <p className="text-sm text-[var(--text-secondary)] mt-1 line-clamp-2">
               {workflow.description}
@@ -293,7 +326,14 @@ interface WorkflowDetailViewProps {
   runError: string | null;
 }
 
-function WorkflowDetailView({ workflow, onBack, onRun, isRunning, runResult, runError }: WorkflowDetailViewProps) {
+function WorkflowDetailView({
+  workflow,
+  onBack,
+  onRun,
+  isRunning,
+  runResult,
+  runError,
+}: WorkflowDetailViewProps) {
   const getProtocolColor = (protocol: string) => {
     switch (protocol) {
       case "REST":
@@ -320,9 +360,13 @@ function WorkflowDetailView({ workflow, onBack, onRun, isRunning, runResult, run
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-semibold text-[var(--text-primary)]">{workflow.name}</h1>
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">
+                {workflow.name}
+              </h1>
               {workflow.description && (
-                <p className="text-sm text-[var(--text-secondary)]">{workflow.description}</p>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  {workflow.description}
+                </p>
               )}
             </div>
           </div>
@@ -353,7 +397,7 @@ function WorkflowDetailView({ workflow, onBack, onRun, isRunning, runResult, run
             <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider mb-4">
               Steps ({workflow.steps.length})
             </h2>
-            
+
             {workflow.steps.length === 0 ? (
               <p className="text-[var(--text-secondary)] text-center py-8">
                 No steps configured for this workflow
@@ -361,7 +405,10 @@ function WorkflowDetailView({ workflow, onBack, onRun, isRunning, runResult, run
             ) : (
               <div className="space-y-3">
                 {workflow.steps
-                  .sort((a: WorkflowStep, b: WorkflowStep) => a.stepOrder - b.stepOrder)
+                  .sort(
+                    (a: WorkflowStep, b: WorkflowStep) =>
+                      a.stepOrder - b.stepOrder,
+                  )
                   .map((step: WorkflowStep, index: number) => (
                     <div
                       key={step.id}
@@ -370,7 +417,9 @@ function WorkflowDetailView({ workflow, onBack, onRun, isRunning, runResult, run
                       <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--bg-secondary)] text-xs font-medium text-[var(--text-secondary)]">
                         {index + 1}
                       </span>
-                      <span className={`px-2 py-0.5 text-xs rounded font-medium border ${getProtocolColor(step.protocol)}`}>
+                      <span
+                        className={`px-2 py-0.5 text-xs rounded font-medium border ${getProtocolColor(step.protocol)}`}
+                      >
                         {step.protocol}
                       </span>
                       <span className="text-[var(--text-primary)] text-sm">
@@ -393,66 +442,79 @@ function WorkflowDetailView({ workflow, onBack, onRun, isRunning, runResult, run
               <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider mb-3">
                 Run Results
               </h2>
-              
+
               {runError ? (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
                   <XCircle className="w-5 h-5 flex-shrink-0" />
                   <span>{runError}</span>
                 </div>
-              ) : runResult && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-[var(--text-secondary)]">Run ID:</span>
-                    <span className="font-mono text-xs text-[var(--text-primary)]">{runResult.workflowRunId}</span>
-                  </div>
-                  
-                  {runResult.steps.length === 0 ? (
-                    <p className="text-[var(--text-secondary)] text-sm">No steps were executed</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {runResult.steps.map((stepResult, index) => (
-                        <div
-                          key={stepResult.stepId}
-                          className={`flex items-center gap-3 p-3 rounded-lg border ${
-                            stepResult.status === "SUCCESS" || stepResult.status === "COMPLETED"
-                              ? "bg-green-500/10 border-green-500/30"
-                              : stepResult.status === "FAILED"
-                              ? "bg-red-500/10 border-red-500/30"
-                              : "bg-yellow-500/10 border-yellow-500/30"
-                          }`}
-                        >
-                          <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--bg-secondary)] text-xs font-medium">
-                            {index + 1}
-                          </span>
-                          {stepResult.status === "SUCCESS" || stepResult.status === "COMPLETED" ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-400" />
-                          ) : stepResult.status === "FAILED" ? (
-                            <XCircle className="w-5 h-5 text-red-400" />
-                          ) : (
-                            <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
-                          )}
-                          <span className="flex-1 text-sm text-[var(--text-primary)]">
-                            Step {index + 1}
-                          </span>
-                          {stepResult.durationMs !== undefined && (
-                            <span className="text-xs text-[var(--text-secondary)]">
-                              {stepResult.durationMs}ms
-                            </span>
-                          )}
-                          <span className={`text-xs font-medium ${
-                            stepResult.status === "SUCCESS" || stepResult.status === "COMPLETED"
-                              ? "text-green-400"
-                              : stepResult.status === "FAILED"
-                              ? "text-red-400"
-                              : "text-yellow-400"
-                          }`}>
-                            {stepResult.status}
-                          </span>
-                        </div>
-                      ))}
+              ) : (
+                runResult && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-[var(--text-secondary)]">
+                        Run ID:
+                      </span>
+                      <span className="font-mono text-xs text-[var(--text-primary)]">
+                        {runResult.workflowRunId}
+                      </span>
                     </div>
-                  )}
-                </div>
+
+                    {runResult.steps.length === 0 ? (
+                      <p className="text-[var(--text-secondary)] text-sm">
+                        No steps were executed
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {runResult.steps.map((stepResult, index) => (
+                          <div
+                            key={stepResult.stepId}
+                            className={`flex items-center gap-3 p-3 rounded-lg border ${
+                              stepResult.status === "SUCCESS" ||
+                              stepResult.status === "COMPLETED"
+                                ? "bg-green-500/10 border-green-500/30"
+                                : stepResult.status === "FAILED"
+                                  ? "bg-red-500/10 border-red-500/30"
+                                  : "bg-yellow-500/10 border-yellow-500/30"
+                            }`}
+                          >
+                            <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--bg-secondary)] text-xs font-medium">
+                              {index + 1}
+                            </span>
+                            {stepResult.status === "SUCCESS" ||
+                            stepResult.status === "COMPLETED" ? (
+                              <CheckCircle2 className="w-5 h-5 text-green-400" />
+                            ) : stepResult.status === "FAILED" ? (
+                              <XCircle className="w-5 h-5 text-red-400" />
+                            ) : (
+                              <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
+                            )}
+                            <span className="flex-1 text-sm text-[var(--text-primary)]">
+                              Step {index + 1}
+                            </span>
+                            {stepResult.durationMs !== undefined && (
+                              <span className="text-xs text-[var(--text-secondary)]">
+                                {stepResult.durationMs}ms
+                              </span>
+                            )}
+                            <span
+                              className={`text-xs font-medium ${
+                                stepResult.status === "SUCCESS" ||
+                                stepResult.status === "COMPLETED"
+                                  ? "text-green-400"
+                                  : stepResult.status === "FAILED"
+                                    ? "text-red-400"
+                                    : "text-yellow-400"
+                              }`}
+                            >
+                              {stepResult.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
               )}
             </div>
           )}
@@ -476,12 +538,18 @@ function WorkflowDetailView({ workflow, onBack, onRun, isRunning, runResult, run
                 </span>
               </div>
               <div>
-                <span className="text-[var(--text-secondary)]">Created by:</span>
-                <span className="ml-2 text-[var(--text-primary)]">{workflow.createdBy}</span>
+                <span className="text-[var(--text-secondary)]">
+                  Created by:
+                </span>
+                <span className="ml-2 text-[var(--text-primary)]">
+                  {workflow.createdBy}
+                </span>
               </div>
               <div>
                 <span className="text-[var(--text-secondary)]">ID:</span>
-                <span className="ml-2 text-[var(--text-primary)] font-mono text-xs">{workflow.id}</span>
+                <span className="ml-2 text-[var(--text-primary)] font-mono text-xs">
+                  {workflow.id}
+                </span>
               </div>
             </div>
           </div>
