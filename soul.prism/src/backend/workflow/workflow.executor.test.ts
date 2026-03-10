@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getCollectionByIdMock: vi.fn(),
   getRequestByIdMock: vi.fn(),
+  getGraphQLRequestByIdMock: vi.fn(),
+  getGRPCRequestByIdMock: vi.fn(),
   createWorkflowRunStepMock: vi.fn(),
   getWorkflowByIdMock: vi.fn(),
   getWorkflowStepsMock: vi.fn(),
@@ -17,6 +19,14 @@ vi.mock("@/backend/collection/collection.service", () => ({
 
 vi.mock("@/backend/request/request.service", () => ({
   getRequestById: mocks.getRequestByIdMock,
+}));
+
+vi.mock("@/backend/graphql-request/graphql-request.service", () => ({
+  getGraphQLRequestById: mocks.getGraphQLRequestByIdMock,
+}));
+
+vi.mock("@/backend/grpc-request/grpc-request.service", () => ({
+  getGRPCRequestById: mocks.getGRPCRequestByIdMock,
 }));
 
 vi.mock("./workflow.service", () => ({
@@ -45,37 +55,58 @@ describe("workflow.executor", () => {
       {
         id: "step-1",
         requestId: "req-1",
+        protocol: "REST",
         retryCount: 0,
       },
       {
         id: "step-2",
-        requestId: "req-2",
+        requestId: "gql-1",
+        protocol: "GRAPHQL",
+        retryCount: 0,
+      },
+      {
+        id: "step-3",
+        requestId: "grpc-1",
+        protocol: "GRPC",
         retryCount: 0,
       },
     ]);
     mocks.createWorkflowRunStepMock
       .mockResolvedValueOnce({ id: "run-step-1" })
-      .mockResolvedValueOnce({ id: "run-step-2" });
-    mocks.getRequestByIdMock
-      .mockResolvedValueOnce({
-        id: "req-1",
-        method: "GET",
-        url: "https://api.example.com/one",
-        headers: { Authorization: "Bearer a" },
-        body: null,
-        collectionId: "col-1",
-      })
-      .mockResolvedValueOnce({
-        id: "req-2",
-        method: "POST",
-        url: "https://api.example.com/two",
-        headers: null,
-        body: '{"ok":true}',
-        collectionId: "col-2",
-      });
+      .mockResolvedValueOnce({ id: "run-step-2" })
+      .mockResolvedValueOnce({ id: "run-step-3" });
+    mocks.getRequestByIdMock.mockResolvedValueOnce({
+      id: "req-1",
+      method: "GET",
+      url: "https://api.example.com/one",
+      headers: { Authorization: "Bearer a" },
+      body: null,
+      collectionId: "col-1",
+    });
+    mocks.getGraphQLRequestByIdMock.mockResolvedValueOnce({
+      id: "gql-1",
+      url: "https://api.example.com/graphql",
+      query: "{ viewer { id } }",
+      variables: null,
+      operationName: null,
+      headers: null,
+      collectionId: "col-2",
+    });
+    mocks.getGRPCRequestByIdMock.mockResolvedValueOnce({
+      id: "grpc-1",
+      serverAddress: "localhost:50051",
+      service: "Greeter",
+      method: "SayHello",
+      protoFile: 'syntax = "proto3";',
+      metadata: null,
+      useTls: false,
+      body: "{}",
+      collectionId: "col-3",
+    });
     mocks.getCollectionByIdMock
       .mockResolvedValueOnce({ id: "col-1", workspaceId: "ws-1" })
-      .mockResolvedValueOnce({ id: "col-2", workspaceId: "ws-1" });
+      .mockResolvedValueOnce({ id: "col-2", workspaceId: "ws-1" })
+      .mockResolvedValueOnce({ id: "col-3", workspaceId: "ws-1" });
     mocks.fetchMock
       .mockResolvedValueOnce({
         ok: true,
@@ -92,6 +123,14 @@ describe("workflow.executor", () => {
           status: 201,
           request_duration: "22ms",
         }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          execution_id: "exec-3",
+          status_code: 0,
+          request_duration: "31ms",
+        }),
       });
 
     const result = await executeWorkflow("wf-1", "run-1", {
@@ -104,10 +143,35 @@ describe("workflow.executor", () => {
       1,
       "https://prism.local/api/intercept",
       expect.objectContaining({
+        body: JSON.stringify({
+          protocol: "REST",
+          request_id: "req-1",
+        }),
+        headers: { "Content-Type": "application/json" },
         method: "POST",
       }),
     );
-    expect(mocks.fetchMock).toHaveBeenCalledTimes(2);
+    expect(mocks.fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://prism.local/api/intercept",
+      expect.objectContaining({
+        body: JSON.stringify({
+          protocol: "GRAPHQL",
+          graphql_request_id: "gql-1",
+        }),
+      }),
+    );
+    expect(mocks.fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "https://prism.local/api/intercept",
+      expect.objectContaining({
+        body: JSON.stringify({
+          protocol: "GRPC",
+          grpc_request_id: "grpc-1",
+        }),
+      }),
+    );
+    expect(mocks.fetchMock).toHaveBeenCalledTimes(3);
     expect(mocks.updateWorkflowRunStepMock).toHaveBeenNthCalledWith(
       1,
       "run-step-1",
@@ -121,6 +185,13 @@ describe("workflow.executor", () => {
       "SUCCESS",
       "exec-2",
       22,
+    );
+    expect(mocks.updateWorkflowRunStepMock).toHaveBeenNthCalledWith(
+      3,
+      "run-step-3",
+      "SUCCESS",
+      "exec-3",
+      31,
     );
     expect(mocks.updateWorkflowRunStatusMock).toHaveBeenCalledWith(
       "run-1",
@@ -141,6 +212,12 @@ describe("workflow.executor", () => {
           status: "SUCCESS",
           durationMs: 22,
         },
+        {
+          stepId: "step-3",
+          executionId: "exec-3",
+          status: "SUCCESS",
+          durationMs: 31,
+        },
       ],
     });
   });
@@ -155,6 +232,7 @@ describe("workflow.executor", () => {
       {
         id: "step-1",
         requestId: "req-1",
+        protocol: "REST",
         retryCount: 1,
       },
     ]);
@@ -216,6 +294,63 @@ describe("workflow.executor", () => {
           executionId: "exec-2",
           status: "FAILED",
           durationMs: 11,
+        },
+      ],
+    });
+  });
+
+  it("fails before intercept execution when a step request belongs to another workspace", async () => {
+    mocks.getWorkflowByIdMock.mockResolvedValue({
+      id: "wf-1",
+      workspaceId: "ws-1",
+      steps: [],
+    });
+    mocks.getWorkflowStepsMock.mockResolvedValue([
+      {
+        id: "step-1",
+        requestId: "gql-9",
+        protocol: "GRAPHQL",
+        retryCount: 0,
+      },
+    ]);
+    mocks.createWorkflowRunStepMock.mockResolvedValue({ id: "run-step-1" });
+    mocks.getGraphQLRequestByIdMock.mockResolvedValue({
+      id: "gql-9",
+      url: "https://api.example.com/graphql",
+      query: "{ ping }",
+      variables: null,
+      operationName: null,
+      headers: null,
+      collectionId: "col-9",
+    });
+    mocks.getCollectionByIdMock.mockResolvedValue({
+      id: "col-9",
+      workspaceId: "ws-2",
+    });
+
+    const result = await executeWorkflow("wf-1", "run-1", {
+      interceptBaseUrl: "https://prism.local",
+      triggeredBy: "user-1",
+      workflowWorkspaceId: "ws-1",
+    });
+
+    expect(mocks.fetchMock).not.toHaveBeenCalled();
+    expect(mocks.updateWorkflowRunStepMock).toHaveBeenCalledWith(
+      "run-step-1",
+      "FAILED",
+      undefined,
+      undefined,
+    );
+    expect(mocks.updateWorkflowRunStatusMock).toHaveBeenCalledWith(
+      "run-1",
+      "FAILED",
+    );
+    expect(result).toEqual({
+      workflowRunId: "run-1",
+      steps: [
+        {
+          stepId: "step-1",
+          status: "FAILED",
         },
       ],
     });
