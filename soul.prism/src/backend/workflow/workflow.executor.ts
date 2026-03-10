@@ -1,5 +1,12 @@
-import type { JsonValue } from "@prisma/client";
+import type {
+  GraphQLRequest,
+  GRPCRequest,
+  Request,
+  WorkflowRequestProtocol,
+} from "@prisma/client";
 import { getCollectionById } from "@/backend/collection/collection.service";
+import { getGraphQLRequestById } from "@/backend/graphql-request/graphql-request.service";
+import { getGRPCRequestById } from "@/backend/grpc-request/grpc-request.service";
 import { getRequestById } from "@/backend/request/request.service";
 import {
   createWorkflowRunStep,
@@ -12,6 +19,7 @@ import type {
   WorkflowExecutionContext,
   WorkflowExecutionResult,
   WorkflowInterceptResponse,
+  WorkflowRequestResolution,
   WorkflowRunStepResult,
   WorkflowStep,
 } from "./workflow.types";
@@ -24,23 +32,6 @@ function parseDurationMs(value?: string): number | undefined {
   const normalized = value.trim().replace(/ms$/i, "");
   const durationMs = Number(normalized);
   return Number.isFinite(durationMs) ? durationMs : undefined;
-}
-
-function normalizeHeaders(
-  value: JsonValue | null | undefined,
-): Record<string, string> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
-  }
-
-  const normalized: Record<string, string> = {};
-  for (const [key, headerValue] of Object.entries(value)) {
-    if (typeof headerValue === "string" && key.trim().length > 0) {
-      normalized[key] = headerValue;
-    }
-  }
-
-  return normalized;
 }
 
 function buildInterceptUrl(baseUrl: string): string {
@@ -68,34 +59,92 @@ async function executeInterceptRequest(
   return data;
 }
 
-async function buildStepPayload(
-  step: WorkflowStep,
-  triggeredBy: string,
+type WorkflowRequestLoader<
+  TRequest extends { id: string; collectionId: string },
+> = (requestId: string) => Promise<TRequest | null>;
+
+type WorkflowRequestResolver = {
+  resolveRequestType: WorkflowRequestProtocol;
+  loadRequest: WorkflowRequestLoader<Request | GraphQLRequest | GRPCRequest>;
+  buildInterceptPayload: (requestId: string) => Record<string, string>;
+};
+
+const workflowRequestResolvers: Record<
+  WorkflowRequestProtocol,
+  WorkflowRequestResolver
+> = {
+  REST: {
+    resolveRequestType: "REST",
+    loadRequest: getRequestById,
+    buildInterceptPayload: (requestId) => ({
+      protocol: "REST",
+      request_id: requestId,
+    }),
+  },
+  GRAPHQL: {
+    resolveRequestType: "GRAPHQL",
+    loadRequest: getGraphQLRequestById,
+    buildInterceptPayload: (requestId) => ({
+      protocol: "GRAPHQL",
+      graphql_request_id: requestId,
+    }),
+  },
+  GRPC: {
+    resolveRequestType: "GRPC",
+    loadRequest: getGRPCRequestById,
+    buildInterceptPayload: (requestId) => ({
+      protocol: "GRPC",
+      grpc_request_id: requestId,
+    }),
+  },
+};
+
+function resolveRequestType(step: WorkflowStep): WorkflowRequestResolver {
+  return workflowRequestResolvers[step.protocol];
+}
+
+async function validateRequestWorkspace(
+  resolution: WorkflowRequestResolution,
   workflowWorkspaceId: string,
-) {
-  const request = await getRequestById(step.requestId);
-  if (!request) {
-    throw new Error(`Request not found for workflow step ${step.id}`);
-  }
-
-  const collection = await getCollectionById(request.collectionId);
+): Promise<void> {
+  const collection = await getCollectionById(resolution.collectionId);
   if (!collection) {
-    throw new Error(`Collection not found for request ${request.id}`);
-  }
-  if (collection.workspaceId !== workflowWorkspaceId) {
-    throw new Error(`Request ${request.id} is outside the workflow workspace`);
+    throw new Error(
+      `Collection not found for request ${resolution.request.id}`,
+    );
   }
 
-  return {
-    method: request.method,
-    url: request.url,
-    headers: normalizeHeaders(request.headers as JsonValue | null),
-    body: request.body,
-    request_id: request.id,
-    collection_id: request.collectionId,
-    created_by_id: triggeredBy,
-    protocol: "REST",
+  if (collection.workspaceId !== workflowWorkspaceId) {
+    throw new Error(
+      `Request ${resolution.request.id} is outside the workflow workspace`,
+    );
+  }
+}
+
+async function loadStepRequest(
+  step: WorkflowStep,
+  workflowWorkspaceId: string,
+): Promise<WorkflowRequestResolution> {
+  const resolver = resolveRequestType(step);
+  const request = await resolver.loadRequest(step.requestId);
+
+  if (!request) {
+    throw new Error(
+      `${resolver.resolveRequestType} request not found for workflow step ${step.id}`,
+    );
+  }
+
+  const resolution = {
+    request,
+    collectionId: request.collectionId,
   };
+  await validateRequestWorkspace(resolution, workflowWorkspaceId);
+  return resolution;
+}
+
+function buildInterceptPayload(step: WorkflowStep): Record<string, string> {
+  const resolver = resolveRequestType(step);
+  return resolver.buildInterceptPayload(step.requestId);
 }
 
 function getStepStatus(statusCode: number | undefined): "SUCCESS" | "FAILED" {
@@ -117,11 +166,8 @@ async function executeStepWithRetry(
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
-      const payload = await buildStepPayload(
-        step,
-        context.triggeredBy,
-        context.workflowWorkspaceId,
-      );
+      await loadStepRequest(step, context.workflowWorkspaceId);
+      const payload = buildInterceptPayload(step);
       const response = await executeInterceptRequest(
         context.interceptBaseUrl,
         payload,
