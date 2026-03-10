@@ -1,8 +1,20 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
-import { Layers, Plus, Users, X, UserPlus, Trash2 } from "lucide-react";
-import { parseBackendWorkspace, Workspace } from "@/@types/workspace";
+import React, { useState, useTransition, useEffect } from "react";
+import {
+  Layers,
+  Plus,
+  Users,
+  X,
+  UserPlus,
+  Trash2,
+  ChevronDown,
+} from "lucide-react";
+import {
+  parseBackendWorkspace,
+  Workspace,
+  WorkspaceUser,
+} from "@/@types/workspace";
 import { createNewWorkspace } from "./WorkspaceServer";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
@@ -10,6 +22,10 @@ import {
   createWorkspaceAction,
   deleteWorkspaceAction,
   updateWorkspaceAction,
+  addUserToWorkspaceAction,
+  removeUserFromWorkspaceAction,
+  updateUserRoleAction,
+  getWorkspaceUsersAction,
 } from "@/backend/workspace/workspace.actions";
 import { unwrap } from "@/@types/actionResult";
 import { useSelectionStore } from "@/stores/useSelectionStore";
@@ -24,12 +40,38 @@ export function WorkspaceSidebarClient() {
     null,
   );
   const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "editor" | "viewer">(
+    "editor",
+  );
+  const [usersLoading, setUsersLoading] = useState(false);
+
+  const openEditor = async (ws: Workspace) => {
+    if (workspaces.find((w) => w.id === ws.id)) {
+      setUsersLoading(true);
+      try {
+        const result = await getWorkspaceUsersAction(ws.id);
+        if (result.success) {
+          setEditingWorkspace({
+            ...ws,
+            users: result.data,
+          });
+        } else {
+          toast.error(result.error);
+        }
+      } catch (err: any) {
+        toast.error(err.message ?? "Failed to load users");
+      }
+      setUsersLoading(false);
+    } else {
+      setEditingWorkspace(ws);
+    }
+  };
 
   const addWorkspace = () => {
     const newWs: Workspace = {
       id: crypto.randomUUID(),
       name: "New Workspace",
-      created_by: "", // In production, get from auth context
+      created_by: "",
       users: [],
       created_at: new Date().toISOString(),
     };
@@ -98,23 +140,92 @@ export function WorkspaceSidebarClient() {
     setLoading(false);
   };
 
-  const addUser = () => {
+  const addUser = async () => {
     if (!newUserEmail.trim() || !editingWorkspace) return;
-    if (editingWorkspace.users.includes(newUserEmail)) return;
+    if (editingWorkspace.users.some((u) => u.email === newUserEmail.trim())) {
+      toast.error("User is already a member");
+      return;
+    }
 
-    setEditingWorkspace({
-      ...editingWorkspace,
-      users: [...editingWorkspace.users, newUserEmail.trim()],
-    });
-    setNewUserEmail("");
+    try {
+      const result = unwrap(
+        await addUserToWorkspaceAction(
+          editingWorkspace.id,
+          newUserEmail.trim(),
+          newUserRole,
+        ),
+      );
+      const newUsers = [
+        ...editingWorkspace.users,
+        { email: result.email, role: result.role },
+      ];
+      setEditingWorkspace({
+        ...editingWorkspace,
+        users: newUsers,
+      });
+      setWorkspaces(
+        workspaces.map((ws) =>
+          ws.id === editingWorkspace.id ? { ...ws, users: newUsers } : ws,
+        ),
+      );
+      setNewUserEmail("");
+      toast.success(`Added ${result.email} as ${result.role}`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to add user");
+    }
   };
 
-  const removeUser = (userToRemove: string) => {
+  const removeUser = async (userEmail: string) => {
     if (!editingWorkspace) return;
-    setEditingWorkspace({
-      ...editingWorkspace,
-      users: editingWorkspace.users.filter((u) => u !== userToRemove),
-    });
+
+    try {
+      unwrap(
+        await removeUserFromWorkspaceAction(editingWorkspace.id, userEmail),
+      );
+      const newUsers = editingWorkspace.users.filter(
+        (u) => u.email !== userEmail,
+      );
+      setEditingWorkspace({
+        ...editingWorkspace,
+        users: newUsers,
+      });
+      setWorkspaces(
+        workspaces.map((ws) =>
+          ws.id === editingWorkspace.id ? { ...ws, users: newUsers } : ws,
+        ),
+      );
+      toast.success(`Removed ${userEmail}`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to remove user");
+    }
+  };
+
+  const changeUserRole = async (
+    userEmail: string,
+    newRole: "admin" | "editor" | "viewer",
+  ) => {
+    if (!editingWorkspace) return;
+
+    try {
+      const result = unwrap(
+        await updateUserRoleAction(editingWorkspace.id, userEmail, newRole),
+      );
+      const newUsers = editingWorkspace.users.map((u) =>
+        u.email === userEmail ? { ...u, role: result.role } : u,
+      );
+      setEditingWorkspace({
+        ...editingWorkspace,
+        users: newUsers,
+      });
+      setWorkspaces(
+        workspaces.map((ws) =>
+          ws.id === editingWorkspace.id ? { ...ws, users: newUsers } : ws,
+        ),
+      );
+      toast.success(`Updated role to ${result.role}`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to update role");
+    }
   };
 
   return (
@@ -165,7 +276,7 @@ export function WorkspaceSidebarClient() {
               <div className="flex justify-between min-w-0">
                 <div
                   className="flex flex-col min-w-0"
-                  onClick={() => setEditingWorkspace(ws)}
+                  onClick={() => openEditor(ws)}
                 >
                   <span
                     className="text-xs font-mono tracking-tight truncate"
@@ -243,22 +354,6 @@ export function WorkspaceSidebarClient() {
 
             {/* Modal Content */}
             <div className="p-4 space-y-4">
-              {/* Meta Info */}
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-[9px] uppercase font-bold opacity-40"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  Created By
-                </label>
-                <span
-                  className="text-xs font-mono"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  {editingWorkspace.created_by}
-                </span>
-              </div>
-
               {/* User Management */}
               <div className="flex flex-col gap-2">
                 <label
@@ -277,7 +372,21 @@ export function WorkspaceSidebarClient() {
                     onChange={(e) => setNewUserEmail(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addUser()}
                   />
+                  <select
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded px-2 py-1 text-xs font-mono outline-none focus:border-[var(--accent)]"
+                    value={newUserRole}
+                    onChange={(e) =>
+                      setNewUserRole(
+                        e.target.value as "admin" | "editor" | "viewer",
+                      )
+                    }
+                  >
+                    <option value="editor">Editor</option>
+                    <option value="viewer">Viewer</option>
+                    <option value="admin">Admin</option>
+                  </select>
                   <button
+                    type="button"
                     onClick={addUser}
                     className="p-1.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:text-[var(--accent)] transition-colors"
                   >
@@ -287,23 +396,50 @@ export function WorkspaceSidebarClient() {
 
                 {/* Users List */}
                 <div className="max-h-40 overflow-y-auto border border-[var(--border-color)] rounded bg-[var(--bg-secondary)]/30">
-                  {editingWorkspace.users.map((user) => (
-                    <div
-                      key={user}
-                      className="flex items-center justify-between p-2 border-b last:border-0"
-                      style={{ borderColor: "var(--border-color)" }}
-                    >
-                      <span className="text-xs font-mono text-[var(--text-primary)]">
-                        {user}
-                      </span>
-                      <button
-                        onClick={() => removeUser(user)}
-                        className="text-[var(--text-secondary)] hover:text-[var(--error)] transition-colors"
-                      >
-                        <X size={12} />
-                      </button>
+                  {usersLoading ? (
+                    <div className="p-2 flex items-center justify-center">
+                      <div className="h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
                     </div>
-                  ))}
+                  ) : editingWorkspace.users.length === 0 ? (
+                    <div className="p-2 text-xs font-mono text-[var(--text-secondary)] text-center">
+                      No members yet
+                    </div>
+                  ) : (
+                    editingWorkspace.users.map((user) => (
+                      <div
+                        key={user.email}
+                        className="flex items-center justify-between p-2 border-b last:border-0"
+                        style={{ borderColor: "var(--border-color)" }}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-mono text-[var(--text-primary)]">
+                            {user.email}
+                          </span>
+                          <select
+                            className="bg-transparent border border-[var(--border-color)] rounded px-1 py-0.5 text-[9px] font-mono outline-none"
+                            value={user.role}
+                            onChange={(e) =>
+                              changeUserRole(
+                                user.email,
+                                e.target.value as "admin" | "editor" | "viewer",
+                              )
+                            }
+                          >
+                            <option value="admin">Admin</option>
+                            <option value="editor">Editor</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeUser(user.email)}
+                          className="text-[var(--text-secondary)] hover:text-[var(--error)] transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

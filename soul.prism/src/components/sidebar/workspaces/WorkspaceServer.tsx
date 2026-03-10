@@ -5,35 +5,13 @@ import {
   listWorkspacesForUser,
 } from "@/backend/workspace/workspace.service";
 import { WorkspaceSidebarClient } from "./WorkspaceSidebarPanel";
-import { Workspace } from "@/@types/workspace";
-import {
-  CreateWorkspaceInput,
-  Workspace as Workspace_S,
-} from "@/backend/workspace/workspace.types";
-import { parseBackendWorkspace } from "@/@types/workspace";
-import { refresh, revalidatePath } from "next/cache";
+import { Workspace, parseBackendWorkspace } from "@/@types/workspace";
+import { CreateWorkspaceInput } from "@/backend/workspace/workspace.types";
+import { revalidatePath } from "next/cache";
 
 const userId = "user_1"; // TODO: need to get userId from some auth context or something
 
 export default async function WorkspaceServer() {
-  // Mocking the database response from the Request/Trace schema
-  const mockWorkspaces: Workspace[] = [
-    {
-      id: "1",
-      name: "Workspace 1",
-      users: ["user 2", "user 3"],
-      created_by: "user 1",
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      name: "Workspace 2",
-      users: [],
-      created_by: "user 2",
-      created_at: new Date().toISOString(),
-    },
-  ];
-
   const workspaces = (await listWorkspacesForUser(userId)).map((workspace) =>
     parseBackendWorkspace(workspace),
   );
