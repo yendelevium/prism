@@ -6,9 +6,20 @@ import {
   updateWorkspace,
   listWorkspacesForUser,
   getWorkspaceById,
+  getWorkspaceUsers,
+  addUserToWorkspace,
+  removeUserFromWorkspace,
+  updateUserRole,
 } from "@/backend/workspace/workspace.service";
-import type { Workspace } from "@/backend/workspace/workspace.types";
-import { requireUser, requireWorkspaceAccess } from "@/backend/auth/auth.utils";
+import type {
+  Workspace,
+  WorkspaceRole,
+} from "@/backend/workspace/workspace.types";
+import {
+  requireUser,
+  requireWorkspaceAccess,
+  requireWorkspaceAdmin,
+} from "@/backend/auth/auth.utils";
 import { getUsernameByUserId } from "../user/user.service";
 
 export type ActionResult<T> =
@@ -48,7 +59,7 @@ export async function listWorkspacesAction(): Promise<
     const workspaces = await Promise.all(
       (await listWorkspacesForUser(user.id)).map(async (ws) => ({
         ...ws,
-        ownerId: (await getUsernameByUserId(user.id))!,
+        ownerId: (await getUsernameByUserId(ws.ownerId))!,
       })),
     );
     return { success: true, data: workspaces };
@@ -114,10 +125,113 @@ export async function updateWorkspaceAction(
       user.id,
       newName.trim(),
     );
-    return { success: true, data: workspace };
+    const workspaceWithOwnerName = {
+      ...workspace!,
+      ownerId: (await getUsernameByUserId(workspace!.ownerId))!,
+    };
+    return { success: true, data: workspaceWithOwnerName ?? null };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to update workspace", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function getWorkspaceUsersAction(
+  workspaceId: string,
+): Promise<ActionResult<{ email: string; role: WorkspaceRole }[]>> {
+  if (!workspaceId?.trim()) {
+    return { success: false, error: "workspaceId is required" };
+  }
+
+  try {
+    await requireWorkspaceAdmin(workspaceId);
+    const users = await getWorkspaceUsers(workspaceId);
+    return { success: true, data: users };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to get workspace users", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function addUserToWorkspaceAction(
+  workspaceId: string,
+  userEmail: string,
+  role: WorkspaceRole,
+): Promise<ActionResult<{ email: string; role: WorkspaceRole }>> {
+  if (!workspaceId?.trim() || !userEmail?.trim()) {
+    return { success: false, error: "workspaceId and userEmail are required" };
+  }
+
+  if (!["admin", "editor", "viewer"].includes(role)) {
+    return { success: false, error: "Invalid role" };
+  }
+
+  try {
+    await requireWorkspaceAdmin(workspaceId);
+    const newUser = await addUserToWorkspace(
+      workspaceId,
+      (await requireUser()).id,
+      userEmail.trim(),
+      role,
+    );
+    return { success: true, data: newUser };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to add user to workspace", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function removeUserFromWorkspaceAction(
+  workspaceId: string,
+  userEmail: string,
+): Promise<ActionResult<null>> {
+  if (!workspaceId?.trim() || !userEmail?.trim()) {
+    return { success: false, error: "workspaceId and userEmail are required" };
+  }
+
+  try {
+    await requireWorkspaceAdmin(workspaceId);
+    await removeUserFromWorkspace(
+      workspaceId,
+      (await requireUser()).id,
+      userEmail.trim(),
+    );
+    return { success: true, data: null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to remove user from workspace", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function updateUserRoleAction(
+  workspaceId: string,
+  userEmail: string,
+  newRole: WorkspaceRole,
+): Promise<ActionResult<{ email: string; role: WorkspaceRole }>> {
+  if (!workspaceId?.trim() || !userEmail?.trim()) {
+    return { success: false, error: "workspaceId and userEmail are required" };
+  }
+
+  if (!["admin", "editor", "viewer"].includes(newRole)) {
+    return { success: false, error: "Invalid role" };
+  }
+
+  try {
+    await requireWorkspaceAdmin(workspaceId);
+    const updatedUser = await updateUserRole(
+      workspaceId,
+      (await requireUser()).id,
+      userEmail.trim(),
+      newRole,
+    );
+    return { success: true, data: updatedUser };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to update user role", error);
     return { success: false, error: message };
   }
 }
