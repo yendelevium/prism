@@ -10,7 +10,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import IconButton from "../common/IconButton";
-import { Layers } from "lucide-react";
+import { Layers, GitBranch } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export type SidebarSection =
@@ -67,6 +67,10 @@ export default function Sidebar({
           <IconButton
             icon={ChartBarIcon}
             onClick={() => router.push("/analytics")}
+          />
+          <IconButton
+            icon={GitBranch}
+            onClick={() => router.push("/dashboard/workflows")}
           />
           <IconButton icon={Cog6ToothIcon} />
         </div>
