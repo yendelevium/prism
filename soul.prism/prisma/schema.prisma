@@ -67,6 +67,12 @@ enum WorkflowStepStatus {
   FAILED
 }
 
+enum WorkflowRequestProtocol {
+  REST
+  GRAPHQL
+  GRPC
+}
+
 
 model Workflow {
   id          String   @id @default(uuid())
@@ -89,6 +95,7 @@ model WorkflowStep {
   id          String @id @default(uuid())
   workflowId  String
   requestId   String
+  protocol    WorkflowRequestProtocol @default(REST)
   stepOrder   Int
   retryCount  Int     @default(0)
   timeoutMs   Int?
