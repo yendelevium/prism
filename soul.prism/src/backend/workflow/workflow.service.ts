@@ -1,4 +1,8 @@
-import type { WorkflowStatus, WorkflowStepStatus } from "@prisma/client";
+import type {
+  WorkflowRequestProtocol,
+  WorkflowStatus,
+  WorkflowStepStatus,
+} from "@prisma/client";
 import { getPrisma } from "@/backend/prisma";
 import type {
   Workflow,
@@ -53,6 +57,7 @@ export async function getWorkflowById(
 export async function createWorkflowStep(
   workflowId: string,
   requestId: string,
+  protocol: WorkflowRequestProtocol,
   stepOrder: number,
   retryCount: number,
 ): Promise<WorkflowStep> {
@@ -62,6 +67,7 @@ export async function createWorkflowStep(
     data: {
       workflowId,
       requestId,
+      protocol,
       stepOrder,
       retryCount,
     },
