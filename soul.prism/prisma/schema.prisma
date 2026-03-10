@@ -29,6 +29,8 @@ model Workspace {
   users        UserWorkspace[]
   collections  Collection[]
   environments Environment[]
+
+  workflows Workflow[]
 }
 
 model UserWorkspace {
@@ -49,6 +51,100 @@ enum WorkspaceRole {
   editor
   viewer
 }
+
+
+enum WorkflowStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum WorkflowStepStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum WorkflowRequestProtocol {
+  REST
+  GRAPHQL
+  GRPC
+}
+
+
+model Workflow {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  description String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  steps WorkflowStep[]
+  runs  WorkflowRun[]
+
+  @@index([workspaceId])
+}
+
+model WorkflowStep {
+  id          String @id @default(uuid())
+  workflowId  String
+  requestId   String
+  protocol    WorkflowRequestProtocol @default(REST)
+  stepOrder   Int
+  retryCount  Int     @default(0)
+  timeoutMs   Int?
+  condition   String?
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  runs WorkflowRunStep[]
+
+  @@index([workflowId])
+}
+
+
+
+model WorkflowRun {
+  id          String         @id @default(uuid())
+  workflowId  String
+  status      WorkflowStatus @default(PENDING)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  triggeredBy String
+  createdAt   DateTime       @default(now())
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  steps WorkflowRunStep[]
+
+  @@index([workflowId])
+}
+
+
+
+model WorkflowRunStep {
+  id            String             @id @default(uuid())
+  workflowRunId String
+  workflowStepId String
+  executionId   String?
+  status        WorkflowStepStatus @default(PENDING)
+  startedAt     DateTime?
+  endedAt       DateTime?
+  durationMs    Int?
+
+  workflowRun WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+
+  workflowStep WorkflowStep @relation(fields: [workflowStepId], references: [id], onDelete: Cascade)
+
+  @@index([workflowRunId])
+}
+
 
 model Collection {
   id          String   @id @default(uuid())
