@@ -1,5 +1,9 @@
 import type {
+  GraphQLRequest as PrismaGraphQLRequest,
+  GRPCRequest as PrismaGRPCRequest,
+  Request as PrismaRequest,
   Workflow as PrismaWorkflow,
+  WorkflowRequestProtocol,
   WorkflowRun as PrismaWorkflowRun,
   WorkflowRunStep as PrismaWorkflowRunStep,
   WorkflowStatus,
@@ -18,6 +22,7 @@ export interface WorkflowStepDefinition {
   id: string;
   workflowId: string;
   requestId: string;
+  protocol: "REST" | "GRAPHQL" | "GRPC";
   stepOrder: number;
   retryCount: number;
 }
@@ -66,5 +71,11 @@ export interface WorkflowExecutionContext {
   workflowWorkspaceId: string;
 }
 
+export interface WorkflowRequestResolution {
+  collectionId: string;
+  request: PrismaRequest | PrismaGraphQLRequest | PrismaGRPCRequest;
+}
+
 export type WorkflowRunStatusValue = WorkflowStatus;
 export type WorkflowRunStepStatusValue = WorkflowStepStatus;
+export type WorkflowProtocol = WorkflowRequestProtocol;
