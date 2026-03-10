@@ -5,6 +5,7 @@ import { requireUser, requireWorkspaceAccess } from "@/backend/auth/auth.utils";
 import {
   createWorkflow,
   createWorkflowRun,
+  createWorkflowStep,
   getWorkflowById,
   listWorkflows,
 } from "./workflow.service";
@@ -12,8 +13,10 @@ import { executeWorkflow } from "./workflow.executor";
 import type {
   Workflow,
   WorkflowExecutionResult,
+  WorkflowStep,
   WorkflowWithSteps,
 } from "./workflow.types";
+import type { WorkflowRequestProtocol } from "@prisma/client";
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -205,6 +208,58 @@ export async function runWorkflowAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to run workflow", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function addWorkflowStepAction(
+  workflowId: string,
+  workspaceId: string,
+  requestId: string,
+  protocol: WorkflowRequestProtocol,
+  stepOrder: number,
+  retryCount: number = 0,
+): Promise<ActionResult<WorkflowStep>> {
+  const workflowValidation = validateRequiredString(workflowId, "workflowId");
+  if (workflowValidation) {
+    return { success: false, error: workflowValidation };
+  }
+
+  const workspaceValidation = validateRequiredString(workspaceId, "workspaceId");
+  if (workspaceValidation) {
+    return { success: false, error: workspaceValidation };
+  }
+
+  const requestValidation = validateRequiredString(requestId, "requestId");
+  if (requestValidation) {
+    return { success: false, error: requestValidation };
+  }
+
+  try {
+    await requireUser();
+    await requireWorkspaceAccess(workspaceId);
+
+    const workflow = await getWorkflowById(workflowId);
+    if (!workflow) {
+      return { success: false, error: "Workflow not found" };
+    }
+
+    if (workflow.workspaceId !== workspaceId) {
+      return { success: false, error: "Forbidden" };
+    }
+
+    const step = await createWorkflowStep(
+      workflowId,
+      requestId,
+      protocol,
+      stepOrder,
+      retryCount,
+    );
+
+    return { success: true, data: step };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to add workflow step", error);
     return { success: false, error: message };
   }
 }
