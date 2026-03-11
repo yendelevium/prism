@@ -21,28 +21,42 @@ export const test = baseTest.extend<AuthFixture>({
     await resetDatabase();
 
     await use(async (role = "admin") => {
-      // 1. Navigate to any page first to establish origin
-      await page.goto("/");
+      // 1. Navigate to Sign In page
+      await page.goto("/sign-in");
+      await page.waitForLoadState("networkidle");
       
-      // 2. Inject Clerk testing token AFTER page load
-      await setupClerkTestingToken({ page });
+      // 2. Perform Real UI Login
+      const emailInput = page.getByLabel('Email address');
+      await emailInput.waitFor({ state: 'visible' });
+      await emailInput.fill(process.env.E2E_TEST_EMAIL || "prism-e2e-test@gmail.com");
+      await emailInput.press('Enter');
       
-      // 3. Navigate again so the token cookie is active
-      await page.goto("/");
+      // Wait for password field to appear
+      const passwordInput = page.getByLabel('Password');
+      await passwordInput.waitFor({ state: 'visible' });
+      await passwordInput.fill(process.env.E2E_TEST_PASSWORD || "PrismTest123!");
+      await passwordInput.press('Enter');
       
-      // 4. Now fetch whoami inside the browser context window using page.goto
-      const resp = await page.goto("/api/test/whoami");
-      if (!resp || !resp.ok()) {
-        const bodyText = await resp?.text();
-        throw new Error(
-          `whoami failed: ${resp?.status()} ${bodyText}`
-        );
-      }
-      const { userId: clerkUserId } = await resp.json();
+      // 3. Wait until Clerk physically redirects to the dashboard
+      await page.waitForURL(url => url.pathname.startsWith('/dashboard'), { timeout: 30000 });
+      await page.waitForLoadState("networkidle");
       
-      // 5. Seed DB with real Clerk userId
+      // 4. Verification and User ID retrieval
+      const result = await page.evaluate(async () => {
+        const resp = await fetch("/api/test/whoami", { credentials: "include" });
+        if (!resp.ok) throw new Error(`whoami failed: ${resp.status}`);
+        return await resp.json();
+      });
+      
+      const clerkUserId = result.userId;
+      
+      // 5. Seed DB matching this actual Clerk user
       const accountInfo = await seedWorkspace(clerkUserId, role);
       
+      // 6. Final sync navigation
+      await page.goto("/dashboard/requests");
+      await page.waitForLoadState('networkidle');
+
       return {
         workspaceId: accountInfo.workspaceId,
         userId: clerkUserId,
