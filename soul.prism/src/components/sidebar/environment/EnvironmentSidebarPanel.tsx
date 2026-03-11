@@ -155,6 +155,7 @@ export function EnvSidebarClient({
 
         {/* Add environment */}
         <button
+          data-testid="new-environment-btn"
           onClick={addEnvironment}
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: "var(--accent)" }}
@@ -254,6 +255,7 @@ export function EnvSidebarClient({
               }}
             >
               <input
+                data-testid="env-name-input"
                 autoFocus
                 className="bg-transparent text-sm font-mono font-bold text-[var(--accent)] outline-none border-b border-transparent focus:border-[var(--accent)] px-1"
                 value={editingEnv.name}
@@ -276,6 +278,7 @@ export function EnvSidebarClient({
             {/* Variables */}
             <div className="h-[300px] overflow-hidden bg-[var(--bg-primary)]">
               <KeyValueEditor
+                testidPrefix="env"
                 rows={editingEnv.variables}
                 onChange={handleUpdateVariables}
                 allowAdd
@@ -299,6 +302,7 @@ export function EnvSidebarClient({
                 Cancel
               </button>
               <button
+                data-testid="save-env-btn"
                 onClick={saveChanges}
                 className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all"
                 style={{

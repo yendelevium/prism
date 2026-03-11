@@ -32,13 +32,14 @@ export default function RequestTabs() {
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
+    <div data-testid="request-builder-panel" className="flex flex-1 flex-col min-h-0 p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
       {/* Tabs */}
       <div className="flex gap-4 justify-between text-sm border-b border-[var(--border-color)] mb-3">
         <div className="flex gap-4 text-sm">
           {restTabs.map((tab) => (
             <button
               key={tab}
+              data-testid={`tab-${tab.toLowerCase()}`}
               type="button"
               onClick={() => {
                 setActiveTab(tab);
@@ -65,13 +66,15 @@ export default function RequestTabs() {
       {/* Content */}
       <div className="flex flex-1 flex-col min-h-0">
         {activeTab === "Body" && (
-          <CodeEditor
-            language="json"
-            value={rest.body ?? ""}
-            onChange={(body) => {
-              setRestField({ body: body ?? "" });
-            }}
-          />
+          <div data-testid="body-editor" className="flex-1 min-h-0">
+            <CodeEditor
+              language="json"
+              value={rest.body ?? ""}
+              onChange={(body) => {
+                setRestField({ body: body ?? "" });
+              }}
+            />
+          </div>
         )}
 
         {activeTab === "Params" && (
@@ -95,6 +98,7 @@ export default function RequestTabs() {
         {activeTab === "Headers" && (
           <div className="flex-1 min-h-0">
             <KeyValueEditor
+              testidPrefix="header"
               rows={rest.headers}
               onChange={(headers) => setRestField({ headers })}
               title="Request Headers"

@@ -56,6 +56,7 @@ export default function RequestBar() {
   const renderRestBar = () => (
     <>
       <select
+        data-testid="method-select"
         value={rest.method}
         onChange={(e) => setRestField({ method: e.target.value as any })}
         className="px-3 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
@@ -67,6 +68,7 @@ export default function RequestBar() {
         ))}
       </select>
       <input
+        data-testid="url-input"
         value={rest.url}
         onChange={(e) => setRestField({ url: e.target.value })}
         placeholder="Enter request URL"
@@ -77,6 +79,7 @@ export default function RequestBar() {
 
   const renderGraphQLBar = () => (
     <input
+      data-testid="graphql-url-input"
       value={graphql.url}
       onChange={(e) => setGraphQLField({ url: e.target.value })}
       placeholder="GraphQL Endpoint URL"
@@ -123,6 +126,7 @@ export default function RequestBar() {
       {protocol === "GRPC" && renderGRPCBar()}
 
       <button
+        data-testid="send-request-btn"
         type="button"
         onClick={handleSend}
         className="relative bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-black px-4 py-1.5 rounded flex items-center justify-center text-sm font-medium"

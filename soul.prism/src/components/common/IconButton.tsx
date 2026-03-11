@@ -7,9 +7,11 @@ export default function IconButton({
   icon: Icon,
   onClick,
   variant = "default",
+  "data-testid": testId,
 }: IconButtonProps) {
   return (
     <button
+      data-testid={testId}
       onClick={onClick}
       className={`p-2 rounded-md transition-colors ${variantStyles[variant]}`}
     >
@@ -24,4 +26,5 @@ export type IconButtonProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   onClick?: () => void;
   variant?: IconButtonVariant;
+  "data-testid"?: string;
 };

@@ -36,6 +36,7 @@ const SpanDetailPanel: React.FC<SpanDetailPanelProps> = ({ span, onClose }) => {
 
       {/* Side Panel */}
       <div
+        data-testid="span-detail-panel"
         className="fixed right-0 top-0 h-full w-96 shadow-2xl z-50 flex flex-col animate-slide-in"
         style={{
           backgroundColor: NORD.bgPanel,
@@ -51,6 +52,7 @@ const SpanDetailPanel: React.FC<SpanDetailPanelProps> = ({ span, onClose }) => {
             Span Details
           </h2>
           <button
+            data-testid="close-span-detail-btn"
             onClick={onClose}
             className="p-1 rounded hover:bg-opacity-20 hover:bg-white transition-colors"
             style={{ color: NORD.textSecondary }}
@@ -202,10 +204,10 @@ const SpanDetailPanel: React.FC<SpanDetailPanelProps> = ({ span, onClose }) => {
               >
                 Tags
               </label>
-              <div className="space-y-2">
+              <div data-testid="span-attributes-table" className="space-y-2">
                 {Object.entries(span.tags).map(([key, value]) => (
                   <div key={key} className="flex justify-between text-xs">
-                    <span className="font-mono" style={{ color: NORD.accent }}>
+                    <span data-testid={`attr-key-${key}`} className="font-mono" style={{ color: NORD.accent }}>
                       {key}:
                     </span>
                     <span

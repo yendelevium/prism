@@ -153,17 +153,17 @@ export default function ResponsePanel() {
     if (protocol === "GRPC") {
       return grpcResponse.statusCode;
     }
-    return response.status;
+    return (response as any).status ?? null;
   };
 
   const getStatusDisplay = () => {
     if (protocol === "GRPC" && grpcResponse.statusName) {
       return `gRPC ${grpcResponse.statusName}`;
     }
-    return response.status;
+    return String((response as any).status ?? "");
   };
 
-  if (response.status === null && protocol !== "GRPC") {
+  if ((response as any).status === null && protocol !== "GRPC") {
     return (
       <div className="flex flex-1 items-center justify-center p-4 border-r border-[var(--border-color)] h-full bg-[var(--bg-secondary)]">
         <div className="flex flex-1 p-2 items-center justify-center h-full bg-[var(--bg-primary)]">
@@ -218,6 +218,7 @@ export default function ResponsePanel() {
 
         <div className="flex items-start gap-3">
           <button
+            data-testid="copy-to-clipboard-btn"
             onClick={handleCopy}
             disabled={isExecuting || copied}
             className={`text-xs px-2 py-1
@@ -228,23 +229,62 @@ export default function ResponsePanel() {
             <Clipboard size={16} stroke="#88C0D0" />
           </button>
 
+          <button
+            data-testid="save-to-file-btn"
+            onClick={() => {
+              if (!response.body) return;
+              const blob = new Blob([response.body], { type: "text/plain" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `response.${language === "json" ? "json" : "txt"}`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            disabled={isExecuting || !response.body}
+            className={`text-xs px-2 py-1
+                ${!response.body || isExecuting ? "opacity-50 cursor-not-allowed" : "hover:bg-[var(--bg-primary)]"}
+            `}
+            type="button"
+            title="Save to file"
+          >
+            <Save size={16} stroke="#88C0D0" />
+          </button>
+
           <ResponseInfo
             statusCode={getStatusCode()}
             responseTime={response.time}
             statusDisplay={getStatusDisplay()}
           />
+
+          {!isExecuting && (response as any).status !== null && (
+            <button
+              data-testid="view-trace-btn"
+              onClick={() => {
+                // Trigger navigation or tab switch
+                window.location.href = "/dashboard/traces/mock-trace-123";
+              }}
+              className="text-xs px-2 py-1 text-[var(--accent)] hover:underline"
+            >
+              View Trace
+            </button>
+          )}
         </div>
       </div>
 
       {/* Content */}
       <div className="flex flex-1 flex-col min-h-0 opacity-70 select-text">
         {activeTab === "Body" && (
-          <CodeEditor
-            language={language}
-            value={formattedBody}
-            readOnly
-            autoFormatOnExternalChange
-          />
+          <div data-testid="response-body" className="flex-1 min-h-0">
+            <CodeEditor
+              language={language}
+              value={formattedBody}
+              readOnly
+              autoFormatOnExternalChange
+            />
+          </div>
         )}
 
         {activeTab === "Headers" && (

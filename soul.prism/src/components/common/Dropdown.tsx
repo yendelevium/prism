@@ -12,6 +12,7 @@ interface DropdownProps<T extends string> {
   value: T;
   options: readonly Option<T>[];
   onChange: (value: T) => void;
+  "data-testid"?: string;
 }
 
 export default function Dropdown<T extends string>({
@@ -19,6 +20,7 @@ export default function Dropdown<T extends string>({
   value,
   options,
   onChange,
+  "data-testid": testId,
 }: DropdownProps<T>) {
   const ref = useRef<HTMLSelectElement>(null);
 
@@ -50,6 +52,7 @@ export default function Dropdown<T extends string>({
   return (
     <label className="flex items-center gap-1 text-sm">
       <select
+        data-testid={testId}
         ref={ref}
         value={value}
         onChange={(e) => onChange(e.target.value as T)}

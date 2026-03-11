@@ -7,6 +7,7 @@ import "./styles/theme.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import QueryProvider from "./providers/QueryProviders";
 import { Toaster } from "@/components/toast/toaster";
+import { MSWProvider } from "@/components/MSWProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +37,9 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}
         >
           <QueryProvider>
-            {children}
+            <MSWProvider>
+              {children}
+            </MSWProvider>
             <Toaster />
           </QueryProvider>
         </body>

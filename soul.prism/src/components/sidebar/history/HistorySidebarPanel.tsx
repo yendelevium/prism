@@ -78,6 +78,7 @@ export function HistorySidebar({ history }: HistorySidebarProps) {
           history.map((req) => (
             <div
               key={req.id}
+              data-testid="execution-history-item"
               className="group mx-2 mb-1 px-3 py-2 rounded border border-transparent hover:border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-all cursor-pointer"
             >
               {/* Method + timestamp */}

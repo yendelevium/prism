@@ -122,6 +122,7 @@ export const CustomBarShape = (props: any) => {
 
   return (
     <rect
+      data-testid={payload.status === "error" ? `span-bar-error-${payload.service_name}` : `span-bar-${payload.service_name}`}
       x={x}
       y={y}
       width={width}
@@ -151,6 +152,8 @@ export const CustomBarShape = (props: any) => {
 export const TraceGanttClient = () => {
   const spans = useSpanStore((s) => s.spans);
   const [selectedSpan, setSelectedSpan] = useState<Span | null>(null);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [appliedFilter, setAppliedFilter] = useState("");
   const pannedRef = useRef(false); // For keeping track of if the current mouse click is a pan or a click
   const dragStart = useRef({ x: 0, y: 0 });
 
@@ -166,7 +169,22 @@ export const TraceGanttClient = () => {
    * which is typically shallow in practice.
    */
   const data = useMemo(() => {
-    const minStart = Math.min(...spans.map((s) => s.start_time));
+    const filteredSpans = spans.filter((s) => {
+      if (!appliedFilter) return true;
+      const query = appliedFilter.toLowerCase();
+      let match = true;
+      if (query.includes("service:")) {
+        const svc = query.match(/service:(\w+)/)?.[1];
+        if (svc && !s.service_name.toLowerCase().includes(svc)) match = false;
+      }
+      if (query.includes("duration:>")) {
+        const durMatch = query.match(/duration:>(\d+)/)?.[1];
+        if (durMatch && s.duration / 1000 <= parseInt(durMatch)) match = false; // duration is in micoseconds
+      }
+      return match;
+    });
+
+    const minStart = Math.min(...filteredSpans.map((s) => s.start_time));
     const spanMap = new Map(spans.map((s) => [s.span_id, s]));
 
     const getDepth = (id: string | null): number => {
@@ -175,7 +193,7 @@ export const TraceGanttClient = () => {
       return parent ? 1 + getDepth(parent.parent_span_id) : 0;
     };
 
-    const newSpans = spans
+    const newSpans = filteredSpans
       .sort((a, b) => a.start_time - b.start_time)
       .map((span, index) => ({
         ...span,
@@ -204,12 +222,37 @@ export const TraceGanttClient = () => {
 
   return (
     <div
+      data-testid="trace-waterfall"
       className="w-full h-full border overflow-hidden relative"
       style={{
         backgroundColor: "var(--bg-primary)",
         borderColor: "var(--border-color)",
       }}
     >
+      <div className="absolute top-4 left-4 z-20 flex gap-2 w-96">
+        <input
+          data-testid="filter-bar-input"
+          value={filterQuery}
+          onChange={(e) => setFilterQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && setAppliedFilter(filterQuery)}
+          placeholder="Filter... e.g. service:payment duration:>2000"
+          className="flex-1 bg-[var(--bg-panel)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded px-2 py-1 shadow"
+        />
+        {(filterQuery || appliedFilter) && (
+          <button
+            data-testid="clear-filters-btn"
+            onClick={() => {
+              setFilterQuery("");
+              setAppliedFilter("");
+            }}
+            className="text-[10px] uppercase font-bold px-2 py-1 bg-[var(--bg-panel)] border border-[var(--border-color)] rounded shadow"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       <TransformWrapper
         initialScale={1}
         minScale={0.1}
@@ -291,6 +334,7 @@ export const TraceGanttClient = () => {
               }}
             >
               <div
+                data-testid="trace-waterfall-rendered"
                 style={{
                   width: chartWidth,
                   height: chartHeight,
@@ -341,6 +385,7 @@ export const TraceGanttClient = () => {
                         const d = payload[0].payload;
                         return (
                           <div
+                            data-testid="span-tooltip"
                             style={{
                               background: "var(--bg-panel)",
                               border: "1px solid var(--border-color)",
