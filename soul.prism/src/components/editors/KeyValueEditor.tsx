@@ -165,6 +165,11 @@ export type KeyValueEditorProps = {
    * @defaultValue false
    */
   dense?: boolean;
+
+  /**
+   * Optional prefix for data-testid attributes used in E2E tests.
+   */
+  testidPrefix?: string;
 };
 
 /**
@@ -277,6 +282,7 @@ export function KeyValueEditor({
 
   rowHeight = "md",
   dense = false,
+  testidPrefix,
 }: KeyValueEditorProps) {
   /**
    * Whether the editor is currently in view-only mode.
@@ -347,6 +353,7 @@ export function KeyValueEditor({
 
           {allowAdd && !isView && (
             <button
+              data-testid={testidPrefix ? `add-${testidPrefix}-btn` : undefined}
               onClick={addRow}
               className={clsx(
                 "flex items-center gap-1 rounded px-2 py-1 text-xs",
@@ -369,7 +376,7 @@ export function KeyValueEditor({
         )}
 
         <div className="flex flex-col gap-1">
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             const keyError = validateKey?.(row.key);
             const valueError = validateValue?.(row.value);
             const isSecret = row.secret;
@@ -400,6 +407,7 @@ export function KeyValueEditor({
 
                 {/* Key */}
                 <input
+                  data-testid={testidPrefix ? `${testidPrefix}-key-input-${index}` : undefined}
                   value={row.key}
                   placeholder={keyPlaceholder}
                   disabled={isView || row.readonly}
@@ -414,6 +422,7 @@ export function KeyValueEditor({
                 {/* Value */}
                 <div className="relative flex flex-1 items-center">
                   <input
+                    data-testid={testidPrefix ? `${testidPrefix}-val-input-${index}` : undefined}
                     value={row.value}
                     placeholder={valuePlaceholder}
                     type={isSecret && !isRevealed ? "password" : "text"}

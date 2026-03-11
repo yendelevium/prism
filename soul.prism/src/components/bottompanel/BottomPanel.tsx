@@ -25,6 +25,7 @@ export default function BottomPanelClient({
       {/* SWITCHER BAR */}
       <div className="flex items-center gap-2 px-2 h-11 bg-[var(--bg-panel)]">
         <IconButton
+          data-testid="tab-metrics"
           icon={DocumentTextIcon}
           variant={activeView === "logs" ? "active" : "default"}
           onClick={() => setActiveView("logs")}
@@ -35,6 +36,7 @@ export default function BottomPanelClient({
           onClick={() => setActiveView("gantt")}
         />
         <IconButton
+          data-testid="tab-service-map"
           icon={MapIcon}
           variant={activeView === "servicemap" ? "active" : "default"}
           onClick={() => setActiveView("servicemap")}
@@ -43,11 +45,15 @@ export default function BottomPanelClient({
 
       {/* VIEWER */}
       <div className="flex-1 min-h-0 min-w-0 bg-[var(--bg-secondary)] p-0">
-        {activeView === "logs"
-          ? logsView
-          : activeView === "gantt"
-            ? ganttView
-            : servicemapView}
+        {activeView === "logs" ? (
+          <div data-testid="log-panel" className="h-full w-full">
+            {logsView}
+          </div>
+        ) : activeView === "gantt" ? (
+          ganttView
+        ) : (
+          servicemapView
+        )}
       </div>
     </div>
   );

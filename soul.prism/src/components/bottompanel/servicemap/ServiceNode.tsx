@@ -16,6 +16,7 @@ const ServiceNode = ({ data, selected }: NodeProps) => {
   // but the custom node allows us to ensure pointer-events and structure are stable.
   return (
     <div
+      data-testid="service-node"
       style={{
         width: "100%",
         height: "100%",

@@ -96,15 +96,17 @@ export const CollectionsSidebarPanel: React.FC = () => {
     type: "REST" | "GRAPHQL" | "GRPC";
   } | null>(null);
 
+  const [createCollectionModal, setCreateCollectionModal] = useState<{ name: string } | null>(null);
+
   const toggleFolder = (id: string) => {
     setExpandedFolders((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const createCollection = async () => {
+  const createCollection = async (name: string) => {
     setLoading(true);
     try {
       const newCollection = unwrap(
-        await createCollectionAction("Untitled", currentWorkspace!.id),
+        await createCollectionAction(name || "Untitled", currentWorkspace!.id),
       );
       const newCollectionItem = await collectionToCollectionItem(newCollection);
       setCollections([...collections, newCollectionItem]);
@@ -113,6 +115,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
       toast.error(err.message);
     }
     setLoading(false);
+    setCreateCollectionModal(null);
     return;
   };
 
@@ -474,10 +477,11 @@ export const CollectionsSidebarPanel: React.FC = () => {
         </h2>
 
         <button
+          data-testid="create-collection-btn"
           type="button"
           className="p-1 rounded hover:bg-[var(--bg-secondary)] transition-colors"
           style={{ color: "var(--accent)" }}
-          onClick={createCollection}
+          onClick={() => setCreateCollectionModal({ name: "Untitled" })}
         >
           <Plus size={14} />
         </button>
@@ -516,6 +520,9 @@ export const CollectionsSidebarPanel: React.FC = () => {
           collections.map((col) => (
             <div key={col.id} className="mb-1">
               <div
+                data-testid="collection-list-item"
+                data-collection-name={`sidebar-collection-${col.name}`}
+                className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
                 onClick={() => {
                   if (editingCollectionId) return;
                   toggleFolder(col.id);
@@ -525,7 +532,6 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   setEditingCollectionId(col.id);
                   setEditingCollectionName(col.name);
                 }}
-                className="group flex items-center px-4 py-1.5 hover:bg-[var(--bg-secondary)] transition-colors"
               >
                 <span className="mr-1" style={{ color: "var(--border-color)" }}>
                   <button
@@ -553,6 +559,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
                 {editingCollectionId === col.id ? (
                   <input
+                    data-testid="collection-name-input-edit"
                     autoFocus
                     value={editingCollectionName}
                     onChange={(e) => setEditingCollectionName(e.target.value)}
@@ -571,6 +578,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   />
                 ) : (
                   <span
+                    data-testid={`sidebar-collection-${col.name}`}
                     className="text-sm truncate flex-1"
                     style={{ color: "var(--text-primary)" }}
                   >
@@ -580,6 +588,22 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
+                    data-testid="edit-collection-btn"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingCollectionId(col.id);
+                      setEditingCollectionName(col.name);
+                    }}
+                    className="p-1 rounded cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                    style={{ color: "var(--text-secondary)" }}
+                    title="Edit collection"
+                  >
+                    <Plus size={12} className="rotate-45" />
+                  </button>
+
+                  <button
+                    data-testid="new-request-btn"
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -600,6 +624,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   </button>
 
                   <button
+                    data-testid="delete-collection-btn"
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -612,6 +637,10 @@ export const CollectionsSidebarPanel: React.FC = () => {
                     <Trash2 size={12} />
                   </button>
                 </div>
+              </div>
+
+              <div data-testid={`collection-count-${col.name}`} className="hidden">
+                 {col.requests.length + col.graphqlRequests.length + col.grpcRequests.length}
               </div>
 
               {expandedFolders[col.id] && (
@@ -680,6 +709,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
                       <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          data-testid="delete-request-btn"
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -756,6 +786,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
                       <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          data-testid="delete-request-btn"
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -832,6 +863,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
 
                       <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          data-testid="delete-request-btn"
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -894,6 +926,32 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   className="text-[9px] uppercase font-bold opacity-40"
                   style={{ color: "var(--text-secondary)" }}
                 >
+                  Collection
+                </label>
+                <div className="relative">
+                  <select
+                    data-testid="collection-select"
+                    className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded px-3 py-2 text-xs font-mono outline-none focus:border-[var(--accent)] appearance-none cursor-pointer"
+                    value={createRequestModal.collectionId}
+                    onChange={(e) => setCreateRequestModal({
+                      ...createRequestModal,
+                      collectionId: e.target.value
+                    })}
+                  >
+                    {collections.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label
+                  className="text-[9px] uppercase font-bold opacity-40"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   Request Type
                 </label>
                 <div className="relative">
@@ -931,6 +989,7 @@ export const CollectionsSidebarPanel: React.FC = () => {
                 Cancel
               </button>
               <button
+                data-testid="save-request-btn"
                 onClick={() => {
                   if (createRequestModal.type === "REST") {
                     createRequest(
@@ -957,6 +1016,55 @@ export const CollectionsSidebarPanel: React.FC = () => {
                   Create
                 </span>
                 {isLoadingRequest && (
+                  <div className="absolute h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {createCollectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2E3440]/80 backdrop-blur-sm p-4">
+          <div
+            className="w-full max-w-md rounded-lg border shadow-2xl overflow-hidden"
+            style={{
+              backgroundColor: "var(--bg-primary)",
+              borderColor: "var(--border-color)",
+            }}
+          >
+            <div
+              className="flex items-center justify-between p-3 border-b"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                borderColor: "var(--border-color)",
+              }}
+            >
+              <input
+                data-testid="collection-name-input"
+                autoFocus
+                className="bg-transparent text-sm font-mono font-bold text-[var(--accent)] outline-none border-b border-transparent focus:border-[var(--accent)] px-1 w-full"
+                value={createCollectionModal.name}
+                onChange={(e) =>
+                  setCreateCollectionModal({ name: e.target.value })
+                }
+                placeholder="Collection name"
+              />
+            </div>
+            <div className="p-3 flex justify-end gap-2">
+              <button
+                onClick={() => setCreateCollectionModal(null)}
+                className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                data-testid="save-collection-btn"
+                onClick={() => createCollection(createCollectionModal.name)}
+                className="relative flex items-center justify-center px-3 py-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[10px] font-bold uppercase rounded transition-all text-black"
+              >
+                <span className={isLoading ? "opacity-0" : "opacity-100"}>Create</span>
+                {isLoading && (
                   <div className="absolute h-4 w-4 border-2 border-[var(--border-color)] border-t-[var(--accent)] rounded-full animate-spin" />
                 )}
               </button>

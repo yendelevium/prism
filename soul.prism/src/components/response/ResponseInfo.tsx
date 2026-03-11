@@ -37,7 +37,7 @@ export default function ResponseInfo({
 
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className={clsx(statusClass)}>
+      <span data-testid="response-status" className={clsx(statusClass)}>
         {statusDisplay ?? statusCode ?? "—"} {statusDisplay ? "" : label}
       </span>
 

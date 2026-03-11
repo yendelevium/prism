@@ -45,3 +45,9 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Test logs and temp files
+*.log
+test-results/
+playwright-report/
+testids.txt

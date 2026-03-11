@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Dropdown from "@/components/common/Dropdown";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
 import IconButton from "../common/IconButton";
+import { UserButton } from "@clerk/nextjs";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useSelectionStore } from "@/stores/useSelectionStore";
 import { useRequestStore } from "@/stores/useRequestStore";
@@ -60,6 +60,7 @@ export default function Topbar() {
 
         {/* Environment Selector */}
         <Dropdown
+          data-testid="env-selector"
           label="Env"
           value={env}
           options={["Development", "Staging", "Production"].map((env) => ({
@@ -73,7 +74,7 @@ export default function Topbar() {
       {/* RIGHT SIDE */}
       <div className="flex items-center">
         {/* Account Button */}
-        <IconButton icon={UserCircleIcon} />
+        <UserButton afterSignOutUrl="/" />
       </div>
     </header>
   );
