@@ -61,7 +61,6 @@
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.0.0",
-    "typedoc": "^0.28.16",
     "typedoc-plugin-markdown": "^4.9.0",
     "xml-formatter": "^3.6.7",
     "zustand": "^5.0.11"
@@ -75,6 +74,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "typedoc": "^0.28.17",
     "typescript": "^5",
     "vitest": "^4.0.18"
   },

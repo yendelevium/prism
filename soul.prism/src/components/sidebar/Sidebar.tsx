@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   FolderIcon,
   GlobeAltIcon,
@@ -10,15 +10,10 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import IconButton from "../common/IconButton";
-import { Layers } from "lucide-react";
+import { Layers, GitBranch } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export type SidebarSection =
-  | "Collections"
-  | "Environments"
-  | "Workspaces"
-  | "History"
-  | null;
+export type SidebarSection = 'Collections' | 'Environments' | 'Workspaces' | 'History' | null;
 
 export default function Sidebar({
   collections,
@@ -43,30 +38,34 @@ export default function Sidebar({
         <div className="flex flex-col items-center gap-3 py-3">
           <IconButton
             icon={FolderIcon}
-            onClick={() => setActiveSection("Collections")}
-            variant={activeSection === "Collections" ? "active" : "default"}
+            onClick={() => setActiveSection('Collections')}
+            variant={activeSection === 'Collections' ? 'active' : 'default'}
           />
           <IconButton
             icon={GlobeAltIcon}
-            onClick={() => setActiveSection("Environments")}
-            variant={activeSection === "Environments" ? "active" : "default"}
+            onClick={() => setActiveSection('Environments')}
+            variant={activeSection === 'Environments' ? 'active' : 'default'}
           />
           <IconButton
             icon={Layers}
-            onClick={() => setActiveSection("Workspaces")}
-            variant={activeSection === "Workspaces" ? "active" : "default"}
+            onClick={() => setActiveSection('Workspaces')}
+            variant={activeSection === 'Workspaces' ? 'active' : 'default'}
           />
           <IconButton
             icon={ClockIcon}
-            onClick={() => setActiveSection("History")}
-            variant={activeSection === "History" ? "active" : "default"}
+            onClick={() => setActiveSection('History')}
+            variant={activeSection === 'History' ? 'active' : 'default'}
           />
         </div>
 
         <div className="flex flex-col items-center gap-3 py-3">
           <IconButton
             icon={ChartBarIcon}
-            onClick={() => router.push("/analytics")}
+            onClick={() => router.push('/analytics')}
+          />
+          <IconButton
+            icon={GitBranch}
+            onClick={() => router.push("/dashboard/workflows")}
           />
           <IconButton icon={Cog6ToothIcon} />
         </div>
@@ -80,7 +79,7 @@ export default function Sidebar({
         className={`
           h-full bg-[var(--bg-panel)] border-[var(--border-color)]
           transition-all duration-300 ease-in-out overflow-hidden
-          ${activeSection ? "w-64 border-r" : "w-0 border-r-0"}
+          ${activeSection ? 'w-64 border-r' : 'w-0 border-r-0'}
         `}
       >
         <div className="flex flex-col h-full p-3 w-64">
@@ -100,14 +99,10 @@ export default function Sidebar({
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto">
-            {activeSection === "Collections" && collections}
-
-            {activeSection === "Environments" && environments}
-
-            {activeSection === "Workspaces" && workspaces}
-
-            {activeSection === "History" && history}
-
+            {activeSection === 'Collections' && collections}
+            {activeSection === 'Environments' && environments}
+            {activeSection === 'Workspaces' && workspaces}
+            {activeSection === 'History' && history}
             {!activeSection && none}
           </div>
         </div>

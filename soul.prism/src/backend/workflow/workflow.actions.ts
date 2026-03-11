@@ -12,8 +12,11 @@ import { executeWorkflow } from "./workflow.executor";
 import type {
   Workflow,
   WorkflowExecutionResult,
+  WorkflowStep,
   WorkflowWithSteps,
 } from "./workflow.types";
+import { createWorkflowStep } from "./workflow.service";
+import type { WorkflowRequestProtocol } from "@prisma/client";
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -205,6 +208,49 @@ export async function runWorkflowAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Failed to run workflow", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function addWorkflowStepAction(
+  workflowId: string,
+  workspaceId: string,
+  requestId: string,
+  protocol: WorkflowRequestProtocol,
+  stepOrder: number,
+  retryCount: number,
+): Promise<ActionResult<WorkflowStep>> {
+  const workflowValidation = validateRequiredString(workflowId, "workflowId");
+  if (workflowValidation) {
+    return { success: false, error: workflowValidation };
+  }
+
+  const workspaceValidation = validateRequiredString(workspaceId, "workspaceId");
+  if (workspaceValidation) {
+    return { success: false, error: workspaceValidation };
+  }
+
+  const requestValidation = validateRequiredString(requestId, "requestId");
+  if (requestValidation) {
+    return { success: false, error: requestValidation };
+  }
+
+  try {
+    await requireUser();
+    await requireWorkspaceAccess(workspaceId);
+
+    const step = await createWorkflowStep(
+      workflowId,
+      requestId,
+      protocol,
+      stepOrder,
+      retryCount,
+    );
+
+    return { success: true, data: step };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to create workflow step", error);
     return { success: false, error: message };
   }
 }
